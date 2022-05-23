@@ -19,6 +19,8 @@ import (
 	"reflect"
 	"strconv"
 	"strings"
+
+	"github.com/google/go-cmp/cmp"
 )
 
 // Call represents an expected call to a mock.
@@ -42,11 +44,13 @@ type Call struct {
 	// can set the return values by returning a non-nil slice. Actions run in the
 	// order they are created.
 	actions []func([]any) []any
+
+	cmpOpts cmp.Options // comparison options
 }
 
 // newCall creates a *Call. It requires the method type in order to support
 // unexported methods.
-func newCall(t TestHelper, receiver any, method string, methodType reflect.Type, args ...any) *Call {
+func newCall(t TestHelper, receiver any, method string, methodType reflect.Type, cmpOpts cmp.Options, args ...any) *Call {
 	t.Helper()
 
 	// TODO: check arity, types.
@@ -76,7 +80,8 @@ func newCall(t TestHelper, receiver any, method string, methodType reflect.Type,
 		return rets
 	}}
 	return &Call{t: t, receiver: receiver, method: method, methodType: methodType,
-		args: mArgs, origin: origin, minCalls: 1, maxCalls: 1, actions: actions}
+		args: mArgs, origin: origin, minCalls: 1, maxCalls: 1, actions: actions,
+		cmpOpts: cmpOpts}
 }
 
 // AnyTimes allows the expectation to be called 0 or more times
@@ -321,6 +326,30 @@ func (c *Call) String() string {
 	return fmt.Sprintf("%T.%v(%s) %s", c.receiver, c.method, arguments, c.origin)
 }
 
+func (c *Call) matchError(m Matcher, arg any) error {
+	if g, ok := m.(GotFormatter); ok {
+		return fmt.Errorf(
+			"\nGot: %v\nWant: %v",
+			g.Got(arg), m,
+		)
+	}
+	if d, ok := m.(Differ); ok {
+		diff := d.Diff(arg, c.cmpOpts...)
+		// Recover if the diff is empty, implying the match failed on ignored fields.
+		if diff == "" {
+			return nil
+		}
+		return fmt.Errorf(
+			"\nDiff (-want +got): %s",
+			diff,
+		)
+	}
+	return fmt.Errorf(
+		"\nGot: %v\nWant: %v",
+		formatGottenArg(m, arg), m,
+	)
+}
+
 // Tests if the given call matches the expected call.
 // If yes, returns nil. If no, returns error with message explaining why it does not match.
 func (c *Call) matches(args []any) error {
@@ -331,11 +360,9 @@ func (c *Call) matches(args []any) error {
 		}
 
 		for i, m := range c.args {
-			if !m.Matches(args[i]) {
-				return fmt.Errorf(
-					"expected call at %s doesn't match the argument at index %d.\nGot: %v\nWant: %v",
-					c.origin, i, formatGottenArg(m, args[i]), m,
-				)
+			arg := args[i]
+			if !m.Matches(arg) {
+				return fmt.Errorf("expected call at %s doesn't match the argument at index %d: %w", c.origin, i, c.matchError(m, arg))
 			}
 		}
 	} else {
@@ -353,11 +380,12 @@ func (c *Call) matches(args []any) error {
 		}
 
 		for i, m := range c.args {
+			arg := args[i]
 			if i < c.methodType.NumIn()-1 {
 				// Non-variadic args
-				if !m.Matches(args[i]) {
-					return fmt.Errorf("expected call at %s doesn't match the argument at index %s.\nGot: %v\nWant: %v",
-						c.origin, strconv.Itoa(i), formatGottenArg(m, args[i]), m)
+				if !m.Matches(arg) {
+					return fmt.Errorf("expected call at %s doesn't match the argument at index %d: %w",
+						c.origin, i, c.matchError(m, args[i]))
 				}
 				continue
 			}

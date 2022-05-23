@@ -30,7 +30,7 @@ func TestCallSetAdd(t *testing.T) {
 
 	numCalls := 10
 	for i := 0; i < numCalls; i++ {
-		cs.Add(newCall(t, receiver, method, reflect.TypeOf(receiverType{}.Func)))
+		cs.Add(newCall(t, receiver, method, reflect.TypeOf(receiverType{}.Func), nil))
 	}
 
 	call, err := cs.FindMatch(receiver, method, []any{})
@@ -47,13 +47,13 @@ func TestCallSetAdd_WhenOverridable_ClearsPreviousExpectedAndExhausted(t *testin
 	var receiver any = "TestReceiver"
 	cs := newOverridableCallSet()
 
-	cs.Add(newCall(t, receiver, method, reflect.TypeOf(receiverType{}.Func)))
+	cs.Add(newCall(t, receiver, method, reflect.TypeOf(receiverType{}.Func), nil))
 	numExpectedCalls := len(cs.expected[callSetKey{receiver, method}])
 	if numExpectedCalls != 1 {
 		t.Fatalf("Expected 1 expected call in callset, got %d", numExpectedCalls)
 	}
 
-	cs.Add(newCall(t, receiver, method, reflect.TypeOf(receiverType{}.Func)))
+	cs.Add(newCall(t, receiver, method, reflect.TypeOf(receiverType{}.Func), nil))
 	newNumExpectedCalls := len(cs.expected[callSetKey{receiver, method}])
 	if newNumExpectedCalls != 1 {
 		t.Fatalf("Expected 1 expected call in callset, got %d", newNumExpectedCalls)
@@ -100,7 +100,7 @@ func TestCallSetFindMatch(t *testing.T) {
 		method := "TestMethod"
 		args := []any{}
 
-		c1 := newCall(t, receiver, method, reflect.TypeOf(receiverType{}.Func))
+		c1 := newCall(t, receiver, method, reflect.TypeOf(receiverType{}.Func), nil)
 		cs.exhausted = map[callSetKey][]*Call{
 			{receiver: receiver, fname: method}: {c1},
 		}
