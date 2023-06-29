@@ -132,8 +132,8 @@ func (cs callSet) Failures() []*Call {
 	return failures
 }
 
-// AllExpectedCallsSatisfied returns true in case all expected calls in this callSet are satisfied.
-func (cs callSet) AllExpectedCallsSatisfied() bool {
+// Satisfied returns true in case all expected calls in this callSet are satisfied.
+func (cs callSet) Satisfied() bool {
 	cs.expectedMu.Lock()
 	defer cs.expectedMu.Unlock()
 
