@@ -49,6 +49,3 @@ jobs:
           go test ./...
           popd
         done 
-    
-    - name: Upload coverage to codecov.io
-      uses: codecov/codecov-action@v3
