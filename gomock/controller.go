@@ -231,7 +231,7 @@ func (ctrl *Controller) Finish() {
 	ctrl.finish(false, err)
 }
 
-// Satisfied returns true in case all expected calls bound to this Controller are satisfied.
+// Satisfied returns whether all expected calls bound to this Controller have been satisfied.
 // Calling Finish is then guaranteed to not fail due to missing calls.
 func (ctrl *Controller) Satisfied() bool {
 	return ctrl.expectedCalls.Satisfied()
