@@ -486,8 +486,8 @@ func makeArgString(argNames, argTypes []string) string {
 // GenerateMockMethod generates a mock method implementation.
 // If non-empty, pkgOverride is the package in which unqualified types reside.
 func (g *generator) GenerateMockMethod(mockType string, m *model.Method, pkgOverride, shortTp string) error {
-	argNames := g.getArgNames(m, true)
-	argTypes := g.getArgTypes(m, pkgOverride, true)
+	argNames := g.getArgNames(m, true /* in */)
+	argTypes := g.getArgTypes(m, pkgOverride, true /* in */)
 	argString := makeArgString(argNames, argTypes)
 
 	rets := make([]string, len(m.Out))
