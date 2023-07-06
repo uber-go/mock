@@ -615,10 +615,10 @@ func (g *generator) GenerateMockRecorderMethod(intf *model.Interface, mockType s
 }
 
 func (g *generator) GenerateMockReturnCallMethod(intf *model.Interface, m *model.Method, pkgOverride, longTp, shortTp string) error {
-	argNames := g.getArgNames(m, true)
-	retNames := g.getArgNames(m, false)
-	argTypes := g.getArgTypes(m, pkgOverride, true)
-	retTypes := g.getArgTypes(m, pkgOverride, false)
+	argNames := g.getArgNames(m, true /* in */)
+	retNames := g.getArgNames(m, false /* out */)
+	argTypes := g.getArgTypes(m, pkgOverride, true /* in */)
+	retTypes := g.getArgTypes(m, pkgOverride, false /* out */)
 	argString := strings.Join(argTypes, ", ")
 
 	rets := make([]string, len(m.Out))
@@ -630,8 +630,8 @@ func (g *generator) GenerateMockReturnCallMethod(intf *model.Interface, m *model
 	switch {
 	case len(rets) == 1:
 		retString = " " + rets[0]
-	case len(rets) > 1 {
-		retString = " (" + strings.Join(rets, ", ") + ")"	
+	case len(rets) > 1:
+		retString = " (" + strings.Join(rets, ", ") + ")"
 	}
 
 	ia := newIdentifierAllocator(argNames)
