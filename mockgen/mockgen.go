@@ -626,12 +626,12 @@ func (g *generator) GenerateMockReturnCallMethod(intf *model.Interface, m *model
 		rets[i] = p.Type.String(g.packageMap, pkgOverride)
 	}
 
-	retString := strings.Join(rets, ", ")
-	if len(rets) > 1 {
-		retString = "(" + retString + ")"
-	}
-	if retString != "" {
-		retString = " " + retString
+	var retString string
+	switch {
+	case len(rets) == 1:
+		retString = " " + rets[0]
+	case len(rets) > 1 {
+		retString = " (" + strings.Join(rets, ", ") + ")"	
 	}
 
 	ia := newIdentifierAllocator(argNames)
