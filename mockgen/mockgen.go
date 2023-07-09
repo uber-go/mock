@@ -316,6 +316,17 @@ func (g *generator) Generate(pkg *model.Package, outputPkgName string, outputPac
 
 	packagesName := createPackageMap(sortedPaths)
 
+	definedImports := make(map[string]string, len(im))
+	if *imports != "" {
+		for _, kv := range strings.Split(*imports, ",") {
+			eq := strings.Index(kv, "=")
+			k, v := kv[:eq], kv[eq+1:]
+			if k != "." {
+				definedImports[v] = k
+			}
+		}
+	}
+
 	g.packageMap = make(map[string]string, len(im))
 	localNames := make(map[string]bool, len(im))
 	for _, pth := range sortedPaths {
@@ -327,9 +338,14 @@ func (g *generator) Generate(pkg *model.Package, outputPkgName string, outputPac
 		// Local names for an imported package can usually be the basename of the import path.
 		// A couple of situations don't permit that, such as duplicate local names
 		// (e.g. importing "html/template" and "text/template"), or where the basename is
-		// a keyword (e.g. "foo/case").
+		// a keyword (e.g. "foo/case") or when defining a name for that by using the -imports flag.
 		// try base0, base1, ...
 		pkgName := base
+
+		if _, ok := definedImports[base]; ok {
+			pkgName = definedImports[base]
+		}
+
 		i := 0
 		for localNames[pkgName] || token.Lookup(pkgName).IsKeyword() {
 			pkgName = base + strconv.Itoa(i)
