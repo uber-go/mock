@@ -3,7 +3,7 @@ package source
 import (
 	"testing"
 
-	"github.com/golang/mock/mockgen/internal/tests/generics"
+	"go.uber.org/mock/mockgen/internal/tests/generics"
 )
 
 func TestAssert(t *testing.T) {

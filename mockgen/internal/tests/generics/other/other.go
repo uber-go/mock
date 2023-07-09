@@ -10,12 +10,9 @@ type Four struct{}
 
 type Five interface{}
 
-type Twenty[R, S, T any, Z any] interface {
-	Twenty(S, R) (T, Z)
+type Either[T, R, K, V any] interface {
+	First() T
+	Second() R
+	Third() K
+	Fourth() V
 }
-
-type TwentyThree[U, V any] interface {
-	TwentyThree(U, V) StructType
-}
-
-type StructType struct{}

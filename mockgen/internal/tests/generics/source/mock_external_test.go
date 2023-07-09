@@ -15,18 +15,18 @@ import (
 )
 
 // MockExternalConstraint is a mock of ExternalConstraint interface.
-type MockExternalConstraint[I constraints.Integer, F constraints.Float] struct {
+type MockExternalConstraint[I constraints.Integer, F any] struct {
 	ctrl     *gomock.Controller
 	recorder *MockExternalConstraintMockRecorder[I, F]
 }
 
 // MockExternalConstraintMockRecorder is the mock recorder for MockExternalConstraint.
-type MockExternalConstraintMockRecorder[I constraints.Integer, F constraints.Float] struct {
+type MockExternalConstraintMockRecorder[I constraints.Integer, F any] struct {
 	mock *MockExternalConstraint[I, F]
 }
 
 // NewMockExternalConstraint creates a new mock instance.
-func NewMockExternalConstraint[I constraints.Integer, F constraints.Float](ctrl *gomock.Controller) *MockExternalConstraint[I, F] {
+func NewMockExternalConstraint[I constraints.Integer, F any](ctrl *gomock.Controller) *MockExternalConstraint[I, F] {
 	mock := &MockExternalConstraint[I, F]{ctrl: ctrl}
 	mock.recorder = &MockExternalConstraintMockRecorder[I, F]{mock}
 	return mock
@@ -49,6 +49,20 @@ func (m *MockExternalConstraint[I, F]) Eight(arg0 F) other.Two[I, F] {
 func (mr *MockExternalConstraintMockRecorder[I, F]) Eight(arg0 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Eight", reflect.TypeOf((*MockExternalConstraint[I, F])(nil).Eight), arg0)
+}
+
+// Eleven mocks base method.
+func (m *MockExternalConstraint[I, F]) Eleven() map[string]I {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Eleven")
+	ret0, _ := ret[0].(map[string]I)
+	return ret0
+}
+
+// Eleven indicates an expected call of Eleven.
+func (mr *MockExternalConstraintMockRecorder[I, F]) Eleven() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Eleven", reflect.TypeOf((*MockExternalConstraint[I, F])(nil).Eleven))
 }
 
 // Five mocks base method.
@@ -145,6 +159,24 @@ func (mr *MockExternalConstraintMockRecorder[I, F]) Ten(arg0 interface{}) *gomoc
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Ten", reflect.TypeOf((*MockExternalConstraint[I, F])(nil).Ten), arg0)
 }
 
+// Thirteen mocks base method.
+func (m *MockExternalConstraint[I, F]) Thirteen(arg0 ...I) *F {
+	m.ctrl.T.Helper()
+	varargs := []interface{}{}
+	for _, a := range arg0 {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "Thirteen", varargs...)
+	ret0, _ := ret[0].(*F)
+	return ret0
+}
+
+// Thirteen indicates an expected call of Thirteen.
+func (mr *MockExternalConstraintMockRecorder[I, F]) Thirteen(arg0 ...interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Thirteen", reflect.TypeOf((*MockExternalConstraint[I, F])(nil).Thirteen), arg0...)
+}
+
 // Three mocks base method.
 func (m *MockExternalConstraint[I, F]) Three(arg0 I) F {
 	m.ctrl.T.Helper()
@@ -157,6 +189,20 @@ func (m *MockExternalConstraint[I, F]) Three(arg0 I) F {
 func (mr *MockExternalConstraintMockRecorder[I, F]) Three(arg0 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Three", reflect.TypeOf((*MockExternalConstraint[I, F])(nil).Three), arg0)
+}
+
+// Twelve mocks base method.
+func (m *MockExternalConstraint[I, F]) Twelve(ctx context.Context) <-chan []I {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Twelve", ctx)
+	ret0, _ := ret[0].(<-chan []I)
+	return ret0
+}
+
+// Twelve indicates an expected call of Twelve.
+func (mr *MockExternalConstraintMockRecorder[I, F]) Twelve(ctx interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Twelve", reflect.TypeOf((*MockExternalConstraint[I, F])(nil).Twelve), ctx)
 }
 
 // Two mocks base method.
@@ -210,6 +256,34 @@ func (mr *MockEmbeddingIfaceMockRecorder[T, R]) Eight(arg0 interface{}) *gomock.
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Eight", reflect.TypeOf((*MockEmbeddingIface[T, R])(nil).Eight), arg0)
 }
 
+// Eleven mocks base method.
+func (m *MockEmbeddingIface[T, R]) Eleven() map[string]T {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Eleven")
+	ret0, _ := ret[0].(map[string]T)
+	return ret0
+}
+
+// Eleven indicates an expected call of Eleven.
+func (mr *MockEmbeddingIfaceMockRecorder[T, R]) Eleven() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Eleven", reflect.TypeOf((*MockEmbeddingIface[T, R])(nil).Eleven))
+}
+
+// First mocks base method.
+func (m *MockEmbeddingIface[T, R]) First() R {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "First")
+	ret0, _ := ret[0].(R)
+	return ret0
+}
+
+// First indicates an expected call of First.
+func (mr *MockEmbeddingIfaceMockRecorder[T, R]) First() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "First", reflect.TypeOf((*MockEmbeddingIface[T, R])(nil).First))
+}
+
 // Five mocks base method.
 func (m *MockEmbeddingIface[T, R]) Five(arg0 T) generics.Baz[R] {
 	m.ctrl.T.Helper()
@@ -224,20 +298,6 @@ func (mr *MockEmbeddingIfaceMockRecorder[T, R]) Five(arg0 interface{}) *gomock.C
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Five", reflect.TypeOf((*MockEmbeddingIface[T, R])(nil).Five), arg0)
 }
 
-// Foo mocks base method.
-func (m *MockEmbeddingIface[T, R]) Foo() error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Foo")
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// Foo indicates an expected call of Foo.
-func (mr *MockEmbeddingIfaceMockRecorder[T, R]) Foo() *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Foo", reflect.TypeOf((*MockEmbeddingIface[T, R])(nil).Foo))
-}
-
 // Four mocks base method.
 func (m *MockEmbeddingIface[T, R]) Four(arg0 T) generics.Foo[T, R] {
 	m.ctrl.T.Helper()
@@ -250,6 +310,34 @@ func (m *MockEmbeddingIface[T, R]) Four(arg0 T) generics.Foo[T, R] {
 func (mr *MockEmbeddingIfaceMockRecorder[T, R]) Four(arg0 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Four", reflect.TypeOf((*MockEmbeddingIface[T, R])(nil).Four), arg0)
+}
+
+// Fourth mocks base method.
+func (m *MockEmbeddingIface[T, R]) Fourth() generics.Generater[T] {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Fourth")
+	ret0, _ := ret[0].(generics.Generater[T])
+	return ret0
+}
+
+// Fourth indicates an expected call of Fourth.
+func (mr *MockEmbeddingIfaceMockRecorder[T, R]) Fourth() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Fourth", reflect.TypeOf((*MockEmbeddingIface[T, R])(nil).Fourth))
+}
+
+// Generate mocks base method.
+func (m *MockEmbeddingIface[T, R]) Generate() R {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Generate")
+	ret0, _ := ret[0].(R)
+	return ret0
+}
+
+// Generate indicates an expected call of Generate.
+func (mr *MockEmbeddingIfaceMockRecorder[T, R]) Generate() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Generate", reflect.TypeOf((*MockEmbeddingIface[T, R])(nil).Generate))
 }
 
 // Nine mocks base method.
@@ -276,6 +364,35 @@ func (m *MockEmbeddingIface[T, R]) One(arg0 string) string {
 func (mr *MockEmbeddingIfaceMockRecorder[T, R]) One(arg0 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "One", reflect.TypeOf((*MockEmbeddingIface[T, R])(nil).One), arg0)
+}
+
+// Read mocks base method.
+func (m *MockEmbeddingIface[T, R]) Read(p []byte) (int, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Read", p)
+	ret0, _ := ret[0].(int)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// Read indicates an expected call of Read.
+func (mr *MockEmbeddingIfaceMockRecorder[T, R]) Read(p interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Read", reflect.TypeOf((*MockEmbeddingIface[T, R])(nil).Read), p)
+}
+
+// Second mocks base method.
+func (m *MockEmbeddingIface[T, R]) Second() generics.StructType {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Second")
+	ret0, _ := ret[0].(generics.StructType)
+	return ret0
+}
+
+// Second indicates an expected call of Second.
+func (mr *MockEmbeddingIfaceMockRecorder[T, R]) Second() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Second", reflect.TypeOf((*MockEmbeddingIface[T, R])(nil).Second))
 }
 
 // Seven mocks base method.
@@ -318,6 +435,38 @@ func (mr *MockEmbeddingIfaceMockRecorder[T, R]) Ten(arg0 interface{}) *gomock.Ca
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Ten", reflect.TypeOf((*MockEmbeddingIface[T, R])(nil).Ten), arg0)
 }
 
+// Third mocks base method.
+func (m *MockEmbeddingIface[T, R]) Third() other.Five {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Third")
+	ret0, _ := ret[0].(other.Five)
+	return ret0
+}
+
+// Third indicates an expected call of Third.
+func (mr *MockEmbeddingIfaceMockRecorder[T, R]) Third() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Third", reflect.TypeOf((*MockEmbeddingIface[T, R])(nil).Third))
+}
+
+// Thirteen mocks base method.
+func (m *MockEmbeddingIface[T, R]) Thirteen(arg0 ...T) *R {
+	m.ctrl.T.Helper()
+	varargs := []interface{}{}
+	for _, a := range arg0 {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "Thirteen", varargs...)
+	ret0, _ := ret[0].(*R)
+	return ret0
+}
+
+// Thirteen indicates an expected call of Thirteen.
+func (mr *MockEmbeddingIfaceMockRecorder[T, R]) Thirteen(arg0 ...interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Thirteen", reflect.TypeOf((*MockEmbeddingIface[T, R])(nil).Thirteen), arg0...)
+}
+
 // Three mocks base method.
 func (m *MockEmbeddingIface[T, R]) Three(arg0 T) R {
 	m.ctrl.T.Helper()
@@ -332,61 +481,18 @@ func (mr *MockEmbeddingIfaceMockRecorder[T, R]) Three(arg0 interface{}) *gomock.
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Three", reflect.TypeOf((*MockEmbeddingIface[T, R])(nil).Three), arg0)
 }
 
-// Twenty mocks base method.
-func (m *MockEmbeddingIface[T, R]) Twenty(arg0 generics.StructType, arg1 T) (R, other.Five) {
+// Twelve mocks base method.
+func (m *MockEmbeddingIface[T, R]) Twelve(ctx context.Context) <-chan []T {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Twenty", arg0, arg1)
-	ret0, _ := ret[0].(R)
-	ret1, _ := ret[1].(other.Five)
-	return ret0, ret1
-}
-
-// Twenty indicates an expected call of Twenty.
-func (mr *MockEmbeddingIfaceMockRecorder[T, R]) Twenty(arg0, arg1 interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Twenty", reflect.TypeOf((*MockEmbeddingIface[T, R])(nil).Twenty), arg0, arg1)
-}
-
-// TwentyFour mocks base method.
-func (m *MockEmbeddingIface[T, R]) TwentyFour() other.StructType {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "TwentyFour")
-	ret0, _ := ret[0].(other.StructType)
+	ret := m.ctrl.Call(m, "Twelve", ctx)
+	ret0, _ := ret[0].(<-chan []T)
 	return ret0
 }
 
-// TwentyFour indicates an expected call of TwentyFour.
-func (mr *MockEmbeddingIfaceMockRecorder[T, R]) TwentyFour() *gomock.Call {
+// Twelve indicates an expected call of Twelve.
+func (mr *MockEmbeddingIfaceMockRecorder[T, R]) Twelve(ctx interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "TwentyFour", reflect.TypeOf((*MockEmbeddingIface[T, R])(nil).TwentyFour))
-}
-
-// TwentyThree mocks base method.
-func (m *MockEmbeddingIface[T, R]) TwentyThree(arg0 generics.TwentyTwo[R], arg1 generics.TwentyTwo[T]) other.StructType {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "TwentyThree", arg0, arg1)
-	ret0, _ := ret[0].(other.StructType)
-	return ret0
-}
-
-// TwentyThree indicates an expected call of TwentyThree.
-func (mr *MockEmbeddingIfaceMockRecorder[T, R]) TwentyThree(arg0, arg1 interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "TwentyThree", reflect.TypeOf((*MockEmbeddingIface[T, R])(nil).TwentyThree), arg0, arg1)
-}
-
-// TwentyTwo mocks base method.
-func (m *MockEmbeddingIface[T, R]) TwentyTwo() generics.StructType {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "TwentyTwo")
-	ret0, _ := ret[0].(generics.StructType)
-	return ret0
-}
-
-// TwentyTwo indicates an expected call of TwentyTwo.
-func (mr *MockEmbeddingIfaceMockRecorder[T, R]) TwentyTwo() *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "TwentyTwo", reflect.TypeOf((*MockEmbeddingIface[T, R])(nil).TwentyTwo))
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Twelve", reflect.TypeOf((*MockEmbeddingIface[T, R])(nil).Twelve), ctx)
 }
 
 // Two mocks base method.
@@ -403,340 +509,91 @@ func (mr *MockEmbeddingIfaceMockRecorder[T, R]) Two(arg0 interface{}) *gomock.Ca
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Two", reflect.TypeOf((*MockEmbeddingIface[T, R])(nil).Two), arg0)
 }
 
-// MockTwentyOne is a mock of TwentyOne interface.
-type MockTwentyOne[T any] struct {
+// Water mocks base method.
+func (m *MockEmbeddingIface[T, R]) Water(arg0 generics.Generater[T]) []generics.Generater[T] {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Water", arg0)
+	ret0, _ := ret[0].([]generics.Generater[T])
+	return ret0
+}
+
+// Water indicates an expected call of Water.
+func (mr *MockEmbeddingIfaceMockRecorder[T, R]) Water(arg0 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Water", reflect.TypeOf((*MockEmbeddingIface[T, R])(nil).Water), arg0)
+}
+
+// MockGenerater is a mock of Generater interface.
+type MockGenerater[T any] struct {
 	ctrl     *gomock.Controller
-	recorder *MockTwentyOneMockRecorder[T]
+	recorder *MockGeneraterMockRecorder[T]
 }
 
-// MockTwentyOneMockRecorder is the mock recorder for MockTwentyOne.
-type MockTwentyOneMockRecorder[T any] struct {
-	mock *MockTwentyOne[T]
+// MockGeneraterMockRecorder is the mock recorder for MockGenerater.
+type MockGeneraterMockRecorder[T any] struct {
+	mock *MockGenerater[T]
 }
 
-// NewMockTwentyOne creates a new mock instance.
-func NewMockTwentyOne[T any](ctrl *gomock.Controller) *MockTwentyOne[T] {
-	mock := &MockTwentyOne[T]{ctrl: ctrl}
-	mock.recorder = &MockTwentyOneMockRecorder[T]{mock}
+// NewMockGenerater creates a new mock instance.
+func NewMockGenerater[T any](ctrl *gomock.Controller) *MockGenerater[T] {
+	mock := &MockGenerater[T]{ctrl: ctrl}
+	mock.recorder = &MockGeneraterMockRecorder[T]{mock}
 	return mock
 }
 
 // EXPECT returns an object that allows the caller to indicate expected use.
-func (m *MockTwentyOne[T]) EXPECT() *MockTwentyOneMockRecorder[T] {
+func (m *MockGenerater[T]) EXPECT() *MockGeneraterMockRecorder[T] {
 	return m.recorder
 }
 
-// TwentyOne mocks base method.
-func (m *MockTwentyOne[T]) TwentyOne() T {
+// Generate mocks base method.
+func (m *MockGenerater[T]) Generate() T {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "TwentyOne")
+	ret := m.ctrl.Call(m, "Generate")
 	ret0, _ := ret[0].(T)
 	return ret0
 }
 
-// TwentyOne indicates an expected call of TwentyOne.
-func (mr *MockTwentyOneMockRecorder[T]) TwentyOne() *gomock.Call {
+// Generate indicates an expected call of Generate.
+func (mr *MockGeneraterMockRecorder[T]) Generate() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "TwentyOne", reflect.TypeOf((*MockTwentyOne[T])(nil).TwentyOne))
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Generate", reflect.TypeOf((*MockGenerater[T])(nil).Generate))
 }
 
-// MockTwentyFour is a mock of TwentyFour interface.
-type MockTwentyFour[T other.StructType] struct {
+// MockGroup is a mock of Group interface.
+type MockGroup[T generics.Generater[T]] struct {
 	ctrl     *gomock.Controller
-	recorder *MockTwentyFourMockRecorder[T]
+	recorder *MockGroupMockRecorder[T]
 }
 
-// MockTwentyFourMockRecorder is the mock recorder for MockTwentyFour.
-type MockTwentyFourMockRecorder[T other.StructType] struct {
-	mock *MockTwentyFour[T]
+// MockGroupMockRecorder is the mock recorder for MockGroup.
+type MockGroupMockRecorder[T generics.Generater[T]] struct {
+	mock *MockGroup[T]
 }
 
-// NewMockTwentyFour creates a new mock instance.
-func NewMockTwentyFour[T other.StructType](ctrl *gomock.Controller) *MockTwentyFour[T] {
-	mock := &MockTwentyFour[T]{ctrl: ctrl}
-	mock.recorder = &MockTwentyFourMockRecorder[T]{mock}
+// NewMockGroup creates a new mock instance.
+func NewMockGroup[T generics.Generater[T]](ctrl *gomock.Controller) *MockGroup[T] {
+	mock := &MockGroup[T]{ctrl: ctrl}
+	mock.recorder = &MockGroupMockRecorder[T]{mock}
 	return mock
 }
 
 // EXPECT returns an object that allows the caller to indicate expected use.
-func (m *MockTwentyFour[T]) EXPECT() *MockTwentyFourMockRecorder[T] {
+func (m *MockGroup[T]) EXPECT() *MockGroupMockRecorder[T] {
 	return m.recorder
 }
 
-// TwentyFour mocks base method.
-func (m *MockTwentyFour[T]) TwentyFour() T {
+// Join mocks base method.
+func (m *MockGroup[T]) Join(ctx context.Context) ([]T, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "TwentyFour")
-	ret0, _ := ret[0].(T)
-	return ret0
-}
-
-// TwentyFour indicates an expected call of TwentyFour.
-func (mr *MockTwentyFourMockRecorder[T]) TwentyFour() *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "TwentyFour", reflect.TypeOf((*MockTwentyFour[T])(nil).TwentyFour))
-}
-
-// MockClonable is a mock of Clonable interface.
-type MockClonable[T any] struct {
-	ctrl     *gomock.Controller
-	recorder *MockClonableMockRecorder[T]
-}
-
-// MockClonableMockRecorder is the mock recorder for MockClonable.
-type MockClonableMockRecorder[T any] struct {
-	mock *MockClonable[T]
-}
-
-// NewMockClonable creates a new mock instance.
-func NewMockClonable[T any](ctrl *gomock.Controller) *MockClonable[T] {
-	mock := &MockClonable[T]{ctrl: ctrl}
-	mock.recorder = &MockClonableMockRecorder[T]{mock}
-	return mock
-}
-
-// EXPECT returns an object that allows the caller to indicate expected use.
-func (m *MockClonable[T]) EXPECT() *MockClonableMockRecorder[T] {
-	return m.recorder
-}
-
-// Clone mocks base method.
-func (m *MockClonable[T]) Clone() T {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Clone")
-	ret0, _ := ret[0].(T)
-	return ret0
-}
-
-// Clone indicates an expected call of Clone.
-func (mr *MockClonableMockRecorder[T]) Clone() *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Clone", reflect.TypeOf((*MockClonable[T])(nil).Clone))
-}
-
-// MockFinder is a mock of Finder interface.
-type MockFinder[T generics.Clonable[T]] struct {
-	ctrl     *gomock.Controller
-	recorder *MockFinderMockRecorder[T]
-}
-
-// MockFinderMockRecorder is the mock recorder for MockFinder.
-type MockFinderMockRecorder[T generics.Clonable[T]] struct {
-	mock *MockFinder[T]
-}
-
-// NewMockFinder creates a new mock instance.
-func NewMockFinder[T generics.Clonable[T]](ctrl *gomock.Controller) *MockFinder[T] {
-	mock := &MockFinder[T]{ctrl: ctrl}
-	mock.recorder = &MockFinderMockRecorder[T]{mock}
-	return mock
-}
-
-// EXPECT returns an object that allows the caller to indicate expected use.
-func (m *MockFinder[T]) EXPECT() *MockFinderMockRecorder[T] {
-	return m.recorder
-}
-
-// Find mocks base method.
-func (m *MockFinder[T]) Find(ctx context.Context) ([]T, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Find", ctx)
+	ret := m.ctrl.Call(m, "Join", ctx)
 	ret0, _ := ret[0].([]T)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// Find indicates an expected call of Find.
-func (mr *MockFinderMockRecorder[T]) Find(ctx interface{}) *gomock.Call {
+// Join indicates an expected call of Join.
+func (mr *MockGroupMockRecorder[T]) Join(ctx interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Find", reflect.TypeOf((*MockFinder[T])(nil).Find), ctx)
-}
-
-// MockUpdateNotifier is a mock of UpdateNotifier interface.
-type MockUpdateNotifier[T any] struct {
-	ctrl     *gomock.Controller
-	recorder *MockUpdateNotifierMockRecorder[T]
-}
-
-// MockUpdateNotifierMockRecorder is the mock recorder for MockUpdateNotifier.
-type MockUpdateNotifierMockRecorder[T any] struct {
-	mock *MockUpdateNotifier[T]
-}
-
-// NewMockUpdateNotifier creates a new mock instance.
-func NewMockUpdateNotifier[T any](ctrl *gomock.Controller) *MockUpdateNotifier[T] {
-	mock := &MockUpdateNotifier[T]{ctrl: ctrl}
-	mock.recorder = &MockUpdateNotifierMockRecorder[T]{mock}
-	return mock
-}
-
-// EXPECT returns an object that allows the caller to indicate expected use.
-func (m *MockUpdateNotifier[T]) EXPECT() *MockUpdateNotifierMockRecorder[T] {
-	return m.recorder
-}
-
-// NotifyC mocks base method.
-func (m *MockUpdateNotifier[T]) NotifyC(ctx context.Context) <-chan []T {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "NotifyC", ctx)
-	ret0, _ := ret[0].(<-chan []T)
-	return ret0
-}
-
-// NotifyC indicates an expected call of NotifyC.
-func (mr *MockUpdateNotifierMockRecorder[T]) NotifyC(ctx interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "NotifyC", reflect.TypeOf((*MockUpdateNotifier[T])(nil).NotifyC), ctx)
-}
-
-// Refresh mocks base method.
-func (m *MockUpdateNotifier[T]) Refresh(ctx context.Context) {
-	m.ctrl.T.Helper()
-	m.ctrl.Call(m, "Refresh", ctx)
-}
-
-// Refresh indicates an expected call of Refresh.
-func (mr *MockUpdateNotifierMockRecorder[T]) Refresh(ctx interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Refresh", reflect.TypeOf((*MockUpdateNotifier[T])(nil).Refresh), ctx)
-}
-
-// MockEmbeddedW is a mock of EmbeddedW interface.
-type MockEmbeddedW[W generics.StructType] struct {
-	ctrl     *gomock.Controller
-	recorder *MockEmbeddedWMockRecorder[W]
-}
-
-// MockEmbeddedWMockRecorder is the mock recorder for MockEmbeddedW.
-type MockEmbeddedWMockRecorder[W generics.StructType] struct {
-	mock *MockEmbeddedW[W]
-}
-
-// NewMockEmbeddedW creates a new mock instance.
-func NewMockEmbeddedW[W generics.StructType](ctrl *gomock.Controller) *MockEmbeddedW[W] {
-	mock := &MockEmbeddedW[W]{ctrl: ctrl}
-	mock.recorder = &MockEmbeddedWMockRecorder[W]{mock}
-	return mock
-}
-
-// EXPECT returns an object that allows the caller to indicate expected use.
-func (m *MockEmbeddedW[W]) EXPECT() *MockEmbeddedWMockRecorder[W] {
-	return m.recorder
-}
-
-// EmbeddedZ mocks base method.
-func (m *MockEmbeddedW[W]) EmbeddedZ(arg0 W) {
-	m.ctrl.T.Helper()
-	m.ctrl.Call(m, "EmbeddedZ", arg0)
-}
-
-// EmbeddedZ indicates an expected call of EmbeddedZ.
-func (mr *MockEmbeddedWMockRecorder[W]) EmbeddedZ(arg0 interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "EmbeddedZ", reflect.TypeOf((*MockEmbeddedW[W])(nil).EmbeddedZ), arg0)
-}
-
-// MockEmbeddedX is a mock of EmbeddedX interface.
-type MockEmbeddedX[X generics.StructType] struct {
-	ctrl     *gomock.Controller
-	recorder *MockEmbeddedXMockRecorder[X]
-}
-
-// MockEmbeddedXMockRecorder is the mock recorder for MockEmbeddedX.
-type MockEmbeddedXMockRecorder[X generics.StructType] struct {
-	mock *MockEmbeddedX[X]
-}
-
-// NewMockEmbeddedX creates a new mock instance.
-func NewMockEmbeddedX[X generics.StructType](ctrl *gomock.Controller) *MockEmbeddedX[X] {
-	mock := &MockEmbeddedX[X]{ctrl: ctrl}
-	mock.recorder = &MockEmbeddedXMockRecorder[X]{mock}
-	return mock
-}
-
-// EXPECT returns an object that allows the caller to indicate expected use.
-func (m *MockEmbeddedX[X]) EXPECT() *MockEmbeddedXMockRecorder[X] {
-	return m.recorder
-}
-
-// EmbeddedZ mocks base method.
-func (m *MockEmbeddedX[X]) EmbeddedZ(arg0 X) {
-	m.ctrl.T.Helper()
-	m.ctrl.Call(m, "EmbeddedZ", arg0)
-}
-
-// EmbeddedZ indicates an expected call of EmbeddedZ.
-func (mr *MockEmbeddedXMockRecorder[X]) EmbeddedZ(arg0 interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "EmbeddedZ", reflect.TypeOf((*MockEmbeddedX[X])(nil).EmbeddedZ), arg0)
-}
-
-// MockEmbeddedY is a mock of EmbeddedY interface.
-type MockEmbeddedY[Y generics.StructType] struct {
-	ctrl     *gomock.Controller
-	recorder *MockEmbeddedYMockRecorder[Y]
-}
-
-// MockEmbeddedYMockRecorder is the mock recorder for MockEmbeddedY.
-type MockEmbeddedYMockRecorder[Y generics.StructType] struct {
-	mock *MockEmbeddedY[Y]
-}
-
-// NewMockEmbeddedY creates a new mock instance.
-func NewMockEmbeddedY[Y generics.StructType](ctrl *gomock.Controller) *MockEmbeddedY[Y] {
-	mock := &MockEmbeddedY[Y]{ctrl: ctrl}
-	mock.recorder = &MockEmbeddedYMockRecorder[Y]{mock}
-	return mock
-}
-
-// EXPECT returns an object that allows the caller to indicate expected use.
-func (m *MockEmbeddedY[Y]) EXPECT() *MockEmbeddedYMockRecorder[Y] {
-	return m.recorder
-}
-
-// EmbeddedZ mocks base method.
-func (m *MockEmbeddedY[Y]) EmbeddedZ(arg0 Y) {
-	m.ctrl.T.Helper()
-	m.ctrl.Call(m, "EmbeddedZ", arg0)
-}
-
-// EmbeddedZ indicates an expected call of EmbeddedZ.
-func (mr *MockEmbeddedYMockRecorder[Y]) EmbeddedZ(arg0 interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "EmbeddedZ", reflect.TypeOf((*MockEmbeddedY[Y])(nil).EmbeddedZ), arg0)
-}
-
-// MockEmbeddedZ is a mock of EmbeddedZ interface.
-type MockEmbeddedZ[Z any] struct {
-	ctrl     *gomock.Controller
-	recorder *MockEmbeddedZMockRecorder[Z]
-}
-
-// MockEmbeddedZMockRecorder is the mock recorder for MockEmbeddedZ.
-type MockEmbeddedZMockRecorder[Z any] struct {
-	mock *MockEmbeddedZ[Z]
-}
-
-// NewMockEmbeddedZ creates a new mock instance.
-func NewMockEmbeddedZ[Z any](ctrl *gomock.Controller) *MockEmbeddedZ[Z] {
-	mock := &MockEmbeddedZ[Z]{ctrl: ctrl}
-	mock.recorder = &MockEmbeddedZMockRecorder[Z]{mock}
-	return mock
-}
-
-// EXPECT returns an object that allows the caller to indicate expected use.
-func (m *MockEmbeddedZ[Z]) EXPECT() *MockEmbeddedZMockRecorder[Z] {
-	return m.recorder
-}
-
-// EmbeddedZ mocks base method.
-func (m *MockEmbeddedZ[Z]) EmbeddedZ(arg0 Z) {
-	m.ctrl.T.Helper()
-	m.ctrl.Call(m, "EmbeddedZ", arg0)
-}
-
-// EmbeddedZ indicates an expected call of EmbeddedZ.
-func (mr *MockEmbeddedZMockRecorder[Z]) EmbeddedZ(arg0 interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "EmbeddedZ", reflect.TypeOf((*MockEmbeddedZ[Z])(nil).EmbeddedZ), arg0)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Join", reflect.TypeOf((*MockGroup[T])(nil).Join), ctx)
 }
