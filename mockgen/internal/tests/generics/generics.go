@@ -5,7 +5,7 @@ import (
 	"golang.org/x/exp/constraints"
 )
 
-//go:generate mockgen --source=generics.go --destination=source/mock_generics_test.go --package source
+//go:generate mockgen --source=generics.go --destination=source/mock_generics_mock.go --package source
 ////go:generate mockgen --destination=reflect/mock_test.go --package reflect . Bar,Bar2
 
 type Bar[T any, R any] interface {

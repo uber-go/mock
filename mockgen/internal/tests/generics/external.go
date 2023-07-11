@@ -8,7 +8,7 @@ import (
 	"golang.org/x/exp/constraints"
 )
 
-//go:generate mockgen --source=external.go --destination=source/mock_external_test.go --package source
+//go:generate mockgen --source=external.go --destination=source/mock_external_mock.go --package source
 
 type ExternalConstraint[I constraints.Integer, F any] interface {
 	One(string) string
@@ -28,16 +28,16 @@ type ExternalConstraint[I constraints.Integer, F any] interface {
 
 type EmbeddingIface[T constraints.Integer, R constraints.Float] interface {
 	io.Reader
-	Generater[R]
-	Earth[Generater[T]]
-	other.Either[R, StructType, other.Five, Generater[T]]
+	Generator[R]
+	Earth[Generator[T]]
+	other.Either[R, StructType, other.Five, Generator[T]]
 	ExternalConstraint[T, R]
 }
 
-type Generater[T any] interface {
+type Generator[T any] interface {
 	Generate() T
 }
 
-type Group[T Generater[T]] interface {
-	Join(ctx context.Context) ([]T, error)
+type Group[T Generator[any]] interface {
+	Join(ctx context.Context) []T
 }
