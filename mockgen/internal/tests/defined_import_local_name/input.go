@@ -5,9 +5,9 @@ import (
 	"context"
 )
 
-//go:generate mockgen -package defined_import_local_name -destination mock.go -source input.go -imports b_mock=bytes,c_mock=context
+//go:generate mockgen -package defined_import_local_name -destination mock.go -source input.go -imports b_mock=bytes,c_mock=context,g_mock=gomock
 
-type WithDotImports interface {
+type WithImports interface {
 	Method1() bytes.Buffer
 	Method2() context.Context
 }

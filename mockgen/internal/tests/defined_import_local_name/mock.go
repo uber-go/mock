@@ -12,31 +12,31 @@ import (
 	gomock "go.uber.org/mock/gomock"
 )
 
-// MockWithDotImports is a mock of WithDotImports interface.
-type MockWithDotImports struct {
+// MockWithImports is a mock of WithImports interface.
+type MockWithImports struct {
 	ctrl     *gomock.Controller
-	recorder *MockWithDotImportsMockRecorder
+	recorder *MockWithImportsMockRecorder
 }
 
-// MockWithDotImportsMockRecorder is the mock recorder for MockWithDotImports.
-type MockWithDotImportsMockRecorder struct {
-	mock *MockWithDotImports
+// MockWithImportsMockRecorder is the mock recorder for MockWithImports.
+type MockWithImportsMockRecorder struct {
+	mock *MockWithImports
 }
 
-// NewMockWithDotImports creates a new mock instance.
-func NewMockWithDotImports(ctrl *gomock.Controller) *MockWithDotImports {
-	mock := &MockWithDotImports{ctrl: ctrl}
-	mock.recorder = &MockWithDotImportsMockRecorder{mock}
+// NewMockWithImports creates a new mock instance.
+func NewMockWithImports(ctrl *gomock.Controller) *MockWithImports {
+	mock := &MockWithImports{ctrl: ctrl}
+	mock.recorder = &MockWithImportsMockRecorder{mock}
 	return mock
 }
 
 // EXPECT returns an object that allows the caller to indicate expected use.
-func (m *MockWithDotImports) EXPECT() *MockWithDotImportsMockRecorder {
+func (m *MockWithImports) EXPECT() *MockWithImportsMockRecorder {
 	return m.recorder
 }
 
 // Method1 mocks base method.
-func (m *MockWithDotImports) Method1() b_mock.Buffer {
+func (m *MockWithImports) Method1() b_mock.Buffer {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Method1")
 	ret0, _ := ret[0].(b_mock.Buffer)
@@ -44,13 +44,13 @@ func (m *MockWithDotImports) Method1() b_mock.Buffer {
 }
 
 // Method1 indicates an expected call of Method1.
-func (mr *MockWithDotImportsMockRecorder) Method1() *gomock.Call {
+func (mr *MockWithImportsMockRecorder) Method1() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Method1", reflect.TypeOf((*MockWithDotImports)(nil).Method1))
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Method1", reflect.TypeOf((*MockWithImports)(nil).Method1))
 }
 
 // Method2 mocks base method.
-func (m *MockWithDotImports) Method2() c_mock.Context {
+func (m *MockWithImports) Method2() c_mock.Context {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Method2")
 	ret0, _ := ret[0].(c_mock.Context)
@@ -58,7 +58,7 @@ func (m *MockWithDotImports) Method2() c_mock.Context {
 }
 
 // Method2 indicates an expected call of Method2.
-func (mr *MockWithDotImportsMockRecorder) Method2() *gomock.Call {
+func (mr *MockWithImportsMockRecorder) Method2() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Method2", reflect.TypeOf((*MockWithDotImports)(nil).Method2))
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Method2", reflect.TypeOf((*MockWithImports)(nil).Method2))
 }
