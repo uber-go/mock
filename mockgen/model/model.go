@@ -147,12 +147,12 @@ type Type interface {
 }
 
 func init() {
-	gob.Register(&ArrayType{})
-	gob.Register(&ChanType{})
-	gob.Register(&FuncType{})
-	gob.Register(&MapType{})
-	gob.Register(&NamedType{})
-	gob.Register(&PointerType{})
+	gob.RegisterName(pkgPath+".ArrayType", &ArrayType{})
+	gob.RegisterName(pkgPath+".ChanType", &ChanType{})
+	gob.RegisterName(pkgPath+".FuncType", &FuncType{})
+	gob.RegisterName(pkgPath+".MapType", &MapType{})
+	gob.RegisterName(pkgPath+".NamedType", &NamedType{})
+	gob.RegisterName(pkgPath+".PointerType", &PointerType{})
 
 	// Call gob.RegisterName to make sure it has the consistent name registered
 	// for both gob decoder and encoder.
