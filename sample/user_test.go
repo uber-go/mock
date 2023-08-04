@@ -11,7 +11,6 @@ import (
 
 func TestRemember(t *testing.T) {
 	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
 
 	mockIndex := NewMockIndex(ctrl)
 	mockIndex.EXPECT().Put("a", 1)            // literals work
@@ -64,7 +63,6 @@ func TestRemember(t *testing.T) {
 
 func TestVariadicFunction(t *testing.T) {
 	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
 
 	mockIndex := NewMockIndex(ctrl)
 	mockIndex.EXPECT().Ellip("%d", 5, 6, 7, 8).Do(func(format string, nums ...int) {
@@ -122,7 +120,6 @@ func TestVariadicFunction(t *testing.T) {
 
 func TestGrabPointer(t *testing.T) {
 	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
 
 	mockIndex := NewMockIndex(ctrl)
 	mockIndex.EXPECT().Ptr(gomock.Any()).SetArg(0, 7) // set first argument to 7
@@ -135,7 +132,6 @@ func TestGrabPointer(t *testing.T) {
 
 func TestEmbeddedInterface(t *testing.T) {
 	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
 
 	mockEmbed := NewMockEmbed(ctrl)
 	mockEmbed.EXPECT().RegularMethod()
@@ -152,7 +148,6 @@ func TestExpectTrueNil(t *testing.T) {
 	// Make sure that passing "nil" to EXPECT (thus as a nil interface value),
 	// will correctly match a nil concrete type.
 	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
 
 	mockIndex := NewMockIndex(ctrl)
 	mockIndex.EXPECT().Ptr(nil) // this nil is a nil any
@@ -162,7 +157,6 @@ func TestExpectTrueNil(t *testing.T) {
 func TestDoAndReturnSignature(t *testing.T) {
 	t.Run("wrong number of return args", func(t *testing.T) {
 		ctrl := gomock.NewController(t)
-		defer ctrl.Finish()
 
 		mockIndex := NewMockIndex(ctrl)
 
@@ -181,7 +175,6 @@ func TestDoAndReturnSignature(t *testing.T) {
 
 	t.Run("wrong type of return arg", func(t *testing.T) {
 		ctrl := gomock.NewController(t)
-		defer ctrl.Finish()
 
 		mockIndex := NewMockIndex(ctrl)
 

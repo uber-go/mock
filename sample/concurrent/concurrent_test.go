@@ -1,12 +1,10 @@
 package concurrent
 
 import (
+	"context"
 	"testing"
 
-	"context"
-
 	"go.uber.org/mock/gomock"
-
 	mock "go.uber.org/mock/sample/concurrent/mock"
 )
 
@@ -30,7 +28,6 @@ func call(ctx context.Context, m Math) (int, error) {
 func TestConcurrentFails(t *testing.T) {
 	t.Skip("Test is expected to fail, remove skip to trying running yourself.")
 	ctrl, ctx := gomock.WithContext(context.Background(), t)
-	defer ctrl.Finish()
 	m := mock.NewMockMath(ctrl)
 	if _, err := call(ctx, m); err != nil {
 		t.Error("call failed:", err)
@@ -39,7 +36,6 @@ func TestConcurrentFails(t *testing.T) {
 
 func TestConcurrentWorks(t *testing.T) {
 	ctrl, ctx := gomock.WithContext(context.Background(), t)
-	defer ctrl.Finish()
 	m := mock.NewMockMath(ctrl)
 	m.EXPECT().Sum(1, 2).Return(3)
 	if _, err := call(ctx, m); err != nil {

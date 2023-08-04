@@ -137,9 +137,6 @@ func SUT(f Foo) {
 func TestFoo(t *testing.T) {
   ctrl := gomock.NewController(t)
 
-  // Assert that Bar() is invoked.
-  defer ctrl.Finish()
-
   m := NewMockFoo(ctrl)
 
   // Asserts that the first and only call to Bar() is passed 99.
@@ -152,11 +149,6 @@ func TestFoo(t *testing.T) {
   SUT(m)
 }
 ```
-
-If you are using a Go version of 1.14+, a mockgen version of 1.5.0+, and are
-passing a *testing.T into `gomock.NewController(t)` you no longer need to call
-`ctrl.Finish()` explicitly. It will be called for you automatically from a self
-registered [Cleanup](https://pkg.go.dev/testing?tab=doc#T.Cleanup) function.
 
 ## Building Stubs
 
@@ -174,7 +166,6 @@ func SUT(f Foo) {
 ```go
 func TestFoo(t *testing.T) {
   ctrl := gomock.NewController(t)
-  defer ctrl.Finish()
 
   m := NewMockFoo(ctrl)
 

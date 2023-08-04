@@ -1,8 +1,9 @@
 package bugreport
 
 import (
-	"go.uber.org/mock/gomock"
 	"testing"
+
+	"go.uber.org/mock/gomock"
 )
 
 func TestExample_Method(t *testing.T) {
@@ -11,8 +12,6 @@ func TestExample_Method(t *testing.T) {
 	m.EXPECT().Method(1, 2, 3, 4)
 
 	m.Method(1, 2, 3, 4)
-
-	ctrl.Finish()
 }
 
 func TestExample_VarargMethod(t *testing.T) {
@@ -21,6 +20,4 @@ func TestExample_VarargMethod(t *testing.T) {
 	m.EXPECT().VarargMethod(1, 2, 3, 4, 6, 7)
 
 	m.VarargMethod(1, 2, 3, 4, 6, 7)
-
-	ctrl.Finish()
 }

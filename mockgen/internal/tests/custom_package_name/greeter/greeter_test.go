@@ -9,7 +9,6 @@ import (
 
 func TestGreeter_Greet(t *testing.T) {
 	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
 
 	input := client.GreetInput{
 		Name: "Foo",

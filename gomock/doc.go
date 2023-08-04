@@ -23,7 +23,7 @@
 //	(2) Use mockgen to generate a mock from the interface.
 //	(3) Use the mock in a test:
 //	      func TestMyThing(t *testing.T) {
-//	        mockCtrl := gomock.NewController(t)//
+//	        mockCtrl := gomock.NewController(t)
 //	        mockObj := something.NewMockMyInterface(mockCtrl)
 //	        mockObj.EXPECT().SomeMethod(4, "blah")
 //	        // pass mockObj to a real object and play with it.
