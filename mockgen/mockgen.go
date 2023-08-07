@@ -325,8 +325,7 @@ func (g *generator) Generate(pkg *model.Package, outputPkgName string, outputPac
 	if *imports != "" {
 		for _, kv := range strings.Split(*imports, ",") {
 			eq := strings.Index(kv, "=")
-			k, v := kv[:eq], kv[eq+1:]
-			if k != "." {
+			if k, v := kv[:eq], kv[eq+1:]; k != "." {
 				definedImports[v] = k
 			}
 		}
