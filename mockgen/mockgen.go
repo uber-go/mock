@@ -53,17 +53,18 @@ var (
 )
 
 var (
-	source             = flag.String("source", "", "(source mode) Input Go source file; enables source mode.")
-	destination        = flag.String("destination", "", "Output file; defaults to stdout.")
-	mockNames          = flag.String("mock_names", "", "Comma-separated interfaceName=mockName pairs of explicit mock names to use. Mock names default to 'Mock'+ interfaceName suffix.")
-	packageOut         = flag.String("package", "", "Package of the generated code; defaults to the package of the input with a 'mock_' prefix.")
-	selfPackage        = flag.String("self_package", "", "The full package import path for the generated code. The purpose of this flag is to prevent import cycles in the generated code by trying to include its own package. This can happen if the mock's package is set to one of its inputs (usually the main one) and the output is stdio so mockgen cannot detect the final output package. Setting this flag will then tell mockgen which import to exclude.")
-	writePkgComment    = flag.Bool("write_package_comment", true, "Writes package documentation comment (godoc) if true.")
-	writeSourceComment = flag.Bool("write_source_comment", true, "Writes original file (source mode) or interface names (reflect mode) comment if true.")
-	copyrightFile      = flag.String("copyright_file", "", "Copyright file used to add copyright header")
-	typed              = flag.Bool("typed", false, "Generate Type-safe 'Return', 'Do', 'DoAndReturn' function")
-	imports            = flag.String("imports", "", "(source mode) Comma-separated name=path pairs of explicit imports to use.")
-	auxFiles           = flag.String("aux_files", "", "(source mode) Comma-separated pkg=path pairs of auxiliary Go source files.")
+	source                 = flag.String("source", "", "(source mode) Input Go source file; enables source mode.")
+	destination            = flag.String("destination", "", "Output file; defaults to stdout.")
+	mockNames              = flag.String("mock_names", "", "Comma-separated interfaceName=mockName pairs of explicit mock names to use. Mock names default to 'Mock'+ interfaceName suffix.")
+	packageOut             = flag.String("package", "", "Package of the generated code; defaults to the package of the input with a 'mock_' prefix.")
+	selfPackage            = flag.String("self_package", "", "The full package import path for the generated code. The purpose of this flag is to prevent import cycles in the generated code by trying to include its own package. This can happen if the mock's package is set to one of its inputs (usually the main one) and the output is stdio so mockgen cannot detect the final output package. Setting this flag will then tell mockgen which import to exclude.")
+	writePkgComment        = flag.Bool("write_package_comment", true, "Writes package documentation comment (godoc) if true.")
+	writeSourceComment     = flag.Bool("write_source_comment", true, "Writes original file (source mode) or interface names (reflect mode) comment if true.")
+	writeGenerateDirective = flag.Bool("write_generate_directive", false, "Put the //go:generate directive into the generated code")
+	copyrightFile          = flag.String("copyright_file", "", "Copyright file used to add copyright header")
+	typed                  = flag.Bool("typed", false, "Generate Type-safe 'Return', 'Do', 'DoAndReturn' function")
+	imports                = flag.String("imports", "", "(source mode) Comma-separated name=path pairs of explicit imports to use.")
+	auxFiles               = flag.String("aux_files", "", "(source mode) Comma-separated pkg=path pairs of auxiliary Go source files.")
 
 	debugParser = flag.Bool("debug_parser", false, "Print out parser results only.")
 	showVersion = flag.Bool("version", false, "Print version.")
@@ -382,6 +383,10 @@ func (g *generator) Generate(pkg *model.Package, outputPkgName string, outputPac
 	}
 	g.out()
 	g.p(")")
+
+	if *writeGenerateDirective {
+		g.p("//go:generate %v", strings.Join(os.Args, " "))
+	}
 
 	for _, intf := range pkg.Interfaces {
 		if err := g.GenerateMockInterface(intf, outputPackagePath); err != nil {
