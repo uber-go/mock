@@ -53,16 +53,18 @@ var (
 )
 
 var (
-	source                 = flag.String("source", "", "(source mode) Input Go source file; enables source mode.")
-	destination            = flag.String("destination", "", "Output file; defaults to stdout.")
-	mockNames              = flag.String("mock_names", "", "Comma-separated interfaceName=mockName pairs of explicit mock names to use. Mock names default to 'Mock'+ interfaceName suffix.")
-	packageOut             = flag.String("package", "", "Package of the generated code; defaults to the package of the input with a 'mock_' prefix.")
-	selfPackage            = flag.String("self_package", "", "The full package import path for the generated code. The purpose of this flag is to prevent import cycles in the generated code by trying to include its own package. This can happen if the mock's package is set to one of its inputs (usually the main one) and the output is stdio so mockgen cannot detect the final output package. Setting this flag will then tell mockgen which import to exclude.")
-	writePkgComment        = flag.Bool("write_package_comment", true, "Writes package documentation comment (godoc) if true.")
-	writeGenerateDirective = flag.Bool("write_generate_directive", false, "Put the //go:generate directive into the generated code")
-	writeSourceComment     = flag.Bool("write_source_comment", true, "Writes original file (source mode) or interface names (reflect mode) comment if true.")
-	copyrightFile          = flag.String("copyright_file", "", "Copyright file used to add copyright header")
-	typed                  = flag.Bool("typed", false, "Generate Type-safe 'Return', 'Do', 'DoAndReturn' function")
+	source             = flag.String("source", "", "(source mode) Input Go source file; enables source mode.")
+	destination        = flag.String("destination", "", "Output file; defaults to stdout.")
+	mockNames          = flag.String("mock_names", "", "Comma-separated interfaceName=mockName pairs of explicit mock names to use. Mock names default to 'Mock'+ interfaceName suffix.")
+	packageOut         = flag.String("package", "", "Package of the generated code; defaults to the package of the input with a 'mock_' prefix.")
+	selfPackage        = flag.String("self_package", "", "The full package import path for the generated code. The purpose of this flag is to prevent import cycles in the generated code by trying to include its own package. This can happen if the mock's package is set to one of its inputs (usually the main one) and the output is stdio so mockgen cannot detect the final output package. Setting this flag will then tell mockgen which import to exclude.")
+	writePkgComment    = flag.Bool("write_package_comment", true, "Writes package documentation comment (godoc) if true.")
+	writeSourceComment = flag.Bool("write_source_comment", true, "Writes original file (source mode) or interface names (reflect mode) comment if true.")
+  writeGenerateDirective = flag.Bool("write_generate_directive", false, "Put the //go:generate directive into the generated code")
+	copyrightFile      = flag.String("copyright_file", "", "Copyright file used to add copyright header")
+	typed              = flag.Bool("typed", false, "Generate Type-safe 'Return', 'Do', 'DoAndReturn' function")
+	imports            = flag.String("imports", "", "(source mode) Comma-separated name=path pairs of explicit imports to use.")
+	auxFiles           = flag.String("aux_files", "", "(source mode) Comma-separated pkg=path pairs of auxiliary Go source files.")
 
 	debugParser = flag.Bool("debug_parser", false, "Print out parser results only.")
 	showVersion = flag.Bool("version", false, "Print version.")
@@ -232,7 +234,7 @@ type generator struct {
 	packageMap map[string]string // map from import path to package name
 }
 
-func (g *generator) p(format string, args ...interface{}) {
+func (g *generator) p(format string, args ...any) {
 	fmt.Fprintf(&g.buf, g.indent+format+"\n", args...)
 }
 
@@ -319,6 +321,16 @@ func (g *generator) Generate(pkg *model.Package, outputPkgName string, outputPac
 
 	packagesName := createPackageMap(sortedPaths)
 
+	definedImports := make(map[string]string, len(im))
+	if *imports != "" {
+		for _, kv := range strings.Split(*imports, ",") {
+			eq := strings.Index(kv, "=")
+			if k, v := kv[:eq], kv[eq+1:]; k != "." {
+				definedImports[v] = k
+			}
+		}
+	}
+
 	g.packageMap = make(map[string]string, len(im))
 	localNames := make(map[string]bool, len(im))
 	for _, pth := range sortedPaths {
@@ -330,9 +342,14 @@ func (g *generator) Generate(pkg *model.Package, outputPkgName string, outputPac
 		// Local names for an imported package can usually be the basename of the import path.
 		// A couple of situations don't permit that, such as duplicate local names
 		// (e.g. importing "html/template" and "text/template"), or where the basename is
-		// a keyword (e.g. "foo/case").
+		// a keyword (e.g. "foo/case") or when defining a name for that by using the -imports flag.
 		// try base0, base1, ...
 		pkgName := base
+
+		if _, ok := definedImports[base]; ok {
+			pkgName = definedImports[base]
+		}
+
 		i := 0
 		for localNames[pkgName] || token.Lookup(pkgName).IsKeyword() {
 			pkgName = base + strconv.Itoa(i)
@@ -525,11 +542,11 @@ func (g *generator) GenerateMockMethod(mockType string, m *model.Method, pkgOver
 			callArgs = ", " + strings.Join(argNames, ", ")
 		}
 	} else {
-		// Non-trivial. The generated code must build a []interface{},
+		// Non-trivial. The generated code must build a []any,
 		// but the variadic argument may be any type.
 		idVarArgs := ia.allocateIdentifier("varargs")
 		idVArg := ia.allocateIdentifier("a")
-		g.p("%s := []interface{}{%s}", idVarArgs, strings.Join(argNames[:len(argNames)-1], ", "))
+		g.p("%s := []any{%s}", idVarArgs, strings.Join(argNames[:len(argNames)-1], ", "))
 		g.p("for _, %s := range %s {", idVArg, argNames[len(argNames)-1])
 		g.in()
 		g.p("%s = append(%s, %s)", idVarArgs, idVarArgs, idVArg)
@@ -569,14 +586,14 @@ func (g *generator) GenerateMockRecorderMethod(intf *model.Interface, mockType s
 		argString = strings.Join(argNames[:len(argNames)-1], ", ")
 	}
 	if argString != "" {
-		argString += " interface{}"
+		argString += " any"
 	}
 
 	if m.Variadic != nil {
 		if argString != "" {
 			argString += ", "
 		}
-		argString += fmt.Sprintf("%s ...interface{}", argNames[len(argNames)-1])
+		argString += fmt.Sprintf("%s ...any", argNames[len(argNames)-1])
 	}
 
 	ia := newIdentifierAllocator(argNames)
@@ -604,7 +621,7 @@ func (g *generator) GenerateMockRecorderMethod(intf *model.Interface, mockType s
 		} else {
 			// Hard: create a temporary slice.
 			idVarArgs := ia.allocateIdentifier("varargs")
-			g.p("%s := append([]interface{}{%s}, %s...)",
+			g.p("%s := append([]any{%s}, %s...)",
 				idVarArgs,
 				strings.Join(argNames[:len(argNames)-1], ", "),
 				argNames[len(argNames)-1])

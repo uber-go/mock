@@ -18,7 +18,6 @@ package main
 
 import (
 	"errors"
-	"flag"
 	"fmt"
 	"go/ast"
 	"go/build"
@@ -34,11 +33,6 @@ import (
 	"strings"
 
 	"go.uber.org/mock/mockgen/model"
-)
-
-var (
-	imports  = flag.String("imports", "", "(source mode) Comma-separated name=path pairs of explicit imports to use.")
-	auxFiles = flag.String("aux_files", "", "(source mode) Comma-separated pkg=path pairs of auxiliary Go source files.")
 )
 
 // sourceMode generates mocks via source file.
@@ -171,10 +165,10 @@ type fileParser struct {
 	srcDir             string
 }
 
-func (p *fileParser) errorf(pos token.Pos, format string, args ...interface{}) error {
+func (p *fileParser) errorf(pos token.Pos, format string, args ...any) error {
 	ps := p.fileSet.Position(pos)
 	format = "%s:%d:%d: " + format
-	args = append([]interface{}{ps.Filename, ps.Line, ps.Column}, args...)
+	args = append([]any{ps.Filename, ps.Line, ps.Column}, args...)
 	return fmt.Errorf(format, args...)
 }
 
@@ -581,7 +575,7 @@ func (p *fileParser) parseType(pkg string, typ ast.Expr, tps map[string]model.Ty
 		if v.Methods != nil && len(v.Methods.List) > 0 {
 			return nil, p.errorf(v.Pos(), "can't handle non-empty unnamed interface types")
 		}
-		return model.PredeclaredType("interface{}"), nil
+		return model.PredeclaredType("any"), nil
 	case *ast.MapType:
 		key, err := p.parseType(pkg, v.Key, tps)
 		if err != nil {
