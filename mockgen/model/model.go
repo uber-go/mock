@@ -147,6 +147,8 @@ type Type interface {
 }
 
 func init() {
+	// Call gob.RegisterName with pkgPath as prefix to avoid conflicting with
+	// github.com/golang/mock/mockgen/model 's registration.
 	gob.RegisterName(pkgPath+".ArrayType", &ArrayType{})
 	gob.RegisterName(pkgPath+".ChanType", &ChanType{})
 	gob.RegisterName(pkgPath+".FuncType", &FuncType{})
