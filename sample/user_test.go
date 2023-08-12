@@ -7,6 +7,7 @@ import (
 	"go.uber.org/mock/gomock"
 	user "go.uber.org/mock/sample"
 	"go.uber.org/mock/sample/imp1"
+	imp_four "go.uber.org/mock/sample/imp4"
 )
 
 func TestRemember(t *testing.T) {
@@ -192,4 +193,20 @@ func TestDoAndReturnSignature(t *testing.T) {
 
 		mockIndex.Slice([]int{0}, []byte("meow"))
 	})
+}
+
+func TestExpectFnForeignFour(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockIndex := NewMockIndex(ctrl)
+	mockIndex.EXPECT().ForeignFour(gomock.Fn(func(x any) bool {
+		four, ok := x.(imp_four.Imp4)
+		if !ok {
+			return false
+		}
+		return four.Field == "Cool"
+	}))
+
+	mockIndex.ForeignFour(imp_four.Imp4{Field: "Cool"})
 }
