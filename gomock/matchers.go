@@ -106,7 +106,7 @@ func (f fnMatcher) Matches(x any) bool {
 }
 
 func (fnMatcher) String() string {
-	return "a customizable behaviour"
+	return "adheres to a custom condition"
 }
 
 type eqMatcher struct {
