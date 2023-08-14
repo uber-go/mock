@@ -18,6 +18,8 @@ import (
 	"fmt"
 	"reflect"
 	"strings"
+
+	"github.com/golang/protobuf/proto"
 )
 
 // A Matcher is a representation of a class of values.
@@ -112,6 +114,9 @@ func (e eqMatcher) Matches(x any) bool {
 	x2Val := reflect.ValueOf(x)
 
 	if x1Val.Type().AssignableTo(x2Val.Type()) {
+		if _, isProto := x1Val.Interface().(proto.Message); isProto {
+			return proto.Equal(x1Val.Interface().(proto.Message), x2Val.Interface().(proto.Message))
+		}
 		x1ValConverted := x1Val.Convert(x2Val.Type())
 		return reflect.DeepEqual(x1ValConverted.Interface(), x2Val.Interface())
 	}
