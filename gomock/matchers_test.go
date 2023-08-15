@@ -53,7 +53,7 @@ func TestMatchers(t *testing.T) {
 			[]e{[]string{"a", "b"}, A{"a", "b"}},
 			[]e{[]string{"a"}, A{"b"}},
 		},
-		{"test Fn", gomock.Fn(func(x any) bool { return x.(B).Name == "Dam" }), []e{B{Name: "Dam"}}, []e{B{Name: "Dave"}}},
+		{"test Cond", gomock.Cond(func(x any) bool { return x.(B).Name == "Dam" }), []e{B{Name: "Dam"}}, []e{B{Name: "Dave"}}},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

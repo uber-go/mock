@@ -97,15 +97,15 @@ func (anyMatcher) String() string {
 	return "is anything"
 }
 
-type fnMatcher struct {
+type condMatcher struct {
 	fn func(x any) bool
 }
 
-func (f fnMatcher) Matches(x any) bool {
-	return f.fn(x)
+func (c condMatcher) Matches(x any) bool {
+	return c.fn(x)
 }
 
-func (fnMatcher) String() string {
+func (condMatcher) String() string {
 	return "adheres to a custom condition"
 }
 
@@ -292,14 +292,14 @@ func All(ms ...Matcher) Matcher { return allMatcher{ms} }
 // Any returns a matcher that always matches.
 func Any() Matcher { return anyMatcher{} }
 
-// Fn returns a specialized matchers customizable for complex matching behaviour.
+// Cond returns a specialized matchers customizable for complex matching behaviour.
 // This is particularly useful in case you want to match over a field of a custom struct, or dynamic logic.
 //
 // Example usage:
 //
-//	Fn(func(x any){return x.(int) == 1}).Matches(1) // returns true
-//	Fn(func(x any){return x.(int) == 2}).Matches(1) // returns false
-func Fn(fn func(x any) bool) Matcher { return fnMatcher{fn} }
+//	Cond(func(x any){return x.(int) == 1}).Matches(1) // returns true
+//	Cond(func(x any){return x.(int) == 2}).Matches(1) // returns false
+func Cond(fn func(x any) bool) Matcher { return condMatcher{fn} }
 
 // Eq returns a matcher that matches on equality.
 //

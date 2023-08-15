@@ -195,12 +195,12 @@ func TestDoAndReturnSignature(t *testing.T) {
 	})
 }
 
-func TestExpectFnForeignFour(t *testing.T) {
+func TestExpectCondForeignFour(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
 	mockIndex := NewMockIndex(ctrl)
-	mockIndex.EXPECT().ForeignFour(gomock.Fn(func(x any) bool {
+	mockIndex.EXPECT().ForeignFour(gomock.Cond(func(x any) bool {
 		four, ok := x.(imp_four.Imp4)
 		if !ok {
 			return false
