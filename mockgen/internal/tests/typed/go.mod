@@ -1,8 +1,8 @@
 module go.uber.org/mock/mockgen/internal/tests/typed
 
-go 1.18
+go 1.20
 
-replace go.uber.org/mock => ../../../..
+replace go.uber.org/mock => ../../../../
 
 require (
 	go.uber.org/mock v0.0.0-00010101000000-000000000000
