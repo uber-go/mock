@@ -4,7 +4,17 @@ updates:
   directory: "/"
   schedule:
     interval: "daily"
-  open-pull-requests-limit: 10
+  open-pull-requests-limit: 5
+- package-ecosystem: "gomod"
+  directory: "/mockgen/internal/tests/generics"
+  schedule:
+    interval: "daily"
+  open-pull-requests-limit: 5
+- package-ecosystem: "gomod"
+  directory: "/mockgen/internal/tests/typed"
+  schedule:
+    interval: "daily"
+  open-pull-requests-limit: 5
 - package-ecosystem: "github-actions"
   directory: "/"
   schedule:
