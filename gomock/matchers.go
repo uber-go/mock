@@ -97,6 +97,18 @@ func (anyMatcher) String() string {
 	return "is anything"
 }
 
+type condMatcher struct {
+	fn func(x any) bool
+}
+
+func (c condMatcher) Matches(x any) bool {
+	return c.fn(x)
+}
+
+func (condMatcher) String() string {
+	return "adheres to a custom condition"
+}
+
 type eqMatcher struct {
 	x any
 }
@@ -279,6 +291,16 @@ func All(ms ...Matcher) Matcher { return allMatcher{ms} }
 
 // Any returns a matcher that always matches.
 func Any() Matcher { return anyMatcher{} }
+
+// Cond returns a matcher that matches when the given function returns true
+// after passing it the parameter to the mock function.
+// This is particularly useful in case you want to match over a field of a custom struct, or dynamic logic.
+//
+// Example usage:
+//
+//	Cond(func(x any){return x.(int) == 1}).Matches(1) // returns true
+//	Cond(func(x any){return x.(int) == 2}).Matches(1) // returns false
+func Cond(fn func(x any) bool) Matcher { return condMatcher{fn} }
 
 // Eq returns a matcher that matches on equality.
 //
