@@ -292,7 +292,8 @@ func All(ms ...Matcher) Matcher { return allMatcher{ms} }
 // Any returns a matcher that always matches.
 func Any() Matcher { return anyMatcher{} }
 
-// Cond returns a specialized matchers customizable for complex matching behaviour.
+// Cond returns a matcher that matches when the given function returns true
+// after passing it the parameter to the mock function.
 // This is particularly useful in case you want to match over a field of a custom struct, or dynamic logic.
 //
 // Example usage:
