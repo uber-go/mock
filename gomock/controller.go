@@ -53,19 +53,16 @@ type cleanuper interface {
 //
 //	func TestFoo(t *testing.T) {
 //	  ctrl := gomock.NewController(t)
-//	  defer ctrl.Finish()
 //	  // ..
 //	}
 //
 //	func TestBar(t *testing.T) {
 //	  t.Run("Sub-Test-1", st) {
 //	    ctrl := gomock.NewController(st)
-//	    defer ctrl.Finish()
 //	    // ..
 //	  })
 //	  t.Run("Sub-Test-2", st) {
 //	    ctrl := gomock.NewController(st)
-//	    defer ctrl.Finish()
 //	    // ..
 //	  })
 //	})
@@ -81,11 +78,10 @@ type Controller struct {
 	finished      bool
 }
 
-// NewController returns a new Controller. It is the preferred way to create a
-// Controller.
+// NewController returns a new Controller. It is the preferred way to create a Controller.
 //
-// New in go1.14+, if you are passing a *testing.T into this function you no
-// longer need to call ctrl.Finish() in your test methods.
+// Passing [*testing.T] registers cleanup function to automatically call [Controller.Finish]
+// when the test and all its subtests complete.
 func NewController(t TestReporter, opts ...ControllerOption) *Controller {
 	h, ok := t.(TestHelper)
 	if !ok {
@@ -238,12 +234,11 @@ func (ctrl *Controller) Call(receiver any, method string, args ...any) []any {
 	return rets
 }
 
-// Finish checks to see if all the methods that were expected to be called
-// were called. It should be invoked for each Controller. It is not idempotent
-// and therefore can only be invoked once.
+// Finish checks to see if all the methods that were expected to be called were called.
+// It is not idempotent and therefore can only be invoked once.
 //
-// New in go1.14+, if you are passing a *testing.T into NewController function you no
-// longer need to call ctrl.Finish() in your test methods.
+// Deprecated: Calling this function in test methods is not required starting from Go 1.14.
+// It will be called automatically from a self registered [testing.T.Cleanup] function.
 func (ctrl *Controller) Finish() {
 	// If we're currently panicking, probably because this is a deferred call.
 	// This must be recovered in the deferred function.

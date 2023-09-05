@@ -74,7 +74,6 @@ func TestMatchers(t *testing.T) {
 // A more thorough test of notMatcher
 func TestNotMatcher(t *testing.T) {
 	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
 
 	mockMatcher := mock_gomock.NewMockMatcher(ctrl)
 	notMatcher := gomock.Not(mockMatcher)
@@ -98,9 +97,6 @@ type ctxKey struct{}
 
 // A thorough test of assignableToTypeOfMatcher
 func TestAssignableToTypeOfMatcher(t *testing.T) {
-	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
-
 	aStr := "def"
 	anotherStr := "ghi"
 

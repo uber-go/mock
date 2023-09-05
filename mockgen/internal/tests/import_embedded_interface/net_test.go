@@ -23,7 +23,6 @@ import (
 // TestValidInterface assesses whether or not the generated mock is valid
 func TestValidNetInterface(t *testing.T) {
 	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
 
 	s := NewMockNet(ctrl)
 	s.EXPECT().WriteHeader(10)
