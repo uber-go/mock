@@ -79,6 +79,12 @@ func newCall(t TestHelper, receiver any, method string, methodType reflect.Type,
 		args: mArgs, origin: origin, minCalls: 1, maxCalls: 1, actions: actions}
 }
 
+// GetCall returns the current `*Call` instance, this is needed to fulfill the
+// interface that `InOrder` and `After` receive as parameter.
+func (c *Call) GetCall() *Call {
+        return c
+}
+
 // AnyTimes allows the expectation to be called 0 or more times
 func (c *Call) AnyTimes() *Call {
 	c.minCalls, c.maxCalls = 0, 1e8 // close enough to infinity
@@ -288,7 +294,8 @@ func (c *Call) isPreReq(other *Call) bool {
 }
 
 // After declares that the call may only match after preReq has been exhausted.
-func (c *Call) After(preReq *Call) *Call {
+func (c *Call) After(prq interface{GetCall() *Call}) *Call {
+        preReq := prq.GetCall()
 	c.t.Helper()
 
 	if c == preReq {
@@ -435,9 +442,9 @@ func (c *Call) call() []func([]any) []any {
 }
 
 // InOrder declares that the given calls should occur in order.
-func InOrder(calls ...*Call) {
+func InOrder(calls ...interface{GetCall() *Call}) {
 	for i := 1; i < len(calls); i++ {
-		calls[i].After(calls[i-1])
+		calls[i].GetCall().After(calls[i-1])
 	}
 }
 
