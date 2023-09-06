@@ -435,10 +435,38 @@ func (c *Call) call() []func([]any) []any {
 }
 
 // InOrder declares that the given calls should occur in order.
-func InOrder(calls ...*Call) {
+// Ignores every argument that isn't a *Call or wraps one.
+func InOrder(args ...any) {
+        var calls []*Call
+        for i := 0; i < len(args); i++ {
+                if call := getCall(args[i]); call != nil {
+                        calls = append(calls, call)
+                }
+        }
 	for i := 1; i < len(calls); i++ {
 		calls[i].After(calls[i-1])
 	}
+}
+
+func getCall(arg any) *Call {
+        if call, ok := arg.(*Call); ok {
+                return call
+        }
+        t := reflect.ValueOf(arg)
+        if t.Kind() != reflect.Ptr && t.Kind() != reflect.Interface {
+                return nil
+        }
+        t = t.Elem()
+        for i := 0; i < t.NumField(); i++ {
+                f := t.Field(i)
+                if !f.CanInterface() {
+                        continue
+                }
+                if call, ok := f.Interface().(*Call); ok {
+                        return call
+                }
+        }
+        return nil
 }
 
 func setSlice(arg any, v reflect.Value) {
