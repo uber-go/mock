@@ -435,38 +435,41 @@ func (c *Call) call() []func([]any) []any {
 }
 
 // InOrder declares that the given calls should occur in order.
-// Ignores every argument that isn't a *Call or wraps one.
+// It panics if the type of any of the arguments isn't *Call or a generated
+// mock with an embedded *Call.
 func InOrder(args ...any) {
-        var calls []*Call
-        for i := 0; i < len(args); i++ {
-                if call := getCall(args[i]); call != nil {
-                        calls = append(calls, call)
-                }
-        }
+	var calls []*Call
+	for i := 0; i < len(args); i++ {
+		if call := getCall(args[i]); call != nil {
+			calls = append(calls, call)
+			continue
+		}
+		panic("InOrder parameters type must be either a *Call or a generated mock with an embedded *Call")
+	}
 	for i := 1; i < len(calls); i++ {
 		calls[i].After(calls[i-1])
 	}
 }
 
 func getCall(arg any) *Call {
-        if call, ok := arg.(*Call); ok {
-                return call
-        }
-        t := reflect.ValueOf(arg)
-        if t.Kind() != reflect.Ptr && t.Kind() != reflect.Interface {
-                return nil
-        }
-        t = t.Elem()
-        for i := 0; i < t.NumField(); i++ {
-                f := t.Field(i)
-                if !f.CanInterface() {
-                        continue
-                }
-                if call, ok := f.Interface().(*Call); ok {
-                        return call
-                }
-        }
-        return nil
+	if call, ok := arg.(*Call); ok {
+		return call
+	}
+	t := reflect.ValueOf(arg)
+	if t.Kind() != reflect.Ptr && t.Kind() != reflect.Interface {
+		return nil
+	}
+	t = t.Elem()
+	for i := 0; i < t.NumField(); i++ {
+		f := t.Field(i)
+		if !f.CanInterface() {
+			continue
+		}
+		if call, ok := f.Interface().(*Call); ok {
+			return call
+		}
+	}
+	return nil
 }
 
 func setSlice(arg any, v reflect.Value) {

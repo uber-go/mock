@@ -627,18 +627,25 @@ func TestInOrder(t *testing.T) {
 		tr2 := &mockTestReporter{}
 		c1 := &Call{t: tr1}
 		c2 := &c{Call: &Call{t: tr2}}
-		b := &b{foo: "bar"}
-		a := a{name: "Joe"}
-		InOrder(c1, c2)   // This is the only correct relationship
-                InOrder("a", c1)  // Should do nothing
-                InOrder(a, c2)    // Should do nothing
-                InOrder(nil, c2)  // Should do nothing
-                InOrder(b, c2)    // Should do nothing
+		InOrder(c1, c2)
 		if len(c2.preReqs) != 1 {
 			t.Fatalf("expected 1 preReq in c2, found %d", len(c2.preReqs))
 		}
 		if len(c1.preReqs) != 0 {
 			t.Fatalf("expected 0 preReq in c1, found %d", len(c1.preReqs))
 		}
+	})
+	t.Run("panic when the argument isn't a *Call or has one embeded", func(t *testing.T) {
+		defer func() {
+			if r := recover(); r == nil {
+				t.Error("expected InOrder to panic")
+			}
+		}()
+		tr := &mockTestReporter{}
+		c := &Call{t: tr}
+		a := &a{
+			name: "Foo",
+		}
+		InOrder(c, a)
 	})
 }
