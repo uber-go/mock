@@ -75,8 +75,8 @@ func sourceMode(source string) (*model.Package, error) {
 		}
 	}
 
-	if *exclude != "" {
-		p.excludeNamesSet = parseExclude(*exclude)
+	if *excludeInterfaces != "" {
+		p.excludeNamesSet = parseExcludeInterfaces(*excludeInterfaces)
 	}
 
 	// Handle -aux_files.

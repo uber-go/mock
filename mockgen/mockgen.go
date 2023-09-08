@@ -65,7 +65,7 @@ var (
 	typed                  = flag.Bool("typed", false, "Generate Type-safe 'Return', 'Do', 'DoAndReturn' function")
 	imports                = flag.String("imports", "", "(source mode) Comma-separated name=path pairs of explicit imports to use.")
 	auxFiles               = flag.String("aux_files", "", "(source mode) Comma-separated pkg=path pairs of auxiliary Go source files.")
-	exclude                = flag.String("exclude", "", "Comma-separated names of interfaces to be excluded")
+	excludeInterfaces      = flag.String("exclude_interfaces", "", "Comma-separated names of interfaces to be excluded")
 
 	debugParser = flag.Bool("debug_parser", false, "Print out parser results only.")
 	showVersion = flag.Bool("version", false, "Print version.")
@@ -201,7 +201,7 @@ func parseMockNames(names string) map[string]string {
 	return mocksMap
 }
 
-func parseExclude(names string) map[string]struct{} {
+func parseExcludeInterfaces(names string) map[string]struct{} {
 	splitNames := strings.Split(names, ",")
 	if len(splitNames) == 0 {
 		return nil
