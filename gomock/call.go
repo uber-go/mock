@@ -444,7 +444,12 @@ func InOrder(args ...any) {
 			calls = append(calls, call)
 			continue
 		}
-		panic("InOrder parameters type must be either a *Call or a generated mock with an embedded *Call")
+		errMsg := fmt.Sprintf(
+			"invalid argument at position %d of type %T, InOrder expects *gomock.Call or generated mock types with an embedded *gomock.Call",
+			i,
+			args[i],
+		)
+		panic(errMsg)
 	}
 	for i := 1; i < len(calls); i++ {
 		calls[i].After(calls[i-1])
