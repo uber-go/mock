@@ -293,13 +293,13 @@ func TestUnexpectedArgValue_FirstArg(t *testing.T) {
 		"Got: gomock_test.TestStruct{Number:123, Message:\"no message\", Slice:[]int{1, 2}}\nWant: is equal to gomock_test.TestStruct{Number:123, Message:\"hello %s\", Slice:[]int{1, 2}}")
 
 	reporter.assertFatal(func() {
-		// the method argument (of TestStruct type) has 2 unexpected values (for both fields)
-		ctrl.Call(subject, "ActOnTestStructMethod", TestStruct{Number: 11, Message: "no message", Slice: []int{1, 2}}, 15)
+		// the method argument (of TestStruct type) has 3 unexpected values (for all fields)
+		ctrl.Call(subject, "ActOnTestStructMethod", TestStruct{Number: 11, Message: "no message", Slice: []int{}}, 15)
 	}, "Unexpected call to", "doesn't match the argument at index 0",
-		"Got: gomock_test.TestStruct{Number:11, Message:\"no message\", Slice:[]int{1, 2}}\nWant: is equal to gomock_test.TestStruct{Number:123, Message:\"hello %s\", Slice:[]int{1, 2}}")
+		"Got: gomock_test.TestStruct{Number:11, Message:\"no message\", Slice:[]int{}}\nWant: is equal to gomock_test.TestStruct{Number:123, Message:\"hello %s\", Slice:[]int{1, 2}}")
 
 	reporter.assertFatal(func() {
-		// the method argument (of TestStruct type) has 1 unexpected values (slice field)
+		// the method argument (of TestStruct type) has 1 unexpected values (for slice field)
 		ctrl.Call(subject, "ActOnTestStructMethod", TestStruct{Number: 123, Message: "hello %s", Slice: nil}, 15)
 	}, "Unexpected call to", "doesn't match the argument at index 0",
 		"Got: gomock_test.TestStruct{Number:123, Message:\"hello %s\", Slice:[]int(nil)}\nWant: is equal to gomock_test.TestStruct{Number:123, Message:\"hello %s\", Slice:[]int{1, 2}}")
