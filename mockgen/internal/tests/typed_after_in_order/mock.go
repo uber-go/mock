@@ -75,13 +75,13 @@ func (c *AnimalFeedCall) DoAndReturn(f func(string) error) *AnimalFeedCall {
 	return c
 }
 
-// Call rewrite *gomock.Call.GetCall
+// GetCall is needed to implement gomock.CallWrapper
 func (c *AnimalFeedCall) GetCall() *gomock.Call {
 	return c.Call
 }
 
 // After rewrite *gomock.Call.After
-func (c *AnimalFeedCall) After(prq interface{ GetCall() *gomock.Call }) *gomock.Call {
+func (c *AnimalFeedCall) After(prq gomock.CallWrapper) *gomock.Call {
 	return c.Call.After(prq)
 }
 
@@ -123,12 +123,12 @@ func (c *AnimalGetNoiseCall) DoAndReturn(f func() string) *AnimalGetNoiseCall {
 	return c
 }
 
-// Call rewrite *gomock.Call.GetCall
+// GetCall is needed to implement gomock.CallWrapper
 func (c *AnimalGetNoiseCall) GetCall() *gomock.Call {
 	return c.Call
 }
 
 // After rewrite *gomock.Call.After
-func (c *AnimalGetNoiseCall) After(prq interface{ GetCall() *gomock.Call }) *gomock.Call {
+func (c *AnimalGetNoiseCall) After(prq gomock.CallWrapper) *gomock.Call {
 	return c.Call.After(prq)
 }

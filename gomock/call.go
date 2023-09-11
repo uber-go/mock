@@ -44,6 +44,11 @@ type Call struct {
 	actions []func([]any) []any
 }
 
+// CallWrapper is an interface for retrieving a *Call.
+type CallWrapper interface {
+        GetCall() *Call
+}
+
 // newCall creates a *Call. It requires the method type in order to support
 // unexported methods.
 func newCall(t TestHelper, receiver any, method string, methodType reflect.Type, args ...any) *Call {
@@ -79,8 +84,8 @@ func newCall(t TestHelper, receiver any, method string, methodType reflect.Type,
 		args: mArgs, origin: origin, minCalls: 1, maxCalls: 1, actions: actions}
 }
 
-// GetCall returns the current `*Call` instance, this is needed to fulfill the
-// interface that `InOrder` and `After` receive as parameter.
+// GetCall returns the current `*Call` instance, this is needed to implement
+// the CallWrapper interface.
 func (c *Call) GetCall() *Call {
         return c
 }
@@ -294,7 +299,7 @@ func (c *Call) isPreReq(other *Call) bool {
 }
 
 // After declares that the call may only match after preReq has been exhausted.
-func (c *Call) After(prq interface{GetCall() *Call}) *Call {
+func (c *Call) After(prq CallWrapper) *Call {
         preReq := prq.GetCall()
 	c.t.Helper()
 
@@ -442,7 +447,7 @@ func (c *Call) call() []func([]any) []any {
 }
 
 // InOrder declares that the given calls should occur in order.
-func InOrder(calls ...interface{GetCall() *Call}) {
+func InOrder(calls ...CallWrapper) {
 	for i := 1; i < len(calls); i++ {
 		calls[i].GetCall().After(calls[i-1])
 	}

@@ -700,7 +700,7 @@ func (g *generator) GenerateMockReturnCallMethod(intf *model.Interface, m *model
 	g.out()
 	g.p("}")
 
-        g.p("// Call rewrite *gomock.Call.GetCall")
+        g.p("// GetCall is needed to implement gomock.CallWrapper")
         g.p("func (%s *%sCall%s) GetCall() *gomock.Call {", idRecv, recvStructName, shortTp)
         g.in()
         g.p("return %s.Call", idRecv)
@@ -708,7 +708,7 @@ func (g *generator) GenerateMockReturnCallMethod(intf *model.Interface, m *model
         g.p("}")
 
         g.p("// After rewrite *gomock.Call.After")
-        g.p("func (%s *%sCall%s) After(prq interface{ GetCall() *gomock.Call }) *gomock.Call {", idRecv, recvStructName, shortTp)
+        g.p("func (%s *%sCall%s) After(prq gomock.CallWrapper) *gomock.Call {", idRecv, recvStructName, shortTp)
         g.in()
         g.p("return %s.Call.After(prq)", idRecv)
         g.out()
