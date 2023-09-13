@@ -438,24 +438,25 @@ func (c *Call) call() []func([]any) []any {
 // It panics if the type of any of the arguments isn't *Call or a generated
 // mock with an embedded *Call.
 func InOrder(args ...any) {
-	var calls []*Call
+	calls := make([]*Call, 0, len(args))
 	for i := 0; i < len(args); i++ {
 		if call := getCall(args[i]); call != nil {
 			calls = append(calls, call)
 			continue
 		}
-		errMsg := fmt.Sprintf(
+		panic(fmt.Sprintf(
 			"invalid argument at position %d of type %T, InOrder expects *gomock.Call or generated mock types with an embedded *gomock.Call",
 			i,
 			args[i],
-		)
-		panic(errMsg)
+		))
 	}
 	for i := 1; i < len(calls); i++ {
 		calls[i].After(calls[i-1])
 	}
 }
 
+// getCall checks if the parameter is a *Call or a generated struct
+// that wraps a *Call and returns the *Call pointer - if neither, it returns nil.
 func getCall(arg any) *Call {
 	if call, ok := arg.(*Call); ok {
 		return call
