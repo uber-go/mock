@@ -38,6 +38,10 @@ type b struct {
 	foo string
 }
 
+type c struct {
+	*Call
+}
+
 func (testObj b) Foo() string {
 	return testObj.foo
 }
@@ -615,4 +619,33 @@ func TestCall_DoAndReturn(t *testing.T) {
 			action(tc.args)
 		})
 	}
+}
+
+func TestInOrder(t *testing.T) {
+	t.Run("process only *Call or its wrappers", func(t *testing.T) {
+		tr1 := &mockTestReporter{}
+		tr2 := &mockTestReporter{}
+		c1 := &Call{t: tr1}
+		c2 := &c{Call: &Call{t: tr2}}
+		InOrder(c1, c2)
+		if len(c2.preReqs) != 1 {
+			t.Fatalf("expected 1 preReq in c2, found %d", len(c2.preReqs))
+		}
+		if len(c1.preReqs) != 0 {
+			t.Fatalf("expected 0 preReq in c1, found %d", len(c1.preReqs))
+		}
+	})
+	t.Run("panic when the argument isn't a *Call or has one embeded", func(t *testing.T) {
+		defer func() {
+			if r := recover(); r == nil {
+				t.Error("expected InOrder to panic")
+			}
+		}()
+		tr := &mockTestReporter{}
+		c := &Call{t: tr}
+		a := &a{
+			name: "Foo",
+		}
+		InOrder(c, a)
+	})
 }
