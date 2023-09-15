@@ -412,3 +412,57 @@ func TestParsePackageImport_FallbackMultiGoPath(t *testing.T) {
 		t.Errorf("expect %s, got %s", expectedPkgPath, pkgPath)
 	}
 }
+
+func TestParseExcludeInterfaces(t *testing.T) {
+	testCases := []struct {
+		name     string
+		arg      string
+		expected map[string]struct{}
+	}{
+		{
+			name:     "empty string",
+			arg:      "",
+			expected: nil,
+		},
+		{
+			name:     "string without a comma",
+			arg:      "arg1",
+			expected: map[string]struct{}{"arg1": {}},
+		},
+		{
+			name:     "two names",
+			arg:      "arg1,arg2",
+			expected: map[string]struct{}{"arg1": {}, "arg2": {}},
+		},
+		{
+			name:     "two names with a comma at the end",
+			arg:      "arg1,arg2,",
+			expected: map[string]struct{}{"arg1": {}, "arg2": {}},
+		},
+		{
+			name:     "two names with a comma at the beginning",
+			arg:      ",arg1,arg2",
+			expected: map[string]struct{}{"arg1": {}, "arg2": {}},
+		},
+		{
+			name:     "commas only",
+			arg:      ",,,,",
+			expected: nil,
+		},
+		{
+			name:     "duplicates",
+			arg:      "arg1,arg2,arg1",
+			expected: map[string]struct{}{"arg1": {}, "arg2": {}},
+		},
+	}
+
+	for _, tt := range testCases {
+		t.Run(tt.name, func(t *testing.T) {
+			actual := parseExcludeInterfaces(tt.arg)
+
+			if !reflect.DeepEqual(actual, tt.expected) {
+				t.Errorf("expected %v, actual %v", tt.expected, actual)
+			}
+		})
+	}
+}

@@ -75,6 +75,10 @@ func sourceMode(source string) (*model.Package, error) {
 		}
 	}
 
+	if *excludeInterfaces != "" {
+		p.excludeNamesSet = parseExcludeInterfaces(*excludeInterfaces)
+	}
+
 	// Handle -aux_files.
 	if err := p.parseAuxFiles(*auxFiles); err != nil {
 		return nil, err
@@ -163,6 +167,7 @@ type fileParser struct {
 	auxFiles           []*ast.File
 	auxInterfaces      *interfaceCache
 	srcDir             string
+	excludeNamesSet    map[string]struct{}
 }
 
 func (p *fileParser) errorf(pos token.Pos, format string, args ...any) error {
@@ -223,6 +228,9 @@ func (p *fileParser) parseFile(importPath string, file *ast.File) (*model.Packag
 
 	var is []*model.Interface
 	for ni := range iterInterfaces(file) {
+		if _, ok := p.excludeNamesSet[ni.name.String()]; ok {
+			continue
+		}
 		i, err := p.parseInterface(ni.name.String(), importPath, ni)
 		if err != nil {
 			return nil, err
