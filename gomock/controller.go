@@ -236,9 +236,6 @@ func (ctrl *Controller) Call(receiver any, method string, args ...any) []any {
 
 // Finish checks to see if all the methods that were expected to be called were called.
 // It is not idempotent and therefore can only be invoked once.
-//
-// Deprecated: Calling this function in test methods is not required starting from Go 1.14.
-// It will be called automatically from a self registered [testing.T.Cleanup] function.
 func (ctrl *Controller) Finish() {
 	// If we're currently panicking, probably because this is a deferred call.
 	// This must be recovered in the deferred function.
