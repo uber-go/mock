@@ -219,6 +219,27 @@ func (m lenMatcher) String() string {
 	return fmt.Sprintf("has length %d", m.i)
 }
 
+type oneOfMatcher struct {
+	matches []interface{}
+}
+
+func oneOf(matches []interface{}) Matcher {
+	return oneOfMatcher{matches: matches}
+}
+
+func (m oneOfMatcher) Matches(x interface{}) bool {
+	for _, u := range m.matches {
+		if u == x {
+			return true
+		}
+	}
+	return false
+}
+
+func (m oneOfMatcher) String() string {
+	return fmt.Sprintf("is one of %+v", m.matches)
+}
+
 type inAnyOrderMatcher struct {
 	x any
 }
@@ -365,4 +386,15 @@ func AssignableToTypeOf(x any) Matcher {
 //	InAnyOrder([]int{1, 2, 3}).Matches([]int{1, 2}) // returns false
 func InAnyOrder(x any) Matcher {
 	return inAnyOrderMatcher{x}
+}
+
+// OneOf is a Matcher that returns true when the parameter of the mock is
+// part of the set provided to the matcher
+//
+// Example Usage:
+//
+//	OneOf([]any{100,200,300})
+//	OneOf([]any{"Go", "Gopher"})
+func OneOf(x []any) Matcher {
+	return oneOfMatcher{x}
 }

@@ -54,6 +54,7 @@ func TestMatchers(t *testing.T) {
 			[]e{[]string{"a"}, A{"b"}},
 		},
 		{"test Cond", gomock.Cond(func(x any) bool { return x.(B).Name == "Dam" }), []e{B{Name: "Dam"}}, []e{B{Name: "Dave"}}},
+		{"test OneOf", gomock.OneOf([]any{1, 2, 3}), []e{1, 2, 3}, []e{4, 5, 6}},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -142,6 +143,54 @@ func TestAssignableToTypeOfMatcher(t *testing.T) {
 	ctxWithValue := context.WithValue(context.Background(), ctxKey{}, "val")
 	if match := gomock.AssignableToTypeOf(ctxInterface).Matches(ctxWithValue); !match {
 		t.Errorf(`AssignableToTypeOf(context.Context) should not match ctxWithValue`)
+	}
+}
+
+func TestOneOf(t *testing.T) {
+	tests := []struct {
+		name      string
+		wanted    []any
+		given     any
+		wantMatch bool
+	}{
+		{
+			name:      "match for one of many",
+			wanted:    []any{1, 2, 3},
+			given:     1,
+			wantMatch: true,
+		},
+		{
+			name:      "match for single",
+			wanted:    []any{1},
+			given:     1,
+			wantMatch: true,
+		},
+		{
+			name:      "match for mixed types",
+			wanted:    []any{1, "5", 0x4},
+			given:     0x4,
+			wantMatch: true,
+		},
+		{
+			name:      "not match for empty slice",
+			wanted:    []any{},
+			given:     1,
+			wantMatch: false,
+		},
+		{
+			name:      "not match for type mismatch",
+			wanted:    []any{1, 2, 3},
+			given:     "a",
+			wantMatch: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := gomock.OneOf(tt.wanted).Matches(tt.given); got != tt.wantMatch {
+				t.Errorf("got = %v, wantMatch %v", got, tt.wantMatch)
+			}
+		})
 	}
 }
 
