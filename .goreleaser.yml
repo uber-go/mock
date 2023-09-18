@@ -4,7 +4,7 @@
 ---
 release:
   github:
-    owner: uber
+    owner: uber-go
     name: mock
 
 builds:
@@ -30,6 +30,7 @@ archives:
    files:
      - LICENSE
      - README.md
+
 checksum:
 snapshot:
   name_template: "snap-{{ .Commit }}"
