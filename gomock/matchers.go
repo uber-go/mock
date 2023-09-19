@@ -180,6 +180,27 @@ func (m assignableToTypeOfMatcher) String() string {
 	return "is assignable to " + m.targetType.Name()
 }
 
+type anyOfMatcher struct {
+	matchers []Matcher
+}
+
+func (am anyOfMatcher) Matches(x any) bool {
+	for _, m := range am.matchers {
+		if m.Matches(x) {
+			return true
+		}
+	}
+	return false
+}
+
+func (am anyOfMatcher) String() string {
+	ss := make([]string, 0, len(am.matchers))
+	for _, matcher := range am.matchers {
+		ss = append(ss, matcher.String())
+	}
+	return strings.Join(ss, " | ")
+}
+
 type allMatcher struct {
 	matchers []Matcher
 }
@@ -301,6 +322,28 @@ func Any() Matcher { return anyMatcher{} }
 //	Cond(func(x any){return x.(int) == 1}).Matches(1) // returns true
 //	Cond(func(x any){return x.(int) == 2}).Matches(1) // returns false
 func Cond(fn func(x any) bool) Matcher { return condMatcher{fn} }
+
+// AnyOf returns a composite Matcher that returns true if at least one of the
+// matchers returns true.
+//
+// Example usage:
+//
+//	AnyOf(1, 2, 3).Matches(2) // returns true
+//	AnyOf(1, 2, 3).Matches(10) // returns false
+//	AnyOf(Nil(), Len(2)).Matches(nil) // returns true
+//	AnyOf(Nil(), Len(2)).Matches("hi") // returns true
+//	AnyOf(Nil(), Len(2)).Matches("hello") // returns false
+func AnyOf(xs ...any) Matcher {
+	ms := make([]Matcher, 0, len(xs))
+	for _, x := range xs {
+		if m, ok := x.(Matcher); ok {
+			ms = append(ms, m)
+		} else {
+			ms = append(ms, Eq(x))
+		}
+	}
+	return anyOfMatcher{ms}
+}
 
 // Eq returns a matcher that matches on equality.
 //

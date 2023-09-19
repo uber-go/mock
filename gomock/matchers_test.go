@@ -39,6 +39,9 @@ func TestMatchers(t *testing.T) {
 		yes, no []e
 	}{
 		{"test Any", gomock.Any(), []e{3, nil, "foo"}, nil},
+		{"test AnyOf", gomock.AnyOf(gomock.Nil(), gomock.Len(2), 1, 2, 3),
+			[]e{nil, "hi", "to", 1, 2, 3},
+			[]e{"s", "", 0, 4, 10}},
 		{"test All", gomock.Eq(4), []e{4}, []e{3, "blah", nil, int64(4)}},
 		{"test Nil", gomock.Nil(),
 			[]e{nil, (error)(nil), (chan bool)(nil), (*int)(nil)},
