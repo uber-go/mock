@@ -57,3 +57,11 @@ type SolarSystem[T constraints.Ordered] interface {
 type Earth[R any] interface {
 	Water(R) []R
 }
+
+type Water[R any, C UnsignedInteger] interface {
+	Fish(R) []C
+}
+
+type UnsignedInteger interface {
+	~uint | ~uint32 | ~uint64
+}
