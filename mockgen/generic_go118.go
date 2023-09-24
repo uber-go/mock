@@ -127,4 +127,4 @@ func (p *fileParser) parseGenericMethod(field *ast.Field, it *namedInterface, if
 	return p.parseMethod(nf, it, iface, pkg, tps)
 }
 
-var errIgnore = errors.New("parser decided to ignore the interface for constraints")
+var errConstraintInterface = errors.New("interface contains constraints")
