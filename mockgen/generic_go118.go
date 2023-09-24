@@ -102,12 +102,12 @@ func (p *fileParser) parseGenericMethod(field *ast.Field, it *namedInterface, if
 		typ = v.X
 	case *ast.UnaryExpr:
 		if v.Op == token.TILDE {
-			return nil, errIgnore
+			return nil, errConstraintInterface
 		}
 		return nil, fmt.Errorf("~T may only appear as constraint for %T", field.Type)
 	case *ast.BinaryExpr:
 		if v.Op == token.OR {
-			return nil, errIgnore
+			return nil, errConstraintInterface
 		}
 		return nil, fmt.Errorf("A|B may only appear as constraint for %T", field.Type)
 	default:
