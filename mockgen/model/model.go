@@ -20,6 +20,7 @@ import (
 	"fmt"
 	"io"
 	"reflect"
+	"regexp"
 	"strings"
 )
 
@@ -415,10 +416,7 @@ func typeFromType(t reflect.Type) (Type, error) {
 	}
 
 	if imp := t.PkgPath(); imp != "" {
-		return &NamedType{
-			Package: impPath(imp),
-			Type:    t.Name(),
-		}, nil
+		return typeFromNamedType(imp, t.Name()), nil
 	}
 
 	// only unnamed or predeclared types after here
@@ -500,6 +498,51 @@ func typeFromType(t reflect.Type) (Type, error) {
 
 	// TODO: Struct, UnsafePointer
 	return nil, fmt.Errorf("can't yet turn %v (%v) into a model.Type", t, t.Kind())
+}
+
+var genericRegex = regexp.MustCompile(`([^[\]]+)\[([^]]+(?:\[[^\]]*\])?[^[]*)\]`)
+
+func typeFromNamedType(typePackage string, typeName string) Type {
+	namedType := &NamedType{
+		Package: impPath(typePackage),
+		Type:    typeName,
+	}
+
+	match := genericRegex.FindStringSubmatch(typeName)
+	if len(match) < 3 {
+		// not a generic type
+		return namedType
+	}
+
+	namedType.TypeParams = &TypeParametersType{}
+
+	// likely a generic type
+	// e.g. Foo[Bar] / Foo[Baz.Bar] / Foo[Bar, Baz.Bar]
+	namedType.Type = match[1] // e.g. Foo
+	for _, typeParam := range strings.Split(match[2], ",") {
+		typeParam = strings.TrimSpace(typeParam)
+
+		var typeParamType Type
+
+		packageDotIdx := strings.LastIndex(typeParam, ".")
+		if packageDotIdx == -1 {
+			typeParamType = PredeclaredType(typeParam) // e.g. Bar
+		} else {
+			typeName := typeParam[packageDotIdx+1:]  // e.g. Bar
+			packageName := typeParam[:packageDotIdx] // e.g. Baz
+			typeParamType = &NamedType{
+				Package: impPath(packageName),
+				Type:    typeName,
+			}
+		}
+
+		namedType.TypeParams.TypeParameters = append(
+			namedType.TypeParams.TypeParameters,
+			typeParamType,
+		)
+	}
+
+	return namedType
 }
 
 // impPath sanitizes the package path returned by `PkgPath` method of a reflect Type so that
