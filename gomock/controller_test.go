@@ -290,19 +290,19 @@ func TestUnexpectedArgValue_FirstArg(t *testing.T) {
 		// the method argument (of TestStruct type) has 1 unexpected value (for the Message field)
 		ctrl.Call(subject, "ActOnTestStructMethod", TestStruct{Number: 123, Message: "no message", Slice: []int{1, 2}}, 15)
 	}, "Unexpected call to", "doesn't match the argument at index 0",
-		"Got: gomock_test.TestStruct{Number:123, Message:\"no message\", Slice:[]int{1, 2}}\nWant: is equal to gomock_test.TestStruct{Number:123, Message:\"hello %s\", Slice:[]int{1, 2}}")
+		"Got: gomock_test.TestStruct{Number:123, Message:\"no message\", Slice:[]int{1, 2}} (gomock_test.TestStruct)\nWant: is equal to gomock_test.TestStruct{Number:123, Message:\"hello %s\", Slice:[]int{1, 2}} (gomock_test.TestStruct)")
 
 	reporter.assertFatal(func() {
 		// the method argument (of TestStruct type) has 3 unexpected values (for all fields)
 		ctrl.Call(subject, "ActOnTestStructMethod", TestStruct{Number: 11, Message: "no message", Slice: []int{}}, 15)
 	}, "Unexpected call to", "doesn't match the argument at index 0",
-		"Got: gomock_test.TestStruct{Number:11, Message:\"no message\", Slice:[]int{}}\nWant: is equal to gomock_test.TestStruct{Number:123, Message:\"hello %s\", Slice:[]int{1, 2}}")
+		"Got: gomock_test.TestStruct{Number:11, Message:\"no message\", Slice:[]int{}} (gomock_test.TestStruct)\nWant: is equal to gomock_test.TestStruct{Number:123, Message:\"hello %s\", Slice:[]int{1, 2}} (gomock_test.TestStruct)")
 
 	reporter.assertFatal(func() {
 		// the method argument (of TestStruct type) has 1 unexpected values (for slice field)
 		ctrl.Call(subject, "ActOnTestStructMethod", TestStruct{Number: 123, Message: "hello %s", Slice: nil}, 15)
 	}, "Unexpected call to", "doesn't match the argument at index 0",
-		"Got: gomock_test.TestStruct{Number:123, Message:\"hello %s\", Slice:[]int(nil)}\nWant: is equal to gomock_test.TestStruct{Number:123, Message:\"hello %s\", Slice:[]int{1, 2}}")
+		"Got: gomock_test.TestStruct{Number:123, Message:\"hello %s\", Slice:[]int(nil)} (gomock_test.TestStruct)\nWant: is equal to gomock_test.TestStruct{Number:123, Message:\"hello %s\", Slice:[]int{1, 2}} (gomock_test.TestStruct)")
 
 	reporter.assertFatal(func() {
 		// The expected call wasn't made.
@@ -828,7 +828,7 @@ func TestVariadicArgumentsGotFormatterTooManyArgsFailure(t *testing.T) {
 	rep.assertFatal(func() {
 		ctrl.Call(s, "VariadicMethod", 0, "2", "3")
 	}, "expected call to", "doesn't match the argument at index 1",
-		"Got: test{[2 3]}\nWant: is equal to 1")
+		"Got: test{[2 3]}\nWant: is equal to \"1\" (string)")
 	ctrl.Call(s, "VariadicMethod", 0, "1")
 	ctrl.Finish()
 }
