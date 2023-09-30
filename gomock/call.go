@@ -463,7 +463,7 @@ func (c *Call) addAction(action func([]any) []any) {
 }
 
 func formatGottenArg(m Matcher, arg any) string {
-	got := fmt.Sprintf("%#v", arg)
+	got := fmt.Sprintf("%#v (%T)", arg, arg)
 	if gs, ok := m.(GotFormatter); ok {
 		got = gs.Got(arg)
 	}
