@@ -12,7 +12,7 @@ import (
 	"golang.org/x/tools/go/gcexportdata"
 )
 
-func archiveMode(importpath, archive string) (*model.Package, error) {
+func archiveMode(importPath string, symbols []string, archive string) (*model.Package, error) {
 	f, err := os.Open(archive)
 	if err != nil {
 		return nil, err
@@ -25,7 +25,7 @@ func archiveMode(importpath, archive string) (*model.Package, error) {
 
 	fset := token.NewFileSet()
 	imports := make(map[string]*types.Package)
-	tp, err := gcexportdata.Read(r, fset, imports, importpath)
+	tp, err := gcexportdata.Read(r, fset, imports, importPath)
 	if err != nil {
 		return nil, err
 	}
@@ -34,7 +34,7 @@ func archiveMode(importpath, archive string) (*model.Package, error) {
 		Name:    tp.Name(),
 		PkgPath: tp.Path(),
 	}
-	for _, name := range tp.Scope().Names() {
+	for _, name := range symbols {
 		m := tp.Scope().Lookup(name)
 		tn, ok := m.(*types.TypeName)
 		if !ok {

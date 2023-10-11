@@ -85,12 +85,6 @@ func main() {
 	var packageName string
 	if *source != "" {
 		pkg, err = sourceMode(*source)
-	} else if *archive != "" {
-		if flag.NArg() != 1 {
-			usage()
-			log.Fatal("Expected exactly one argument")
-		}
-		pkg, err = archiveMode(flag.Arg(0), *archive)
 	} else {
 		if flag.NArg() != 2 {
 			usage()
@@ -98,17 +92,21 @@ func main() {
 		}
 		packageName = flag.Arg(0)
 		interfaces := strings.Split(flag.Arg(1), ",")
-		if packageName == "." {
-			dir, err := os.Getwd()
-			if err != nil {
-				log.Fatalf("Get current directory failed: %v", err)
+		if *archive != "" {
+			pkg, err = archiveMode(packageName, interfaces, *archive)
+		} else {
+			if packageName == "." {
+				dir, err := os.Getwd()
+				if err != nil {
+					log.Fatalf("Get current directory failed: %v", err)
+				}
+				packageName, err = packageNameOfDir(dir)
+				if err != nil {
+					log.Fatalf("Parse package name failed: %v", err)
+				}
 			}
-			packageName, err = packageNameOfDir(dir)
-			if err != nil {
-				log.Fatalf("Parse package name failed: %v", err)
-			}
+			pkg, err = reflectMode(packageName, interfaces)
 		}
-		pkg, err = reflectMode(packageName, interfaces)
 	}
 	if err != nil {
 		log.Fatalf("Loading input failed: %v", err)
@@ -234,13 +232,6 @@ func usage() {
 
 const usageText = `mockgen has three modes of operation: archive, source and reflect.
 
-Archive mode generates mock interfaces from a package archive
-file (.a). It is enabled by using the -archive flag, the import
-path is also needed as a non-flag argument. No other flags are
-required.
-Example:
-	mockgen -archive=pkg.a importpath
-
 Source mode generates mock interfaces from a source file.
 It is enabled by using the -source flag. Other flags that
 may be useful in this mode are -imports and -aux_files.
@@ -253,6 +244,13 @@ by passing two non-flag arguments: an import path, and a
 comma-separated list of symbols.
 Example:
 	mockgen database/sql/driver Conn,Driver
+
+Archive mode generates mock interfaces from a package archive
+file (.a). It is enabled by using the -archive flag and two 
+two non-flag arguments: an import path, and a comma-separated 
+list of symbols.
+Example:
+	mockgen -archive=pkg.a database/sql/driver Conn,Driver
 
 `
 
