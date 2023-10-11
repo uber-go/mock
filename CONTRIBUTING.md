@@ -2,6 +2,11 @@
 
 First off, thank you for taking an interest to contribute to this project!
 
+> **Tip:** You'll need to sign [Uber's CLA](https://cla-assistant.io/uber-go/mock)
+> before we can accept any of your contributions.
+> If necessary, a bot will remind
+> you to accept the CLA when you open your pull request.
+
 ## Opening issues
 
 When opening a [new issue](https://github.com/uber-go/mock/issues/new/choose)
