@@ -2,7 +2,9 @@ package concurrent
 
 import (
 	"context"
+	"fmt"
 	"testing"
+	"time"
 
 	"go.uber.org/mock/gomock"
 	mock "go.uber.org/mock/sample/concurrent/mock"
@@ -19,6 +21,26 @@ func call(ctx context.Context, m Math) (int, error) {
 		return r, nil
 	case <-ctx.Done():
 		return 0, ctx.Err()
+	}
+}
+
+func waitForMocks(ctx context.Context, ctrl *gomock.Controller) error {
+	ticker := time.NewTicker(1 * time.Millisecond)
+	defer ticker.Stop()
+
+	timeout := time.After(3 * time.Millisecond)
+
+	for {
+		select {
+		case <-ticker.C:
+			if ctrl.Satisfied() {
+				return nil
+			}
+		case <-timeout:
+			return fmt.Errorf("timeout waiting for mocks to be satisfied")
+		case <-ctx.Done():
+			return fmt.Errorf("context cancelled")
+		}
 	}
 }
 
@@ -41,4 +63,27 @@ func TestConcurrentWorks(t *testing.T) {
 	if _, err := call(ctx, m); err != nil {
 		t.Error("call failed:", err)
 	}
+}
+
+func TestCancelWhenMocksSatisfied(t *testing.T) {
+	ctrl, ctx := gomock.WithContext(context.Background(), t)
+	m := mock.NewMockMath(ctrl)
+	m.EXPECT().Sum(1, 2).Return(3).MinTimes(1)
+
+	// This goroutine calls the mock and then waits for the context to be done.
+	go func() {
+		for {
+			m.Sum(1, 2)
+			select {
+			case <-ctx.Done():
+				return
+			}
+		}
+	}()
+
+	// waitForMocks spawns another goroutine which blocks until ctrl.Satisfied() is true.
+	if err := waitForMocks(ctx, ctrl); err != nil {
+		t.Error("call failed:", err)
+	}
+	ctrl.Finish()
 }

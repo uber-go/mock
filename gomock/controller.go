@@ -246,6 +246,8 @@ func (ctrl *Controller) Finish() {
 // Satisfied returns whether all expected calls bound to this Controller have been satisfied.
 // Calling Finish is then guaranteed to not fail due to missing calls.
 func (ctrl *Controller) Satisfied() bool {
+	ctrl.mu.Lock()
+	defer ctrl.mu.Unlock()
 	return ctrl.expectedCalls.Satisfied()
 }
 
