@@ -33,9 +33,9 @@ go install go.uber.org/mock/mockgen@latest
 ### Archive mode
 
 Archive mode generates mock interfaces from a package archive
-file (.a). It is enabled by using the -archive flag, the import
-path is also needed as a non-flag argument. No other flags are
-required.
+file (.a). It is enabled by using the -archive flag and two
+non-flag arguments: an import path, and a comma-separated
+list of symbols.
 
 Example:
 

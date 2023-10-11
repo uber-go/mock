@@ -157,8 +157,8 @@ func typeFromGoTypesType(t types.Type) (Type, error) {
 		if t.NumFields() == 0 {
 			return PredeclaredType("struct{}"), nil
 		}
+		// TODO: UnsafePointer
 	}
 
-	// TODO: Struct, UnsafePointer
 	return nil, fmt.Errorf("can't yet turn %v (%T) into a model.Type", t.String(), t)
 }
