@@ -261,7 +261,7 @@ Example:
 
 Archive mode generates mock interfaces from a package archive
 file (.a). It is enabled by using the -archive flag and two
-two non-flag arguments: an import path, and a comma-separated
+non-flag arguments: an import path, and a comma-separated
 list of symbols.
 Example:
 	mockgen -archive=pkg.a database/sql/driver Conn,Driver
