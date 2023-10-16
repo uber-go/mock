@@ -17,6 +17,7 @@ package gomock
 import (
 	"fmt"
 	"reflect"
+	"regexp"
 	"strings"
 )
 
@@ -166,6 +167,26 @@ func (n notMatcher) Matches(x any) bool {
 
 func (n notMatcher) String() string {
 	return "not(" + n.m.String() + ")"
+}
+
+type regexMatcher struct {
+	regex string
+}
+
+func (m regexMatcher) Matches(x any) bool {
+	str, ok := x.(string)
+	if !ok {
+		return false
+	}
+	match, err := regexp.MatchString(m.regex, str)
+	if !match || err != nil {
+		return false
+	}
+	return true
+}
+
+func (m regexMatcher) String() string {
+	return "matching regex " + m.regex
 }
 
 type assignableToTypeOfMatcher struct {
@@ -380,6 +401,17 @@ func Not(x any) Matcher {
 		return notMatcher{m}
 	}
 	return notMatcher{Eq(x)}
+}
+
+// Regex checks whether a string parameter matches the associated regex.
+//
+// Example usage:
+//
+// Regex("[0-9]{2}:[0-9]{2}").Matches("23:02") // returns true
+// Regex("[0-9]{2}:[0-9]{2}").Matches("hello world") // returns false
+// Regex("[0-9]{2}").Matches(21) // returns false as it's not a string
+func Regex(regexStr string) Matcher {
+	return regexMatcher{regex: regexStr}
 }
 
 // AssignableToTypeOf is a Matcher that matches if the parameter to the mock

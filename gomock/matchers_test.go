@@ -47,6 +47,7 @@ func TestMatchers(t *testing.T) {
 			[]e{nil, (error)(nil), (chan bool)(nil), (*int)(nil)},
 			[]e{"", 0, make(chan bool), errors.New("err"), new(int)}},
 		{"test Not", gomock.Not(gomock.Eq(4)), []e{3, "blah", nil, int64(4)}, []e{4}},
+		{"test Regex", gomock.Regex("[0-9]{2}:[0-9]{2}"), []e{"23:02", "[23:02]: Hello world"}, []e{4, "23-02", "hello world", true}},
 		{"test All", gomock.All(gomock.Any(), gomock.Eq(4)), []e{4}, []e{3, "blah", nil, int64(4)}},
 		{"test Len", gomock.Len(2),
 			[]e{[]int{1, 2}, "ab", map[string]int{"a": 0, "b": 1}, [2]string{"a", "b"}},
@@ -89,6 +90,52 @@ func TestNotMatcher(t *testing.T) {
 	mockMatcher.EXPECT().Matches(5).Return(false)
 	if match := notMatcher.Matches(5); !match {
 		t.Errorf("notMatcher should match 5")
+	}
+}
+
+// A more thorough test of regexMatcher
+func TestRegexMatcher(t *testing.T) {
+	tests := []struct {
+		name               string
+		regex              string
+		input              any
+		wantMatch          bool
+		wantStringResponse string
+	}{
+		{
+			name:               "match for whole num regex with start and end position matching",
+			regex:              "^\\d+$",
+			input:              "2302",
+			wantMatch:          true,
+			wantStringResponse: "matching regex ^\\d+$",
+		},
+		{
+			name:               "match for valid regex with start and end position matching on longer string",
+			regex:              "^[0-9]{2}:[0-9]{2}$",
+			input:              "[23:02]: Hello world",
+			wantMatch:          false,
+			wantStringResponse: "matching regex ^[0-9]{2}:[0-9]{2}$",
+		},
+		{
+			name:               "match for invalid regex",
+			regex:              "^[0-9{2}:[0-9]{2}$",
+			input:              "23:02",
+			wantMatch:          false,
+			wantStringResponse: "matching regex ^[0-9{2}:[0-9]{2}$",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			matcher := gomock.Regex(tt.regex)
+
+			if got := matcher.Matches(tt.input); got != tt.wantMatch {
+				t.Errorf("got = %v, wantMatch = %v", got, tt.wantMatch)
+			}
+			if gotStr := matcher.String(); gotStr != tt.wantStringResponse {
+				t.Errorf("got string = %v, want string = %v", gotStr, tt.wantStringResponse)
+			}
+		})
 	}
 }
 
