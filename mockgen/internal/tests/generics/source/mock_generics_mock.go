@@ -5,6 +5,7 @@
 //
 //	mockgen --source=generics.go --destination=source/mock_generics_mock.go --package source
 //
+
 // Package source is a generated GoMock package.
 package source
 

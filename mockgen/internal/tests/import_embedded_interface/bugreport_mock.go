@@ -5,6 +5,7 @@
 //
 //	mockgen -destination bugreport_mock.go -package bugreport -source=bugreport.go
 //
+
 // Package bugreport is a generated GoMock package.
 package bugreport
 

@@ -5,6 +5,7 @@
 //
 //	mockgen -destination internal/mock_gomock/mock_matcher.go go.uber.org/mock/gomock Matcher
 //
+
 // Package mock_gomock is a generated GoMock package.
 package mock_gomock
 

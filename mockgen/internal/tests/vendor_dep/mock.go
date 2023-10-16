@@ -5,6 +5,7 @@
 //
 //	mockgen -package vendor_dep -destination mock.go go.uber.org/mock/mockgen/internal/tests/vendor_dep VendorsDep
 //
+
 // Package vendor_dep is a generated GoMock package.
 package vendor_dep
 

@@ -5,6 +5,7 @@
 //
 //	mockgen -package const_length -destination mock.go -source input.go
 //
+
 // Package const_length is a generated GoMock package.
 package const_length
 

@@ -5,6 +5,7 @@
 //
 //	mockgen -destination source_mock_package/mock.go -source=vendor_dep.go
 //
+
 // Package mock_vendor_dep is a generated GoMock package.
 package mock_vendor_dep
 

@@ -5,6 +5,7 @@
 //
 //	mockgen --source=panic.go --destination=mock_test.go --package=paniccode
 //
+
 // Package paniccode is a generated GoMock package.
 package paniccode
 

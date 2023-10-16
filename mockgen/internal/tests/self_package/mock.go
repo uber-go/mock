@@ -5,6 +5,7 @@
 //
 //	mockgen -package core -self_package go.uber.org/mock/mockgen/internal/tests/self_package -destination mock.go go.uber.org/mock/mockgen/internal/tests/self_package Methods
 //
+
 // Package core is a generated GoMock package.
 package core
 

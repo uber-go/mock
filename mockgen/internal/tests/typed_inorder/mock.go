@@ -5,6 +5,7 @@
 //
 //	mockgen -package typed_inorder -source=input.go -destination=mock.go -typed
 //
+
 // Package typed_inorder is a generated GoMock package.
 package typed_inorder
 

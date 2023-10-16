@@ -5,6 +5,7 @@
 //
 //	mockgen -destination mock/concurrent_mock.go go.uber.org/mock/sample/concurrent Math
 //
+
 // Package mock_concurrent is a generated GoMock package.
 package mock_concurrent
 

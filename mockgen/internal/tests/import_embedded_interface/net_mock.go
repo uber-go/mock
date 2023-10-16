@@ -5,6 +5,7 @@
 //
 //	mockgen -destination net_mock.go -package bugreport -source=net.go
 //
+
 // Package bugreport is a generated GoMock package.
 package bugreport
 

@@ -5,6 +5,7 @@
 //
 //	mockgen -package defined_import_local_name -destination mock.go -source input.go -imports b_mock=bytes,c_mock=context
 //
+
 // Package defined_import_local_name is a generated GoMock package.
 package defined_import_local_name
 

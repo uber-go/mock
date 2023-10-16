@@ -5,6 +5,7 @@
 //
 //	mockgen -package dot_imports -destination mock.go -source input.go
 //
+
 // Package dot_imports is a generated GoMock package.
 package dot_imports
 
