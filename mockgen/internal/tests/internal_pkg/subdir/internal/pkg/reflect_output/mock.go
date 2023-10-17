@@ -5,6 +5,7 @@
 //
 //	mockgen -destination subdir/internal/pkg/reflect_output/mock.go go.uber.org/mock/mockgen/internal/tests/internal_pkg/subdir/internal/pkg Intf
 //
+
 // Package mock_pkg is a generated GoMock package.
 package mock_pkg
 

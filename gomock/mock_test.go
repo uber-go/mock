@@ -5,6 +5,7 @@
 //
 //	mockgen -destination mock_test.go -package gomock_test -source example_test.go
 //
+
 // Package gomock_test is a generated GoMock package.
 package gomock_test
 

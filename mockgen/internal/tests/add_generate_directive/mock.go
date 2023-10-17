@@ -5,6 +5,7 @@
 //
 //	mockgen -write_generate_directive -destination mock.go -package add_generate_directive . Foo
 //
+
 // Package add_generate_directive is a generated GoMock package.
 package add_generate_directive
 

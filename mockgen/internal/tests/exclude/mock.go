@@ -5,6 +5,7 @@
 //
 //	mockgen -source=./internal/tests/exclude/interfaces.go -destination=./internal/tests/exclude/mock.go -package=exclude -exclude_interfaces=IgnoreMe,IgnoreMe2
 //
+
 // Package exclude is a generated GoMock package.
 package exclude
 

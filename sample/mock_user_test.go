@@ -5,6 +5,7 @@
 //
 //	mockgen -destination mock_user_test.go -package user_test go.uber.org/mock/sample Index,Embed,Embedded
 //
+
 // Package user_test is a generated GoMock package.
 package user_test
 

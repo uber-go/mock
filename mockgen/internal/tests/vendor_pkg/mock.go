@@ -5,6 +5,7 @@
 //
 //	mockgen -destination mock.go -package vendor_pkg golang.org/x/tools/present Elem
 //
+
 // Package vendor_pkg is a generated GoMock package.
 package vendor_pkg
 

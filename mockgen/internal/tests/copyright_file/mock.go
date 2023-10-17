@@ -12,6 +12,7 @@
 //
 //	mockgen -package empty_interface -destination mock.go -source input.go -copyright_file=mock_copyright_header
 //
+
 // Package empty_interface is a generated GoMock package.
 package empty_interface
 

@@ -5,6 +5,7 @@
 //
 //	mockgen -destination mock.go -package extra_import . Foo
 //
+
 // Package extra_import is a generated GoMock package.
 package extra_import
 

@@ -5,6 +5,7 @@
 //
 //	mockgen -source subdir/internal/pkg/input.go -destination subdir/internal/pkg/source_output/mock.go
 //
+
 // Package mock_pkg is a generated GoMock package.
 package mock_pkg
 

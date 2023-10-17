@@ -5,6 +5,7 @@
 //
 //	mockgen -source greeter.go -destination greeter_mock_test.go -package greeter
 //
+
 // Package greeter is a generated GoMock package.
 package greeter
 
