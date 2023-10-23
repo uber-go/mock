@@ -12,7 +12,10 @@ func InterfaceFromGoTypesType(it *types.Interface) (*Interface, error) {
 
 	for i := 0; i < it.NumMethods(); i++ {
 		mt := it.Method(i)
-		// TODO: need to skip unexported methods? or just raise an error?
+		// Skip unexported methods.
+		if !mt.Exported() {
+			continue
+		}
 		m := &Method{
 			Name: mt.Name(),
 		}
@@ -36,13 +39,15 @@ func funcArgsFromGoTypesType(t *types.Signature) (in []*Parameter, variadic *Par
 	}
 	var p *Parameter
 	for i := 0; i < nin; i++ {
-		if p, err = parameterFromGoTypesType(t.Params().At(i), false); err != nil {
+		p, err = parameterFromGoTypesType(t.Params().At(i), false)
+		if err != nil {
 			return
 		}
 		in = append(in, p)
 	}
 	if t.Variadic() {
-		if p, err = parameterFromGoTypesType(t.Params().At(nin), true); err != nil {
+		p, err = parameterFromGoTypesType(t.Params().At(nin), true)
+		if err != nil {
 			return
 		}
 		variadic = p
@@ -70,12 +75,6 @@ func parameterFromGoTypesType(v *types.Var, variadic bool) (*Parameter, error) {
 }
 
 func typeFromGoTypesType(t types.Type) (Type, error) {
-	// Hack workaround for https://golang.org/issue/3853.
-	// This explicit check should not be necessary.
-	// if t == byteType {
-	// 	return PredeclaredType("byte"), nil
-	// }
-
 	if t, ok := t.(*types.Named); ok {
 		tn := t.Obj()
 		if tn.Pkg() == nil {
