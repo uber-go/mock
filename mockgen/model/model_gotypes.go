@@ -42,8 +42,7 @@ func funcArgsFromGoTypesType(t *types.Signature) (in []*Parameter, variadic *Par
 		in = append(in, p)
 	}
 	if t.Variadic() {
-		p, err = parameterFromGoTypesType(t.Params().At(nin), true)
-		if err != nil {
+		if p, err = parameterFromGoTypesType(t.Params().At(nin), true); err != nil {
 			return
 		}
 		variadic = p
