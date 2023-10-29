@@ -47,7 +47,7 @@ func TestMatchers(t *testing.T) {
 			[]e{nil, (error)(nil), (chan bool)(nil), (*int)(nil)},
 			[]e{"", 0, make(chan bool), errors.New("err"), new(int)}},
 		{"test Not", gomock.Not(gomock.Eq(4)), []e{3, "blah", nil, int64(4)}, []e{4}},
-		{"test Regex", gomock.Regex("[0-9]{2}:[0-9]{2}"), []e{"23:02", "[23:02]: Hello world"}, []e{4, "23-02", "hello world", true}},
+		{"test Regex", gomock.Regex("[0-9]{2}:[0-9]{2}"), []e{"23:02", "[23:02]: Hello world", []byte("23:02")}, []e{4, "23-02", "hello world", true, []byte("23-02")}},
 		{"test All", gomock.All(gomock.Any(), gomock.Eq(4)), []e{4}, []e{3, "blah", nil, int64(4)}},
 		{"test Len", gomock.Len(2),
 			[]e{[]int{1, 2}, "ab", map[string]int{"a": 0, "b": 1}, [2]string{"a", "b"}},
@@ -117,11 +117,18 @@ func TestRegexMatcher(t *testing.T) {
 			wantStringResponse: "matching regex ^[0-9]{2}:[0-9]{2}$",
 		},
 		{
+			name:               "match for valid regex with struct as bytes",
+			regex:              `^{"id":[0-9]{2},"name":"world"}$`,
+			input:              []byte{123, 34, 105, 100, 34, 58, 49, 50, 44, 34, 110, 97, 109, 101, 34, 58, 34, 119, 111, 114, 108, 100, 34, 125},
+			wantMatch:          true,
+			wantStringResponse: `matching regex ^{"id":[0-9]{2},"name":"world"}$`,
+		},
+		{
 			name:               "match for invalid regex",
-			regex:              "^[0-9{2}:[0-9]{2}$",
+			regex:              `^[0-9]\\?{2}:[0-9]{2}$`,
 			input:              "23:02",
 			wantMatch:          false,
-			wantStringResponse: "matching regex ^[0-9{2}:[0-9]{2}$",
+			wantStringResponse: "error parsing regexp: invalid nested repetition operator: `?{2}`",
 		},
 	}
 
