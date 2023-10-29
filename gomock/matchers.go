@@ -170,15 +170,10 @@ func (n notMatcher) String() string {
 }
 
 type regexMatcher struct {
-	regex      *regexp.Regexp
-	compileErr error
+	regex *regexp.Regexp
 }
 
 func (m regexMatcher) Matches(x any) bool {
-	if m.regex == nil {
-		return false
-	}
-
 	switch t := x.(type) {
 	case string:
 		return m.regex.MatchString(t)
@@ -190,10 +185,7 @@ func (m regexMatcher) Matches(x any) bool {
 }
 
 func (m regexMatcher) String() string {
-	if m.compileErr != nil {
-		return m.compileErr.Error()
-	}
-	return "matching regex " + m.regex.String()
+	return "matches regex " + m.regex.String()
 }
 
 type assignableToTypeOfMatcher struct {
@@ -415,15 +407,11 @@ func Not(x any) Matcher {
 // Example usage:
 //
 // Regex("[0-9]{2}:[0-9]{2}").Matches("23:02") // returns true
-// Regex("[0-9]{2}:[0-9]{2}").Matches([]byte{50,51,58,48,50}) // returns true
+// Regex("[0-9]{2}:[0-9]{2}").Matches([]byte{'2', '3', ':', '0', '2'}) // returns true
 // Regex("[0-9]{2}:[0-9]{2}").Matches("hello world") // returns false
 // Regex("[0-9]{2}").Matches(21) // returns false as it's not a valid type
 func Regex(regexStr string) Matcher {
-	compiledRegexp, err := regexp.Compile(regexStr)
-	if err == nil {
-		return regexMatcher{regex: compiledRegexp}
-	}
-	return regexMatcher{regex: nil, compileErr: err}
+	return regexMatcher{regex: regexp.MustCompile(regexStr)}
 }
 
 // AssignableToTypeOf is a Matcher that matches if the parameter to the mock

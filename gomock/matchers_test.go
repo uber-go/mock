@@ -101,40 +101,46 @@ func TestRegexMatcher(t *testing.T) {
 		input              any
 		wantMatch          bool
 		wantStringResponse string
+		shouldPanic        bool
 	}{
 		{
 			name:               "match for whole num regex with start and end position matching",
 			regex:              "^\\d+$",
 			input:              "2302",
 			wantMatch:          true,
-			wantStringResponse: "matching regex ^\\d+$",
+			wantStringResponse: "matches regex ^\\d+$",
 		},
 		{
 			name:               "match for valid regex with start and end position matching on longer string",
 			regex:              "^[0-9]{2}:[0-9]{2}$",
 			input:              "[23:02]: Hello world",
 			wantMatch:          false,
-			wantStringResponse: "matching regex ^[0-9]{2}:[0-9]{2}$",
+			wantStringResponse: "matches regex ^[0-9]{2}:[0-9]{2}$",
 		},
 		{
 			name:               "match for valid regex with struct as bytes",
 			regex:              `^{"id":[0-9]{2},"name":"world"}$`,
 			input:              []byte{123, 34, 105, 100, 34, 58, 49, 50, 44, 34, 110, 97, 109, 101, 34, 58, 34, 119, 111, 114, 108, 100, 34, 125},
 			wantMatch:          true,
-			wantStringResponse: `matching regex ^{"id":[0-9]{2},"name":"world"}$`,
+			wantStringResponse: `matches regex ^{"id":[0-9]{2},"name":"world"}$`,
 		},
 		{
-			name:               "match for invalid regex",
-			regex:              `^[0-9]\\?{2}:[0-9]{2}$`,
-			input:              "23:02",
-			wantMatch:          false,
-			wantStringResponse: "error parsing regexp: invalid nested repetition operator: `?{2}`",
+			name:        "should panic when regex fails to compile",
+			regex:       `^[0-9]\\?{2}:[0-9]{2}$`,
+			shouldPanic: true,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			if tt.shouldPanic {
+				defer func() { _ = recover() }()
+			}
 			matcher := gomock.Regex(tt.regex)
+
+			if tt.shouldPanic {
+				t.Errorf("test did not panic, and should have")
+			}
 
 			if got := matcher.Matches(tt.input); got != tt.wantMatch {
 				t.Errorf("got = %v, wantMatch = %v", got, tt.wantMatch)
