@@ -119,10 +119,10 @@ func TestRegexMatcher(t *testing.T) {
 		},
 		{
 			name:               "match for valid regex with struct as bytes",
-			regex:              `^{"id":[0-9]{2},"name":"world"}$`,
-			input:              []byte{123, 34, 105, 100, 34, 58, 49, 50, 44, 34, 110, 97, 109, 101, 34, 58, 34, 119, 111, 114, 108, 100, 34, 125},
+			regex:              `^{"id":[0-9]{2}}$`,
+			input:              []byte{'{', '"', 'i', 'd', '"', ':', '1', '2', '}'},
 			wantMatch:          true,
-			wantStringResponse: `matches regex ^{"id":[0-9]{2},"name":"world"}$`,
+			wantStringResponse: `matches regex ^{"id":[0-9]{2}}$`,
 		},
 		{
 			name:        "should panic when regex fails to compile",

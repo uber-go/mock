@@ -406,10 +406,10 @@ func Not(x any) Matcher {
 //
 // Example usage:
 //
-// Regex("[0-9]{2}:[0-9]{2}").Matches("23:02") // returns true
-// Regex("[0-9]{2}:[0-9]{2}").Matches([]byte{'2', '3', ':', '0', '2'}) // returns true
-// Regex("[0-9]{2}:[0-9]{2}").Matches("hello world") // returns false
-// Regex("[0-9]{2}").Matches(21) // returns false as it's not a valid type
+//	Regex("[0-9]{2}:[0-9]{2}").Matches("23:02") // returns true
+//	Regex("[0-9]{2}:[0-9]{2}").Matches([]byte{'2', '3', ':', '0', '2'}) // returns true
+//	Regex("[0-9]{2}:[0-9]{2}").Matches("hello world") // returns false
+//	Regex("[0-9]{2}").Matches(21) // returns false as it's not a valid type
 func Regex(regexStr string) Matcher {
 	return regexMatcher{regex: regexp.MustCompile(regexStr)}
 }
