@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"os"
+	"path"
 	"path/filepath"
 	"reflect"
 	"regexp"
@@ -369,7 +370,7 @@ func Test_createPackageMap(t *testing.T) {
 
 func TestParsePackageImport_FallbackGoPath(t *testing.T) {
 	goPath := t.TempDir()
-	expectedPkgPath := filepath.Join("example.com", "foo")
+	expectedPkgPath := path.Join("example.com", "foo")
 	srcDir := filepath.Join(goPath, "src", expectedPkgPath)
 	err := os.MkdirAll(srcDir, 0o755)
 	if err != nil {
@@ -390,7 +391,7 @@ func TestParsePackageImport_FallbackMultiGoPath(t *testing.T) {
 	// first gopath
 	goPath := t.TempDir()
 	goPathList := []string{goPath}
-	expectedPkgPath := filepath.Join("example.com", "foo")
+	expectedPkgPath := path.Join("example.com", "foo")
 	srcDir := filepath.Join(goPath, "src", expectedPkgPath)
 	err := os.MkdirAll(srcDir, 0o755)
 	if err != nil {
