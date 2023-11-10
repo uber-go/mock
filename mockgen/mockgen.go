@@ -318,7 +318,7 @@ func (g *generator) Generate(pkg *model.Package, outputPkgName string, outputPac
 	g.p("//")
 	// only log the name of the executable, not the full path
 	name := filepath.Base(os.Args[0])
-	if runtime.GOOS == "windows" && strings.HasSuffix(name, ".exe") {
+	if runtime.GOOS == "windows" {
 		name = strings.TrimSuffix(name, ".exe")
 	}
 	g.p("//\t%v", strings.Join(append([]string{name}, os.Args[1:]...), " "))
