@@ -119,6 +119,8 @@ It supports the following flags:
 
 - `-typed`: Generate Type-safe 'Return', 'Do', 'DoAndReturn' function. (default false)
 
+- `-exclude_interfaces`: Comma-separated names of interfaces to be excluded
+
 For an example of the use of `mockgen`, see the `sample/` directory. In simple
 cases, you will need only the `-source` flag.
 
