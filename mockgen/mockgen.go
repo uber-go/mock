@@ -522,7 +522,7 @@ func (g *generator) GenerateMockMethods(mockType string, intf *model.Interface, 
 		_ = g.GenerateMockRecorderMethod(intf, mockType, m, shortTp, typed)
 		if typed {
 			g.p("")
-			_ = g.GenerateMockReturnCallMethod(intf, m, pkgOverride, longTp, shortTp)
+			_ = g.GenerateTypedCallMethods(intf, m, pkgOverride, longTp, shortTp)
 		}
 	}
 }
@@ -671,7 +671,8 @@ func (g *generator) GenerateMockRecorderMethod(intf *model.Interface, mockType s
 	return nil
 }
 
-func (g *generator) GenerateMockReturnCallMethod(intf *model.Interface, m *model.Method, pkgOverride, longTp, shortTp string) error {
+// GenerateTypedCallMethods generates typed methods by wrapping gomock.Call
+func (g *generator) GenerateTypedCallMethods(intf *model.Interface, m *model.Method, pkgOverride, longTp, shortTp string) error {
 	argNames := g.getArgNames(m, true /* in */)
 	retNames := g.getArgNames(m, false /* out */)
 	argTypes := g.getArgTypes(m, pkgOverride, true /* in */)
@@ -727,6 +728,14 @@ func (g *generator) GenerateMockReturnCallMethod(intf *model.Interface, m *model
 	g.p("func (%s *%sCall%s) DoAndReturn(f func(%v)%v) *%sCall%s {", idRecv, recvStructName, shortTp, argString, retString, recvStructName, shortTp)
 	g.in()
 	g.p(`%s.Call = %v.Call.DoAndReturn(f)`, idRecv, idRecv)
+	g.p("return %s", idRecv)
+	g.out()
+	g.p("}")
+
+	g.p("// Times rewrite *gomock.Call.Times")
+	g.p("func (%s *%sCall%s) Times(n int) *%sCall%s {", idRecv, recvStructName, shortTp, recvStructName, shortTp)
+	g.in()
+	g.p(`%s.Call = %v.Call.Times(n)`, idRecv, idRecv)
 	g.p("return %s", idRecv)
 	g.out()
 	g.p("}")
