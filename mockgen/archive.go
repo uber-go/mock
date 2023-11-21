@@ -31,8 +31,9 @@ func archiveMode(importPath string, symbols []string, archive string) (*model.Pa
 	}
 
 	pkg := &model.Package{
-		Name:    tp.Name(),
-		PkgPath: tp.Path(),
+		Name:       tp.Name(),
+		PkgPath:    tp.Path(),
+		Interfaces: make([]*model.Interface, 0, len(symbols)),
 	}
 	for _, name := range symbols {
 		m := tp.Scope().Lookup(name)
