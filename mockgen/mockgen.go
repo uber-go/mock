@@ -89,36 +89,39 @@ func main() {
 	var pkg *model.Package
 	var err error
 	var packageName string
-	if *modelGob != "" {
+
+	// Switch between modes
+	switch {
+	case *modelGob != "": // gob mode
 		pkg, err = gobMode(*modelGob)
-	} else if *source != "" {
+	case *source != "": // source mode
 		pkg, err = sourceMode(*source)
-	} else {
-		if flag.NArg() != 2 {
-			usage()
-			log.Fatal("Expected exactly two arguments")
-		}
+	case *archive != "": // archive mode
+		checkArgs()
 		packageName = flag.Arg(0)
 		interfaces := strings.Split(flag.Arg(1), ",")
-		if *archive != "" {
-			pkg, err = archiveMode(packageName, interfaces, *archive)
-		} else {
-			if packageName == "." {
-				dir, err := os.Getwd()
-				if err != nil {
-					log.Fatalf("Get current directory failed: %v", err)
-				}
-				packageName, err = packageNameOfDir(dir)
-				if err != nil {
-					log.Fatalf("Parse package name failed: %v", err)
-				}
+		pkg, err = archiveMode(packageName, interfaces, *archive)
+
+	default: // reflect mode
+		checkArgs()
+		packageName = flag.Arg(0)
+		interfaces := strings.Split(flag.Arg(1), ",")
+
+		if packageName == "." {
+			dir, err := os.Getwd()
+			if err != nil {
+				log.Fatalf("Get current directory failed: %v", err)
+			}
+			packageName, err = packageNameOfDir(dir)
+			if err != nil {
+				log.Fatalf("Parse package name failed: %v", err)
 			}
 
 			parser := packageModeParser{}
 			pkg, err = parser.parsePackage(packageName, interfaces)
 		}
-
 	}
+
 	if err != nil {
 		log.Fatalf("Loading input failed: %v", err)
 	}
@@ -236,6 +239,13 @@ func parseExcludeInterfaces(names string) map[string]struct{} {
 	}
 
 	return namesSet
+}
+
+func checkArgs() {
+	if flag.NArg() != 2 {
+		usage()
+		log.Fatal("Expected exactly two arguments")
+	}
 }
 
 func usage() {
