@@ -43,7 +43,7 @@ Example:
 # Build the package to a archive.
 go build -o pkg.a database/sql/driver
 
-mockgen -archive=pkg.a database/sql/driver
+mockgen -archive=pkg.a database/sql/driver Conn,Driver
 ```
 
 ### Source mode

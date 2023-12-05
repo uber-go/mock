@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"go/token"
 	"go/types"
-	"log"
 	"os"
 
 	"go.uber.org/mock/mockgen/model"
@@ -47,7 +46,7 @@ func archiveMode(importPath string, symbols []string, archive string) (*model.Pa
 		}
 		it, err := model.InterfaceFromGoTypesType(ti)
 		if err != nil {
-			log.Fatal(err)
+			return nil, err
 		}
 		it.Name = m.Name()
 		pkg.Interfaces = append(pkg.Interfaces, it)
