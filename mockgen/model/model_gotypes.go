@@ -6,7 +6,7 @@ import (
 )
 
 // InterfaceFromGoTypesType returns a pointer to an interface for the
-// given reflection interface type.
+// given interface type loaded from archive.
 func InterfaceFromGoTypesType(it *types.Interface) (*Interface, error) {
 	intf := &Interface{}
 
@@ -23,7 +23,7 @@ func InterfaceFromGoTypesType(it *types.Interface) (*Interface, error) {
 		var err error
 		m.In, m.Variadic, m.Out, err = funcArgsFromGoTypesType(mt.Type().(*types.Signature))
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("method %q: %w", mt.Name(), err)
 		}
 
 		intf.AddMethod(m)
@@ -37,25 +37,24 @@ func funcArgsFromGoTypesType(t *types.Signature) (in []*Parameter, variadic *Par
 	if t.Variadic() {
 		nin--
 	}
-	var p *Parameter
 	for i := 0; i < nin; i++ {
-		p, err = parameterFromGoTypesType(t.Params().At(i), false)
+		p, err := parameterFromGoTypesType(t.Params().At(i), false)
 		if err != nil {
-			return
+			return nil, nil, nil, err
 		}
 		in = append(in, p)
 	}
 	if t.Variadic() {
-		p, err = parameterFromGoTypesType(t.Params().At(nin), true)
+		p, err := parameterFromGoTypesType(t.Params().At(nin), true)
 		if err != nil {
-			return
+			return nil, nil, nil, err
 		}
 		variadic = p
 	}
 	for i := 0; i < t.Results().Len(); i++ {
-		p, err = parameterFromGoTypesType(t.Results().At(i), false)
+		p, err := parameterFromGoTypesType(t.Results().At(i), false)
 		if err != nil {
-			return
+			return nil, nil, nil, err
 		}
 		out = append(out, p)
 	}
