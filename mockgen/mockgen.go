@@ -378,7 +378,7 @@ func (g *generator) Generate(pkg *model.Package, outputPkgName string, outputPac
 		}
 
 		i := 0
-		for localNames[pkgName] || token.Lookup(pkgName).IsKeyword() {
+		for localNames[pkgName] || token.Lookup(pkgName).IsKeyword() || pkgName == "any" {
 			pkgName = base + strconv.Itoa(i)
 			i++
 		}
