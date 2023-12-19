@@ -3,8 +3,29 @@ All notable changes to this project will be documented in this file.
 
 This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
-## Unreleased
-- No changes yet.
+## 0.4.0 (20 Dec 2023)
+### Added
+- [#63][]: `AnyOf` matcher for values that satisfy at least one matcher.
+- [#114][]: `Regex` matcher.
+
+### Fixed
+- [#93][]: Ignore interfaces that contain type constraints.
+- [#101][]: Fix race condition on Controller.Satisfied.
+- [#121][]: Fix paths for windows.
+- [#127][]: Propogate -mock_names to Recorder and ReturnCall types.
+- [#132][]: Sanitize "any" package names.
+
+[#63]: https://github.com/uber-go/mock/pull/63
+[#93]: https://github.com/uber-go/mock/pull/93
+[#101]: https://github.com/uber-go/mock/pull/101
+[#114]: https://github.com/uber-go/mock/pull/114
+[#121]: https://github.com/uber-go/mock/pull/121
+[#127]: https://github.com/uber-go/mock/pull/127
+[#132]: https://github.com/uber-go/mock/pull/132
+
+Thanks to @favonia @hoonmin @pshopper @davidharrigan @dlsniper @merrett010
+@craig65535 @chemidy @tulzke @UnAfraid @JacobOaks @sywhang for their
+contributions this release.
 
 ## 0.3.0 (15 Sep 2023)
 ### Added
@@ -13,7 +34,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
   in the generated code.
 - [#46][]: `-write-generate-directive` for generating go:generate directives into
   the generated mock.
-- [#60][]: `Cond` matcher for specifying a conditional matcher as the result of a 
+- [#60][]: `Cond` matcher for specifying a conditional matcher as the result of a
   given function.
 - [#72][]: `exclude_interfaces` flag for specifying list of interfaces to exclude
   from mock generation.
