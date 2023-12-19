@@ -1,6 +1,6 @@
 package exclude
 
-//go:generate mockgen -source=interfaces.go -destination=mock.go -package=ignore -exclude_interfaces=IgnoreMe,IgnoreMe2
+//go:generate mockgen -source=interfaces.go -destination=mock.go -package=exclude -exclude_interfaces=IgnoreMe,IgnoreMe2
 
 type IgnoreMe interface {
 	A() bool

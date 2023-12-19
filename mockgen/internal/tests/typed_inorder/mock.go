@@ -47,31 +47,31 @@ func (m *MockAnimal) Feed(arg0 string) error {
 }
 
 // Feed indicates an expected call of Feed.
-func (mr *MockAnimalMockRecorder) Feed(arg0 any) *AnimalFeedCall {
+func (mr *MockAnimalMockRecorder) Feed(arg0 any) *MockAnimalFeedCall {
 	mr.mock.ctrl.T.Helper()
 	call := mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Feed", reflect.TypeOf((*MockAnimal)(nil).Feed), arg0)
-	return &AnimalFeedCall{Call: call}
+	return &MockAnimalFeedCall{Call: call}
 }
 
-// AnimalFeedCall wrap *gomock.Call
-type AnimalFeedCall struct {
+// MockAnimalFeedCall wrap *gomock.Call
+type MockAnimalFeedCall struct {
 	*gomock.Call
 }
 
 // Return rewrite *gomock.Call.Return
-func (c *AnimalFeedCall) Return(arg0 error) *AnimalFeedCall {
+func (c *MockAnimalFeedCall) Return(arg0 error) *MockAnimalFeedCall {
 	c.Call = c.Call.Return(arg0)
 	return c
 }
 
 // Do rewrite *gomock.Call.Do
-func (c *AnimalFeedCall) Do(f func(string) error) *AnimalFeedCall {
+func (c *MockAnimalFeedCall) Do(f func(string) error) *MockAnimalFeedCall {
 	c.Call = c.Call.Do(f)
 	return c
 }
 
 // DoAndReturn rewrite *gomock.Call.DoAndReturn
-func (c *AnimalFeedCall) DoAndReturn(f func(string) error) *AnimalFeedCall {
+func (c *MockAnimalFeedCall) DoAndReturn(f func(string) error) *MockAnimalFeedCall {
 	c.Call = c.Call.DoAndReturn(f)
 	return c
 }
@@ -85,31 +85,31 @@ func (m *MockAnimal) GetSound() string {
 }
 
 // GetSound indicates an expected call of GetSound.
-func (mr *MockAnimalMockRecorder) GetSound() *AnimalGetSoundCall {
+func (mr *MockAnimalMockRecorder) GetSound() *MockAnimalGetSoundCall {
 	mr.mock.ctrl.T.Helper()
 	call := mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetSound", reflect.TypeOf((*MockAnimal)(nil).GetSound))
-	return &AnimalGetSoundCall{Call: call}
+	return &MockAnimalGetSoundCall{Call: call}
 }
 
-// AnimalGetSoundCall wrap *gomock.Call
-type AnimalGetSoundCall struct {
+// MockAnimalGetSoundCall wrap *gomock.Call
+type MockAnimalGetSoundCall struct {
 	*gomock.Call
 }
 
 // Return rewrite *gomock.Call.Return
-func (c *AnimalGetSoundCall) Return(arg0 string) *AnimalGetSoundCall {
+func (c *MockAnimalGetSoundCall) Return(arg0 string) *MockAnimalGetSoundCall {
 	c.Call = c.Call.Return(arg0)
 	return c
 }
 
 // Do rewrite *gomock.Call.Do
-func (c *AnimalGetSoundCall) Do(f func() string) *AnimalGetSoundCall {
+func (c *MockAnimalGetSoundCall) Do(f func() string) *MockAnimalGetSoundCall {
 	c.Call = c.Call.Do(f)
 	return c
 }
 
 // DoAndReturn rewrite *gomock.Call.DoAndReturn
-func (c *AnimalGetSoundCall) DoAndReturn(f func() string) *AnimalGetSoundCall {
+func (c *MockAnimalGetSoundCall) DoAndReturn(f func() string) *MockAnimalGetSoundCall {
 	c.Call = c.Call.DoAndReturn(f)
 	return c
 }
