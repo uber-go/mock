@@ -415,10 +415,31 @@ func typeFromType(t reflect.Type) (Type, error) {
 	}
 
 	if imp := t.PkgPath(); imp != "" {
-		return &NamedType{
+
+		typeObj := &NamedType{
 			Package: impPath(imp),
 			Type:    t.Name(),
-		}, nil
+		}
+		if typeName := t.Name(); strings.ContainsAny(typeName, "[]") {
+			var ts []Type
+			startIndex := strings.Index(typeName, "[")
+			endIndex := strings.Index(typeName, "]")
+			if startIndex == -1 || endIndex == -1 || startIndex > endIndex {
+				return nil, fmt.Errorf("%s is not a valid generic type name", typeName)
+			}
+			typeObj.Type = typeName[:startIndex]
+			for _, element := range strings.Split(typeName[startIndex+1:endIndex], ",") {
+				sepIndex := strings.LastIndex(element, ".")
+				ts = append(ts, &NamedType{
+					Package: impPath(element[:sepIndex]),
+					Type:    element[sepIndex+1:],
+				})
+			}
+			typeObj.TypeParams = &TypeParametersType{
+				TypeParameters: ts,
+			}
+		}
+		return typeObj, nil
 	}
 
 	// only unnamed or predeclared types after here
