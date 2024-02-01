@@ -210,8 +210,8 @@ func (ctrl *Controller) Call(receiver any, method string, args ...any) []any {
 		}
 
 		// Two things happen here:
-		// * the matching call no longer needs to check prerequite calls,
-		// * and the prerequite calls are no longer expected, so remove them.
+		// * the matching call no longer needs to check prerequisite calls,
+		// * and the prerequisite calls are no longer expected, so remove them.
 		preReqCalls := expected.dropPrereqs()
 		for _, preReqCall := range preReqCalls {
 			ctrl.expectedCalls.Remove(preReqCall)

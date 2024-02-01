@@ -878,7 +878,7 @@ func TestOrderedCallsWithPreReqMaxUnbounded(t *testing.T) {
 			ctrl.Call(subjectOne, "FooMethod", "1")
 			ctrl.Call(subjectOne, "FooMethod", "1")
 
-			// But calling something that has it as a prerequite should remove it from
+			// But calling something that has it as a prerequisite should remove it from
 			// the expected call set. This allows tests to ensure that FooMethod("1") is
 			// *not* called after FooMethod("2").
 			ctrl.Call(subjectTwo, "FooMethod", "2")
