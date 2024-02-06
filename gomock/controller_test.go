@@ -203,6 +203,22 @@ func TestNoRecordedMatchingMethodNameForAReceiver(t *testing.T) {
 	})
 }
 
+func TestNoStringerDeadlockOnError(t *testing.T) {
+	reporter, ctrl := createFixtures(t)
+	subject := new(Subject)
+	mockFoo := NewMockFoo(ctrl)
+	var _ fmt.Stringer = mockFoo
+
+	ctrl.RecordCall(subject, "FooMethod", mockFoo)
+	reporter.assertFatal(func() {
+		ctrl.Call(subject, "NotRecordedMethod", mockFoo)
+	}, "Unexpected call to", "there are no expected calls of the method \"NotRecordedMethod\" for that receiver")
+	reporter.assertFatal(func() {
+		// The expected call wasn't made.
+		ctrl.Finish()
+	})
+}
+
 // This tests that a call with an arguments of some primitive type matches a recorded call.
 func TestExpectedMethodCall(t *testing.T) {
 	reporter, ctrl := createFixtures(t)

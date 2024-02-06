@@ -206,7 +206,11 @@ func (ctrl *Controller) Call(receiver any, method string, args ...any) []any {
 			// and this line changes, i.e. this code is wrapped in another anonymous function.
 			// 0 is us, 1 is controller.Call(), 2 is the generated mock, and 3 is the user's test.
 			origin := callerInfo(3)
-			ctrl.T.Fatalf("Unexpected call to %T.%v(%v) at %s because: %s", receiver, method, args, origin, err)
+			stringArgs := make([]string, len(args))
+			for i, arg := range args {
+				stringArgs[i] = getString(arg)
+			}
+			ctrl.T.Fatalf("Unexpected call to %T.%v(%v) at %s because: %s", receiver, method, stringArgs, origin, err)
 		}
 
 		// Two things happen here:

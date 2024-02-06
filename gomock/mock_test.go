@@ -38,6 +38,11 @@ func (m *MockFoo) EXPECT() *MockFooMockRecorder {
 	return m.recorder
 }
 
+// ISGOMOCK indicates that this struct is a gomock mock.
+func (m *MockFoo) ISGOMOCK() struct{} {
+	return struct{}{}
+}
+
 // Bar mocks base method.
 func (m *MockFoo) Bar(arg0 string) string {
 	m.ctrl.T.Helper()
@@ -50,4 +55,18 @@ func (m *MockFoo) Bar(arg0 string) string {
 func (mr *MockFooMockRecorder) Bar(arg0 any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Bar", reflect.TypeOf((*MockFoo)(nil).Bar), arg0)
+}
+
+// String mocks base method.
+func (m *MockFoo) String() string {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "String")
+	ret0, _ := ret[0].(string)
+	return ret0
+}
+
+// String indicates an expected call of String.
+func (mr *MockFooMockRecorder) String() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "String", reflect.TypeOf((*MockFoo)(nil).String))
 }
