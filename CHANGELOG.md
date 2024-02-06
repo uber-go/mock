@@ -15,7 +15,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 - [#93][]: Ignore interfaces that contain type constraints.
 - [#101][]: Fix race condition on Controller.Satisfied.
 - [#121][]: Fix paths for windows.
-- [#127][]: Propogate -mock_names to Recorder and ReturnCall types.
+- [#127][]: Propagate -mock_names to Recorder and ReturnCall types.
 - [#132][]: Sanitize "any" package names.
 
 [#63]: https://github.com/uber-go/mock/pull/63

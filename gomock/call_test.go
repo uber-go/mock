@@ -635,7 +635,7 @@ func TestInOrder(t *testing.T) {
 			t.Fatalf("expected 0 preReq in c1, found %d", len(c1.preReqs))
 		}
 	})
-	t.Run("panic when the argument isn't a *Call or has one embeded", func(t *testing.T) {
+	t.Run("panic when the argument isn't a *Call or has one embedded", func(t *testing.T) {
 		defer func() {
 			if r := recover(); r == nil {
 				t.Error("expected InOrder to panic")
