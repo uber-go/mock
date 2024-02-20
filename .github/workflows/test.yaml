@@ -15,7 +15,7 @@ jobs:
   test:
     strategy:
       matrix:
-        go-version: [1.19.x, 1.20.x]
+        go-version: [1.20.x, 1.21.x, 1.22.x]
         os: [ubuntu-latest]
     runs-on: ${{ matrix.os }}
     steps:
@@ -29,6 +29,11 @@ jobs:
         go-version: ${{ matrix.go-version }}
         cache-dependency-path: '**/go.sum'
 
+    - name: Check go.mod and go.sum are up to date
+      run: |
+        go mod tidy
+        git diff --exit-code go.mod go.sum
+
     - name: Vet and build
       run: |
         go vet ./...
@@ -38,10 +43,16 @@ jobs:
       run: |
         go install go.uber.org/mock/mockgen
 
-    - name: Run test script
+    - name: Check generated files are up to date
       run: |
-        ./ci/test.sh
-        ./ci/check_panic_handling.sh
+        go generate ./...
+        git diff --exit-code go.mod go.sum
+
+    - name: Run tests checking panic handling
+      working-directory: mockgen/internal/tests/panicing_test
+      run: |
+        go test -v -tags=panictest -run TestDanger_Panics_Explicit | grep "Danger, Will Robinson!"
+        go test -v -tags=panictest -run TestDanger_Panics_Implicit | grep "Danger, Will Robinson!"
 
     - name: Run Tests
       run: |
@@ -49,4 +60,4 @@ jobs:
           pushd $(dirname $i)
           go test ./...
           popd
-        done 
+        done
