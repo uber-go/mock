@@ -243,7 +243,6 @@ gomock.GotFormatterAdapter(
 If the received value is `3`, then it will be printed as `03`.
 
 [golang]:              http://go.dev/
-[golang-install]:      http://go.dev/doc/install.html#releases
 [ci-badge]:            https://github.com/uber-go/mock/actions/workflows/test.yaml/badge.svg
 [ci-runs]:             https://github.com/uber-go/mock/actions
 [reference-badge]:     https://pkg.go.dev/badge/go.uber.org/mock.svg
