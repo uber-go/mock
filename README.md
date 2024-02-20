@@ -26,6 +26,18 @@ Install the `mockgen` tool.
 go install go.uber.org/mock/mockgen@latest
 ```
 
+To ensure it was installed correctly, use:
+
+```
+mockgen -version
+```
+
+If that fails, make sure your GOPATH/bin is in your PATH. You can add it with:
+
+```
+export PATH=$PATH:$(go env GOPATH)/bin
+```
+
 ## Running mockgen
 
 `mockgen` has two modes of operation: source and reflect.
