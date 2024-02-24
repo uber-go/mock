@@ -6,6 +6,11 @@ updates:
     interval: "daily"
   open-pull-requests-limit: 5
 - package-ecosystem: "gomod"
+  directory: "/tools"
+  schedule:
+    interval: "daily"
+  open-pull-requests-limit: 5
+- package-ecosystem: "gomod"
   directory: "/mockgen/internal/tests/generics"
   schedule:
     interval: "daily"
