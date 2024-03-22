@@ -256,7 +256,7 @@ type generator struct {
 }
 
 func (g *generator) p(format string, args ...any) {
-	fmt.Fprintf(&g.buf, g.indent+format+"\n", args...)
+	_, _ = fmt.Fprintf(&g.buf, g.indent+format+"\n", args...)
 }
 
 func (g *generator) in() {

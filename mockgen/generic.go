@@ -12,7 +12,6 @@ import (
 	"fmt"
 	"go/ast"
 	"go/token"
-	"strings"
 
 	"go.uber.org/mock/mockgen/model"
 )
@@ -62,29 +61,6 @@ func (p *fileParser) parseGenericType(pkg string, typ ast.Expr, tps map[string]m
 		return m, nil
 	}
 	return nil, nil
-}
-
-func getIdentTypeParams(decl any) string {
-	if decl == nil {
-		return ""
-	}
-	ts, ok := decl.(*ast.TypeSpec)
-	if !ok {
-		return ""
-	}
-	if ts.TypeParams == nil || len(ts.TypeParams.List) == 0 {
-		return ""
-	}
-	var sb strings.Builder
-	sb.WriteString("[")
-	for i, v := range ts.TypeParams.List {
-		if i != 0 {
-			sb.WriteString(", ")
-		}
-		sb.WriteString(v.Names[0].Name)
-	}
-	sb.WriteString("]")
-	return sb.String()
 }
 
 func (p *fileParser) parseGenericMethod(field *ast.Field, it *namedInterface, iface *model.Interface, pkg string, tps map[string]model.Type) ([]*model.Method, error) {
