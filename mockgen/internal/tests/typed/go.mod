@@ -1,6 +1,6 @@
 module go.uber.org/mock/mockgen/internal/tests/typed
 
-go 1.18
+go 1.20
 
 replace go.uber.org/mock => ../../../..
 
