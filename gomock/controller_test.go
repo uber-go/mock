@@ -17,11 +17,10 @@ package gomock_test
 import (
 	"fmt"
 	"reflect"
+	"strings"
 	"testing"
 
-	"strings"
-
-	"github.com/golang/mock/gomock"
+	"go.uber.org/mock/gomock"
 )
 
 type ErrorReporter struct {
@@ -107,20 +106,20 @@ func (e *ErrorReporter) recoverUnexpectedFatal() {
 	}
 }
 
-func (e *ErrorReporter) Log(args ...interface{}) {
+func (e *ErrorReporter) Log(args ...any) {
 	e.log = append(e.log, fmt.Sprint(args...))
 }
 
-func (e *ErrorReporter) Logf(format string, args ...interface{}) {
+func (e *ErrorReporter) Logf(format string, args ...any) {
 	e.log = append(e.log, fmt.Sprintf(format, args...))
 }
 
-func (e *ErrorReporter) Errorf(format string, args ...interface{}) {
+func (e *ErrorReporter) Errorf(format string, args ...any) {
 	e.Logf(format, args...)
 	e.failed = true
 }
 
-func (e *ErrorReporter) Fatalf(format string, args ...interface{}) {
+func (e *ErrorReporter) Fatalf(format string, args ...any) {
 	e.Logf(format, args...)
 	e.failed = true
 	panic(&e.fatalToken)
@@ -158,10 +157,10 @@ func (s *Subject) ActOnTestStructMethod(arg TestStruct, arg1 int) int {
 	return 0
 }
 
-func (s *Subject) SetArgMethod(sliceArg []byte, ptrArg *int, mapArg map[interface{}]interface{}) {}
-func (s *Subject) SetArgMethodInterface(sliceArg, ptrArg, mapArg interface{})                    {}
+func (s *Subject) SetArgMethod(sliceArg []byte, ptrArg *int, mapArg map[any]any) {}
+func (s *Subject) SetArgMethodInterface(sliceArg, ptrArg, mapArg any)            {}
 
-func assertEqual(t *testing.T, expected interface{}, actual interface{}) {
+func assertEqual(t *testing.T, expected any, actual any) {
 	if !reflect.DeepEqual(expected, actual) {
 		t.Errorf("Expected %+v, but got %+v", expected, actual)
 	}
@@ -177,8 +176,7 @@ func createFixtures(t *testing.T) (reporter *ErrorReporter, ctrl *gomock.Control
 }
 
 func TestNoCalls(t *testing.T) {
-	reporter, ctrl := createFixtures(t)
-	ctrl.Finish()
+	reporter, _ := createFixtures(t)
 	reporter.assertPass("No calls expected or made.")
 }
 
@@ -189,7 +187,6 @@ func TestNoRecordedCallsForAReceiver(t *testing.T) {
 	reporter.assertFatal(func() {
 		ctrl.Call(subject, "NotRecordedMethod", "argument")
 	}, "Unexpected call to", "there are no expected calls of the method \"NotRecordedMethod\" for that receiver")
-	ctrl.Finish()
 }
 
 func TestNoRecordedMatchingMethodNameForAReceiver(t *testing.T) {
@@ -206,6 +203,22 @@ func TestNoRecordedMatchingMethodNameForAReceiver(t *testing.T) {
 	})
 }
 
+func TestNoStringerDeadlockOnError(t *testing.T) {
+	reporter, ctrl := createFixtures(t)
+	subject := new(Subject)
+	mockFoo := NewMockFoo(ctrl)
+	var _ fmt.Stringer = mockFoo
+
+	ctrl.RecordCall(subject, "FooMethod", mockFoo)
+	reporter.assertFatal(func() {
+		ctrl.Call(subject, "NotRecordedMethod", mockFoo)
+	}, "Unexpected call to", "there are no expected calls of the method \"NotRecordedMethod\" for that receiver")
+	reporter.assertFatal(func() {
+		// The expected call wasn't made.
+		ctrl.Finish()
+	})
+}
+
 // This tests that a call with an arguments of some primitive type matches a recorded call.
 func TestExpectedMethodCall(t *testing.T) {
 	reporter, ctrl := createFixtures(t)
@@ -213,7 +226,6 @@ func TestExpectedMethodCall(t *testing.T) {
 
 	ctrl.RecordCall(subject, "FooMethod", "argument")
 	ctrl.Call(subject, "FooMethod", "argument")
-	ctrl.Finish()
 
 	reporter.assertPass("Expected method call made.")
 }
@@ -225,8 +237,6 @@ func TestUnexpectedMethodCall(t *testing.T) {
 	reporter.assertFatal(func() {
 		ctrl.Call(subject, "FooMethod", "argument")
 	})
-
-	ctrl.Finish()
 }
 
 func TestRepeatedCall(t *testing.T) {
@@ -241,7 +251,6 @@ func TestRepeatedCall(t *testing.T) {
 	reporter.assertFatal(func() {
 		ctrl.Call(subject, "FooMethod", "argument")
 	})
-	ctrl.Finish()
 	reporter.assertFail("After calling one too many times.")
 }
 
@@ -360,7 +369,7 @@ func TestUnexpectedArgValue_GotFormatter(t *testing.T) {
 		"ActOnTestStructMethod",
 		expectedArg0,
 		gomock.GotFormatterAdapter(
-			gomock.GotFormatterFunc(func(i interface{}) string {
+			gomock.GotFormatterFunc(func(i any) string {
 				// Leading 0s
 				return fmt.Sprintf("%02d", i)
 			}),
@@ -388,7 +397,6 @@ func TestAnyTimes(t *testing.T) {
 		ctrl.Call(subject, "FooMethod", "argument")
 	}
 	reporter.assertPass("After 100 method calls.")
-	ctrl.Finish()
 }
 
 func TestMinTimes1(t *testing.T) {
@@ -514,8 +522,6 @@ func TestDo(t *testing.T) {
 	if wantArg != argument {
 		t.Error("Do callback received wrong argument.")
 	}
-
-	ctrl.Finish()
 }
 
 func TestDoAndReturn(t *testing.T) {
@@ -551,8 +557,6 @@ func TestDoAndReturn(t *testing.T) {
 	} else if ret != 5 {
 		t.Errorf("DoAndReturn return value: got %d, want 5", ret)
 	}
-
-	ctrl.Finish()
 }
 
 func TestSetArgSlice(t *testing.T) {
@@ -572,18 +576,16 @@ func TestSetArgSlice(t *testing.T) {
 	ctrl.Call(subject, "SetArgMethodInterface", in, nil, nil)
 
 	if !reflect.DeepEqual(in, set) {
-		t.Error("Expected SetArg() to modify input slice argument as interface{}")
+		t.Error("Expected SetArg() to modify input slice argument as any")
 	}
-
-	ctrl.Finish()
 }
 
 func TestSetArgMap(t *testing.T) {
 	_, ctrl := createFixtures(t)
 	subject := new(Subject)
 
-	var in = map[interface{}]interface{}{"int": 1, "string": "random string", 1: "1", 0: 0}
-	var set = map[interface{}]interface{}{"int": 2, 1: "2", 2: 100}
+	var in = map[any]any{"int": 1, "string": "random string", 1: "1", 0: 0}
+	var set = map[any]any{"int": 2, 1: "2", 2: 100}
 	ctrl.RecordCall(subject, "SetArgMethod", nil, nil, in).SetArg(2, set)
 	ctrl.Call(subject, "SetArgMethod", nil, nil, in)
 
@@ -595,10 +597,8 @@ func TestSetArgMap(t *testing.T) {
 	ctrl.Call(subject, "SetArgMethodInterface", nil, nil, in)
 
 	if !reflect.DeepEqual(in, set) {
-		t.Error("Expected SetArg() to modify input map argument as interface{}")
+		t.Error("Expected SetArg() to modify input map argument as any")
 	}
-
-	ctrl.Finish()
 }
 
 func TestSetArgPtr(t *testing.T) {
@@ -618,9 +618,8 @@ func TestSetArgPtr(t *testing.T) {
 	ctrl.Call(subject, "SetArgMethodInterface", nil, &in, nil)
 
 	if in != set {
-		t.Error("Expected SetArg() to modify value pointed to by argument as interface{}")
+		t.Error("Expected SetArg() to modify value pointed to by argument as any")
 	}
-	ctrl.Finish()
 }
 
 func TestReturn(t *testing.T) {
@@ -633,14 +632,13 @@ func TestReturn(t *testing.T) {
 
 	assertEqual(
 		t,
-		[]interface{}{0},
+		[]any{0},
 		ctrl.Call(subject, "FooMethod", "zero"))
 
 	assertEqual(
 		t,
-		[]interface{}{5},
+		[]any{5},
 		ctrl.Call(subject, "FooMethod", "five"))
-	ctrl.Finish()
 }
 
 func TestUnorderedCalls(t *testing.T) {
@@ -707,7 +705,6 @@ func TestPanicOverridesExpectationChecks(t *testing.T) {
 
 func TestSetArgWithBadType(t *testing.T) {
 	rep, ctrl := createFixtures(t)
-	defer ctrl.Finish()
 
 	s := new(Subject)
 	// This should catch a type error:
@@ -719,7 +716,6 @@ func TestSetArgWithBadType(t *testing.T) {
 
 func TestTimes0(t *testing.T) {
 	rep, ctrl := createFixtures(t)
-	defer ctrl.Finish()
 
 	s := new(Subject)
 	ctrl.RecordCall(s, "FooMethod", "arg").Times(0)
@@ -735,7 +731,6 @@ func TestVariadicMatching(t *testing.T) {
 	s := new(Subject)
 	ctrl.RecordCall(s, "VariadicMethod", 0, "1", "2")
 	ctrl.Call(s, "VariadicMethod", 0, "1", "2")
-	ctrl.Finish()
 	rep.assertPass("variadic matching works")
 }
 
@@ -750,7 +745,6 @@ func TestVariadicNoMatch(t *testing.T) {
 	}, "expected call at", "doesn't match the argument at index 0",
 		"Got: 1 (int)\nWant: is equal to 0 (int)")
 	ctrl.Call(s, "VariadicMethod", 0)
-	ctrl.Finish()
 }
 
 func TestVariadicMatchingWithSlice(t *testing.T) {
@@ -765,13 +759,12 @@ func TestVariadicMatchingWithSlice(t *testing.T) {
 
 			s := new(Subject)
 			ctrl.RecordCall(s, "VariadicMethod", 1, tc)
-			args := make([]interface{}, len(tc)+1)
+			args := make([]any, len(tc)+1)
 			args[0] = 1
 			for i, arg := range tc {
 				args[i+1] = arg
 			}
 			ctrl.Call(s, "VariadicMethod", args...)
-			ctrl.Finish()
 			rep.assertPass("slices can be used as matchers for variadic arguments")
 		})
 	}
@@ -786,7 +779,7 @@ func TestVariadicArgumentsGotFormatter(t *testing.T) {
 		s,
 		"VariadicMethod",
 		gomock.GotFormatterAdapter(
-			gomock.GotFormatterFunc(func(i interface{}) string {
+			gomock.GotFormatterFunc(func(i any) string {
 				return fmt.Sprintf("test{%v}", i)
 			}),
 			gomock.Eq(0),
@@ -798,7 +791,6 @@ func TestVariadicArgumentsGotFormatter(t *testing.T) {
 	}, "expected call to", "doesn't match the argument at index 0",
 		"Got: test{1}\nWant: is equal to 0")
 	ctrl.Call(s, "VariadicMethod", 0)
-	ctrl.Finish()
 }
 
 func TestVariadicArgumentsGotFormatterTooManyArgsFailure(t *testing.T) {
@@ -811,7 +803,7 @@ func TestVariadicArgumentsGotFormatterTooManyArgsFailure(t *testing.T) {
 		"VariadicMethod",
 		0,
 		gomock.GotFormatterAdapter(
-			gomock.GotFormatterFunc(func(i interface{}) string {
+			gomock.GotFormatterFunc(func(i any) string {
 				return fmt.Sprintf("test{%v}", i)
 			}),
 			gomock.Eq("1"),
@@ -823,7 +815,6 @@ func TestVariadicArgumentsGotFormatterTooManyArgsFailure(t *testing.T) {
 	}, "expected call to", "doesn't match the argument at index 1",
 		"Got: test{[2 3]}\nWant: is equal to 1")
 	ctrl.Call(s, "VariadicMethod", 0, "1")
-	ctrl.Finish()
 }
 
 func TestNoHelper(t *testing.T) {
@@ -854,22 +845,7 @@ func TestMultipleDefers(t *testing.T) {
 	reporter.Cleanup(func() {
 		reporter.assertPass("No errors for multiple calls to Finish")
 	})
-	ctrl := gomock.NewController(reporter)
-	ctrl.Finish()
-}
-
-// Equivalent to the TestNoRecordedCallsForAReceiver, but without explicitly
-// calling Finish.
-func TestDeferNotNeededFail(t *testing.T) {
-	reporter := NewErrorReporter(t)
-	subject := new(Subject)
-	var ctrl *gomock.Controller
-	reporter.Cleanup(func() {
-		reporter.assertFatal(func() {
-			ctrl.Call(subject, "NotRecordedMethod", "argument")
-		}, "Unexpected call to", "there are no expected calls of the method \"NotRecordedMethod\" for that receiver")
-	})
-	ctrl = gomock.NewController(reporter)
+	_ = gomock.NewController(reporter)
 }
 
 func TestDeferNotNeededPass(t *testing.T) {
@@ -918,7 +894,7 @@ func TestOrderedCallsWithPreReqMaxUnbounded(t *testing.T) {
 			ctrl.Call(subjectOne, "FooMethod", "1")
 			ctrl.Call(subjectOne, "FooMethod", "1")
 
-			// But calling something that has it as a prerequite should remove it from
+			// But calling something that has it as a prerequisite should remove it from
 			// the expected call set. This allows tests to ensure that FooMethod("1") is
 			// *not* called after FooMethod("2").
 			ctrl.Call(subjectTwo, "FooMethod", "2")

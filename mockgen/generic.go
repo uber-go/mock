@@ -5,16 +5,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-//go:build go1.18
-// +build go1.18
-
 package main
 
 import (
+	"errors"
+	"fmt"
 	"go/ast"
-	"strings"
+	"go/token"
 
-	"github.com/golang/mock/mockgen/model"
+	"go.uber.org/mock/mockgen/model"
 )
 
 func getTypeSpecTypeParams(ts *ast.TypeSpec) []*ast.Field {
@@ -24,7 +23,7 @@ func getTypeSpecTypeParams(ts *ast.TypeSpec) []*ast.Field {
 	return ts.TypeParams.List
 }
 
-func (p *fileParser) parseGenericType(pkg string, typ ast.Expr, tps map[string]bool) (model.Type, error) {
+func (p *fileParser) parseGenericType(pkg string, typ ast.Expr, tps map[string]model.Type) (model.Type, error) {
 	switch v := typ.(type) {
 	case *ast.IndexExpr:
 		m, err := p.parseType(pkg, v.X, tps)
@@ -64,25 +63,41 @@ func (p *fileParser) parseGenericType(pkg string, typ ast.Expr, tps map[string]b
 	return nil, nil
 }
 
-func getIdentTypeParams(decl interface{}) string {
-	if decl == nil {
-		return ""
-	}
-	ts, ok := decl.(*ast.TypeSpec)
-	if !ok {
-		return ""
-	}
-	if ts.TypeParams == nil || len(ts.TypeParams.List) == 0 {
-		return ""
-	}
-	var sb strings.Builder
-	sb.WriteString("[")
-	for i, v := range ts.TypeParams.List {
-		if i != 0 {
-			sb.WriteString(", ")
+func (p *fileParser) parseGenericMethod(field *ast.Field, it *namedInterface, iface *model.Interface, pkg string, tps map[string]model.Type) ([]*model.Method, error) {
+	var indices []ast.Expr
+	var typ ast.Expr
+	switch v := field.Type.(type) {
+	case *ast.IndexExpr:
+		indices = []ast.Expr{v.Index}
+		typ = v.X
+	case *ast.IndexListExpr:
+		indices = v.Indices
+		typ = v.X
+	case *ast.UnaryExpr:
+		if v.Op == token.TILDE {
+			return nil, errConstraintInterface
 		}
-		sb.WriteString(v.Names[0].Name)
+		return nil, fmt.Errorf("~T may only appear as constraint for %T", field.Type)
+	case *ast.BinaryExpr:
+		if v.Op == token.OR {
+			return nil, errConstraintInterface
+		}
+		return nil, fmt.Errorf("A|B may only appear as constraint for %T", field.Type)
+	default:
+		return nil, fmt.Errorf("don't know how to mock method of type %T", field.Type)
 	}
-	sb.WriteString("]")
-	return sb.String()
+
+	nf := &ast.Field{
+		Doc:     field.Comment,
+		Names:   field.Names,
+		Type:    typ,
+		Tag:     field.Tag,
+		Comment: field.Comment,
+	}
+
+	it.embeddedInstTypeParams = indices
+
+	return p.parseMethod(nf, it, iface, pkg, tps)
 }
+
+var errConstraintInterface = errors.New("interface contains constraints")

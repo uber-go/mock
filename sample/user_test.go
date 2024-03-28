@@ -4,14 +4,14 @@ package user_test
 import (
 	"testing"
 
-	"github.com/golang/mock/gomock"
-	user "github.com/golang/mock/sample"
-	"github.com/golang/mock/sample/imp1"
+	"go.uber.org/mock/gomock"
+	user "go.uber.org/mock/sample"
+	"go.uber.org/mock/sample/imp1"
+	imp_four "go.uber.org/mock/sample/imp4"
 )
 
 func TestRemember(t *testing.T) {
 	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
 
 	mockIndex := NewMockIndex(ctrl)
 	mockIndex.EXPECT().Put("a", 1)            // literals work
@@ -28,11 +28,11 @@ func TestRemember(t *testing.T) {
 
 	// Should be able to place expectations on variadic methods.
 	mockIndex.EXPECT().Ellip("%d", 0, 1, 1, 2, 3) // direct args
-	tri := []interface{}{1, 3, 6, 10, 15}
+	tri := []any{1, 3, 6, 10, 15}
 	mockIndex.EXPECT().Ellip("%d", tri...) // args from slice
 	mockIndex.EXPECT().EllipOnly(gomock.Eq("arg"))
 
-	user.Remember(mockIndex, []string{"a", "b"}, []interface{}{1, 2})
+	user.Remember(mockIndex, []string{"a", "b"}, []any{1, 2})
 	// Check the ConcreteRet calls.
 	if c := mockIndex.ConcreteRet(); c != boolc {
 		t.Errorf("ConcreteRet: got %v, want %v", c, boolc)
@@ -43,28 +43,27 @@ func TestRemember(t *testing.T) {
 
 	// Try one with an action.
 	calledString := ""
-	mockIndex.EXPECT().Put(gomock.Any(), gomock.Any()).Do(func(key string, _ interface{}) {
+	mockIndex.EXPECT().Put(gomock.Any(), gomock.Any()).Do(func(key string, _ any) {
 		calledString = key
 	})
 	mockIndex.EXPECT().NillableRet()
-	user.Remember(mockIndex, []string{"blah"}, []interface{}{7})
+	user.Remember(mockIndex, []string{"blah"}, []any{7})
 	if calledString != "blah" {
 		t.Fatalf(`Uh oh. %q != "blah"`, calledString)
 	}
 
 	// Use Do with a nil arg.
-	mockIndex.EXPECT().Put("nil-key", gomock.Any()).Do(func(key string, value interface{}) {
+	mockIndex.EXPECT().Put("nil-key", gomock.Any()).Do(func(key string, value any) {
 		if value != nil {
 			t.Errorf("Put did not pass through nil; got %v", value)
 		}
 	})
 	mockIndex.EXPECT().NillableRet()
-	user.Remember(mockIndex, []string{"nil-key"}, []interface{}{nil})
+	user.Remember(mockIndex, []string{"nil-key"}, []any{nil})
 }
 
 func TestVariadicFunction(t *testing.T) {
 	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
 
 	mockIndex := NewMockIndex(ctrl)
 	mockIndex.EXPECT().Ellip("%d", 5, 6, 7, 8).Do(func(format string, nums ...int) {
@@ -122,7 +121,6 @@ func TestVariadicFunction(t *testing.T) {
 
 func TestGrabPointer(t *testing.T) {
 	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
 
 	mockIndex := NewMockIndex(ctrl)
 	mockIndex.EXPECT().Ptr(gomock.Any()).SetArg(0, 7) // set first argument to 7
@@ -135,7 +133,6 @@ func TestGrabPointer(t *testing.T) {
 
 func TestEmbeddedInterface(t *testing.T) {
 	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
 
 	mockEmbed := NewMockEmbed(ctrl)
 	mockEmbed.EXPECT().RegularMethod()
@@ -152,17 +149,15 @@ func TestExpectTrueNil(t *testing.T) {
 	// Make sure that passing "nil" to EXPECT (thus as a nil interface value),
 	// will correctly match a nil concrete type.
 	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
 
 	mockIndex := NewMockIndex(ctrl)
-	mockIndex.EXPECT().Ptr(nil) // this nil is a nil interface{}
+	mockIndex.EXPECT().Ptr(nil) // this nil is a nil any
 	mockIndex.Ptr(nil)          // this nil is a nil *int
 }
 
 func TestDoAndReturnSignature(t *testing.T) {
 	t.Run("wrong number of return args", func(t *testing.T) {
 		ctrl := gomock.NewController(t)
-		defer ctrl.Finish()
 
 		mockIndex := NewMockIndex(ctrl)
 
@@ -181,7 +176,6 @@ func TestDoAndReturnSignature(t *testing.T) {
 
 	t.Run("wrong type of return arg", func(t *testing.T) {
 		ctrl := gomock.NewController(t)
-		defer ctrl.Finish()
 
 		mockIndex := NewMockIndex(ctrl)
 
@@ -192,4 +186,20 @@ func TestDoAndReturnSignature(t *testing.T) {
 
 		mockIndex.Slice([]int{0}, []byte("meow"))
 	})
+}
+
+func TestExpectCondForeignFour(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockIndex := NewMockIndex(ctrl)
+	mockIndex.EXPECT().ForeignFour(gomock.Cond(func(x any) bool {
+		four, ok := x.(imp_four.Imp4)
+		if !ok {
+			return false
+		}
+		return four.Field == "Cool"
+	}))
+
+	mockIndex.ForeignFour(imp_four.Imp4{Field: "Cool"})
 }

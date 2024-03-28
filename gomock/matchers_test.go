@@ -14,7 +14,7 @@
 
 package gomock_test
 
-//go:generate mockgen -destination internal/mock_gomock/mock_matcher.go github.com/golang/mock/gomock Matcher
+//go:generate mockgen -destination internal/mock_gomock/mock_matcher.go go.uber.org/mock/gomock Matcher
 
 import (
 	"context"
@@ -22,25 +22,32 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/golang/mock/gomock"
-	"github.com/golang/mock/gomock/internal/mock_gomock"
+	"go.uber.org/mock/gomock"
+	"go.uber.org/mock/gomock/internal/mock_gomock"
 )
 
 type A []string
+type B struct {
+	Name string
+}
 
 func TestMatchers(t *testing.T) {
-	type e interface{}
+	type e any
 	tests := []struct {
 		name    string
 		matcher gomock.Matcher
 		yes, no []e
 	}{
 		{"test Any", gomock.Any(), []e{3, nil, "foo"}, nil},
+		{"test AnyOf", gomock.AnyOf(gomock.Nil(), gomock.Len(2), 1, 2, 3),
+			[]e{nil, "hi", "to", 1, 2, 3},
+			[]e{"s", "", 0, 4, 10}},
 		{"test All", gomock.Eq(4), []e{4}, []e{3, "blah", nil, int64(4)}},
 		{"test Nil", gomock.Nil(),
 			[]e{nil, (error)(nil), (chan bool)(nil), (*int)(nil)},
 			[]e{"", 0, make(chan bool), errors.New("err"), new(int)}},
 		{"test Not", gomock.Not(gomock.Eq(4)), []e{3, "blah", nil, int64(4)}, []e{4}},
+		{"test Regex", gomock.Regex("[0-9]{2}:[0-9]{2}"), []e{"23:02", "[23:02]: Hello world", []byte("23:02")}, []e{4, "23-02", "hello world", true, []byte("23-02")}},
 		{"test All", gomock.All(gomock.Any(), gomock.Eq(4)), []e{4}, []e{3, "blah", nil, int64(4)}},
 		{"test Len", gomock.Len(2),
 			[]e{[]int{1, 2}, "ab", map[string]int{"a": 0, "b": 1}, [2]string{"a", "b"}},
@@ -50,6 +57,7 @@ func TestMatchers(t *testing.T) {
 			[]e{[]string{"a", "b"}, A{"a", "b"}},
 			[]e{[]string{"a"}, A{"b"}},
 		},
+		{"test Cond", gomock.Cond(func(x any) bool { return x.(B).Name == "Dam" }), []e{B{Name: "Dam"}}, []e{B{Name: "Dave"}}},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -70,7 +78,6 @@ func TestMatchers(t *testing.T) {
 // A more thorough test of notMatcher
 func TestNotMatcher(t *testing.T) {
 	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
 
 	mockMatcher := mock_gomock.NewMockMatcher(ctrl)
 	notMatcher := gomock.Not(mockMatcher)
@@ -86,6 +93,65 @@ func TestNotMatcher(t *testing.T) {
 	}
 }
 
+// A more thorough test of regexMatcher
+func TestRegexMatcher(t *testing.T) {
+	tests := []struct {
+		name               string
+		regex              string
+		input              any
+		wantMatch          bool
+		wantStringResponse string
+		shouldPanic        bool
+	}{
+		{
+			name:               "match for whole num regex with start and end position matching",
+			regex:              "^\\d+$",
+			input:              "2302",
+			wantMatch:          true,
+			wantStringResponse: "matches regex ^\\d+$",
+		},
+		{
+			name:               "match for valid regex with start and end position matching on longer string",
+			regex:              "^[0-9]{2}:[0-9]{2}$",
+			input:              "[23:02]: Hello world",
+			wantMatch:          false,
+			wantStringResponse: "matches regex ^[0-9]{2}:[0-9]{2}$",
+		},
+		{
+			name:               "match for valid regex with struct as bytes",
+			regex:              `^{"id":[0-9]{2}}$`,
+			input:              []byte{'{', '"', 'i', 'd', '"', ':', '1', '2', '}'},
+			wantMatch:          true,
+			wantStringResponse: `matches regex ^{"id":[0-9]{2}}$`,
+		},
+		{
+			name:        "should panic when regex fails to compile",
+			regex:       `^[0-9]\\?{2}:[0-9]{2}$`,
+			shouldPanic: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if tt.shouldPanic {
+				defer func() { _ = recover() }()
+			}
+			matcher := gomock.Regex(tt.regex)
+
+			if tt.shouldPanic {
+				t.Errorf("test did not panic, and should have")
+			}
+
+			if got := matcher.Matches(tt.input); got != tt.wantMatch {
+				t.Errorf("got = %v, wantMatch = %v", got, tt.wantMatch)
+			}
+			if gotStr := matcher.String(); gotStr != tt.wantStringResponse {
+				t.Errorf("got string = %v, want string = %v", gotStr, tt.wantStringResponse)
+			}
+		})
+	}
+}
+
 type Dog struct {
 	Breed, Name string
 }
@@ -94,9 +160,6 @@ type ctxKey struct{}
 
 // A thorough test of assignableToTypeOfMatcher
 func TestAssignableToTypeOfMatcher(t *testing.T) {
-	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
-
 	aStr := "def"
 	anotherStr := "ghi"
 
@@ -148,8 +211,8 @@ func TestAssignableToTypeOfMatcher(t *testing.T) {
 func TestInAnyOrder(t *testing.T) {
 	tests := []struct {
 		name      string
-		wanted    interface{}
-		given     interface{}
+		wanted    any
+		given     any
 		wantMatch bool
 	}{
 		{

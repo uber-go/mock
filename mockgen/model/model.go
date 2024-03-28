@@ -24,7 +24,7 @@ import (
 )
 
 // pkgPath is the importable path for package model
-const pkgPath = "github.com/golang/mock/mockgen/model"
+const pkgPath = "go.uber.org/mock/mockgen/model"
 
 // Package is a Go package. It may be a subset.
 type Package struct {
@@ -147,12 +147,14 @@ type Type interface {
 }
 
 func init() {
-	gob.Register(&ArrayType{})
-	gob.Register(&ChanType{})
-	gob.Register(&FuncType{})
-	gob.Register(&MapType{})
-	gob.Register(&NamedType{})
-	gob.Register(&PointerType{})
+	// Call gob.RegisterName with pkgPath as prefix to avoid conflicting with
+	// github.com/golang/mock/mockgen/model 's registration.
+	gob.RegisterName(pkgPath+".ArrayType", &ArrayType{})
+	gob.RegisterName(pkgPath+".ChanType", &ChanType{})
+	gob.RegisterName(pkgPath+".FuncType", &FuncType{})
+	gob.RegisterName(pkgPath+".MapType", &MapType{})
+	gob.RegisterName(pkgPath+".NamedType", &NamedType{})
+	gob.RegisterName(pkgPath+".PointerType", &PointerType{})
 
 	// Call gob.RegisterName to make sure it has the consistent name registered
 	// for both gob decoder and encoder.
@@ -160,7 +162,7 @@ func init() {
 	// For a non-pointer type, gob.Register will try to get package full path by
 	// calling rt.PkgPath() for a name to register. If your project has vendor
 	// directory, it is possible that PkgPath will get a path like this:
-	//     ../../../vendor/github.com/golang/mock/mockgen/model
+	//     ../../../vendor/go.uber.org/mock/mockgen/model
 	gob.RegisterName(pkgPath+".PredeclaredType", PredeclaredType(""))
 }
 
@@ -303,7 +305,7 @@ type PredeclaredType string
 func (pt PredeclaredType) String(map[string]string, string) string { return string(pt) }
 func (pt PredeclaredType) addImports(map[string]bool)              {}
 
-// TypeParametersType contains type paramters for a NamedType.
+// TypeParametersType contains type parameters for a NamedType.
 type TypeParametersType struct {
 	TypeParameters []Type
 }
@@ -467,7 +469,7 @@ func typeFromType(t reflect.Type) (Type, error) {
 	case reflect.Interface:
 		// Two special interfaces.
 		if t.NumMethod() == 0 {
-			return PredeclaredType("interface{}"), nil
+			return PredeclaredType("any"), nil
 		}
 		if t == errorType {
 			return PredeclaredType("error"), nil

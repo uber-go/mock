@@ -2,15 +2,15 @@ package main
 
 import (
 	"fmt"
-	"io/ioutil"
 	"os"
+	"path"
 	"path/filepath"
 	"reflect"
 	"regexp"
 	"strings"
 	"testing"
 
-	"github.com/golang/mock/mockgen/model"
+	"go.uber.org/mock/mockgen/model"
 )
 
 func TestMakeArgString(t *testing.T) {
@@ -332,7 +332,7 @@ func TestGetArgNames(t *testing.T) {
 		t.Run(testCase.name, func(t *testing.T) {
 			g := generator{}
 
-			result := g.getArgNames(testCase.method)
+			result := g.getArgNames(testCase.method, true)
 			if !reflect.DeepEqual(result, testCase.expected) {
 				t.Fatalf("expected %s, got %s", result, testCase.expected)
 			}
@@ -369,83 +369,101 @@ func Test_createPackageMap(t *testing.T) {
 }
 
 func TestParsePackageImport_FallbackGoPath(t *testing.T) {
-	goPath, err := ioutil.TempDir("", "gopath")
+	goPath := t.TempDir()
+	expectedPkgPath := path.Join("example.com", "foo")
+	srcDir := filepath.Join(goPath, "src", expectedPkgPath)
+	err := os.MkdirAll(srcDir, 0o755)
 	if err != nil {
-		t.Error(err)
+		t.Fatal(err)
 	}
-	defer func() {
-		if err = os.RemoveAll(goPath); err != nil {
-			t.Error(err)
-		}
-	}()
-	srcDir := filepath.Join(goPath, "src/example.com/foo")
-	err = os.MkdirAll(srcDir, 0755)
-	if err != nil {
-		t.Error(err)
-	}
-	key := "GOPATH"
-	value := goPath
-	if err := os.Setenv(key, value); err != nil {
-		t.Fatalf("unable to set environment variable %q to %q: %v", key, value, err)
-	}
-	key = "GO111MODULE"
-	value = "on"
-	if err := os.Setenv(key, value); err != nil {
-		t.Fatalf("unable to set environment variable %q to %q: %v", key, value, err)
-	}
+	t.Setenv("GOPATH", goPath)
+	t.Setenv("GO111MODULE", "on")
 	pkgPath, err := parsePackageImport(srcDir)
-	expected := "example.com/foo"
-	if pkgPath != expected {
-		t.Errorf("expect %s, got %s", expected, pkgPath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if pkgPath != expectedPkgPath {
+		t.Errorf("expect %s, got %s", expectedPkgPath, pkgPath)
 	}
 }
 
 func TestParsePackageImport_FallbackMultiGoPath(t *testing.T) {
-	var goPathList []string
-
 	// first gopath
-	goPath, err := ioutil.TempDir("", "gopath1")
+	goPath := t.TempDir()
+	goPathList := []string{goPath}
+	expectedPkgPath := path.Join("example.com", "foo")
+	srcDir := filepath.Join(goPath, "src", expectedPkgPath)
+	err := os.MkdirAll(srcDir, 0o755)
 	if err != nil {
-		t.Error(err)
-	}
-	goPathList = append(goPathList, goPath)
-	defer func() {
-		if err = os.RemoveAll(goPath); err != nil {
-			t.Error(err)
-		}
-	}()
-	srcDir := filepath.Join(goPath, "src/example.com/foo")
-	err = os.MkdirAll(srcDir, 0755)
-	if err != nil {
-		t.Error(err)
+		t.Fatal(err)
 	}
 
 	// second gopath
-	goPath, err = ioutil.TempDir("", "gopath2")
-	if err != nil {
-		t.Error(err)
-	}
+	goPath = t.TempDir()
 	goPathList = append(goPathList, goPath)
-	defer func() {
-		if err = os.RemoveAll(goPath); err != nil {
-			t.Error(err)
-		}
-	}()
 
 	goPaths := strings.Join(goPathList, string(os.PathListSeparator))
-	key := "GOPATH"
-	value := goPaths
-	if err := os.Setenv(key, value); err != nil {
-		t.Fatalf("unable to set environment variable %q to %q: %v", key, value, err)
-	}
-	key = "GO111MODULE"
-	value = "on"
-	if err := os.Setenv(key, value); err != nil {
-		t.Fatalf("unable to set environment variable %q to %q: %v", key, value, err)
-	}
+	t.Setenv("GOPATH", goPaths)
+	t.Setenv("GO111MODULE", "on")
 	pkgPath, err := parsePackageImport(srcDir)
-	expected := "example.com/foo"
-	if pkgPath != expected {
-		t.Errorf("expect %s, got %s", expected, pkgPath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if pkgPath != expectedPkgPath {
+		t.Errorf("expect %s, got %s", expectedPkgPath, pkgPath)
+	}
+}
+
+func TestParseExcludeInterfaces(t *testing.T) {
+	testCases := []struct {
+		name     string
+		arg      string
+		expected map[string]struct{}
+	}{
+		{
+			name:     "empty string",
+			arg:      "",
+			expected: nil,
+		},
+		{
+			name:     "string without a comma",
+			arg:      "arg1",
+			expected: map[string]struct{}{"arg1": {}},
+		},
+		{
+			name:     "two names",
+			arg:      "arg1,arg2",
+			expected: map[string]struct{}{"arg1": {}, "arg2": {}},
+		},
+		{
+			name:     "two names with a comma at the end",
+			arg:      "arg1,arg2,",
+			expected: map[string]struct{}{"arg1": {}, "arg2": {}},
+		},
+		{
+			name:     "two names with a comma at the beginning",
+			arg:      ",arg1,arg2",
+			expected: map[string]struct{}{"arg1": {}, "arg2": {}},
+		},
+		{
+			name:     "commas only",
+			arg:      ",,,,",
+			expected: nil,
+		},
+		{
+			name:     "duplicates",
+			arg:      "arg1,arg2,arg1",
+			expected: map[string]struct{}{"arg1": {}, "arg2": {}},
+		},
+	}
+
+	for _, tt := range testCases {
+		t.Run(tt.name, func(t *testing.T) {
+			actual := parseExcludeInterfaces(tt.arg)
+
+			if !reflect.DeepEqual(actual, tt.expected) {
+				t.Errorf("expected %v, actual %v", tt.expected, actual)
+			}
+		})
 	}
 }

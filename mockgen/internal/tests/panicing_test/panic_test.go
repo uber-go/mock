@@ -20,12 +20,11 @@ package paniccode
 import (
 	"testing"
 
-	"github.com/golang/mock/gomock"
+	"go.uber.org/mock/gomock"
 )
 
 func TestDanger_Panics_Explicit(t *testing.T) {
 	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
 	mock := NewMockFoo(ctrl)
 	mock.EXPECT().Bar().Return("Bar")
 	mock.EXPECT().Bar().Return("Baz")

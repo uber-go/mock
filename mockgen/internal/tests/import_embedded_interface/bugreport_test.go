@@ -11,18 +11,18 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
+
 package bugreport
 
 import (
 	"testing"
 
-	"github.com/golang/mock/gomock"
+	"go.uber.org/mock/gomock"
 )
 
 // TestValidInterface assesses whether or not the generated mock is valid
 func TestValidInterface(t *testing.T) {
 	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
 
 	s := NewMockSource(ctrl)
 	s.EXPECT().Ersatz().Return("")
