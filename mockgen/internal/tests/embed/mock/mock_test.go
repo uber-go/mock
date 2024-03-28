@@ -4,9 +4,9 @@ import (
 	reflect "reflect"
 	"testing"
 
-	"github.com/golang/mock/gomock"
-	"github.com/golang/mock/mockgen/internal/tests/embed"
-	mock_embed "github.com/golang/mock/mockgen/internal/tests/embed/mock"
+	"go.uber.org/mock/gomock"
+	"go.uber.org/mock/mockgen/internal/tests/embed"
+	mock_embed "go.uber.org/mock/mockgen/internal/tests/embed/mock"
 )
 
 func TestEmbed(t *testing.T) {

@@ -7,8 +7,8 @@ package mock_embed
 import (
 	reflect "reflect"
 
-	gomock "github.com/golang/mock/gomock"
-	embed "github.com/golang/mock/mockgen/internal/tests/embed"
+	gomock "go.uber.org/mock/gomock"
+	embed "go.uber.org/mock/mockgen/internal/tests/embed"
 )
 
 // MockHoge is a mock of Hoge interface.
