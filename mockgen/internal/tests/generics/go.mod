@@ -1,6 +1,8 @@
 module go.uber.org/mock/mockgen/internal/tests/generics
 
-go 1.19
+go 1.21
+
+toolchain go1.21.2
 
 require (
 	go.uber.org/mock v1.6.0
