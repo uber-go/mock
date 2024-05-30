@@ -16,6 +16,7 @@ package gomock
 
 import (
 	"fmt"
+	"google.golang.org/protobuf/proto"
 	"reflect"
 	"regexp"
 	"strings"
@@ -123,6 +124,11 @@ func (e eqMatcher) Matches(x any) bool {
 	// Check if types assignable and convert them to common type
 	x1Val := reflect.ValueOf(e.x)
 	x2Val := reflect.ValueOf(x)
+
+	if x1Val.Type().Implements(reflect.TypeOf((*proto.Message)(nil)).Elem()) &&
+		x2Val.Type().Implements(reflect.TypeOf((*proto.Message)(nil)).Elem()) {
+		return proto.Equal(e.x.(proto.Message), x.(proto.Message))
+	}
 
 	if x1Val.Type().AssignableTo(x2Val.Type()) {
 		x1ValConverted := x1Val.Convert(x2Val.Type())
