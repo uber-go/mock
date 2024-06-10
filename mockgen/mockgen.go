@@ -829,7 +829,7 @@ func createPackageMap(importPaths []string) map[string]string {
 	}
 	pkgMap := make(map[string]string)
 	b := bytes.NewBuffer(nil)
-	args := []string{"list", "-json"}
+	args := []string{"list", "-json=ImportPath,Name"}
 	args = append(args, importPaths...)
 	cmd := exec.Command("go", args...)
 	cmd.Stdout = b
