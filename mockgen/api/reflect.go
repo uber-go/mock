@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package main
+package api
 
 // This file contains the model construction by reflection.
 
@@ -142,13 +142,13 @@ func runInDir(program []byte, dir string) (*model.Package, error) {
 		}
 	}()
 	const progSource = "prog.go"
-	var progBinary = "prog.bin"
+	progBinary := "prog.bin"
 	if runtime.GOOS == "windows" {
 		// Windows won't execute a program unless it has a ".exe" suffix.
 		progBinary += ".exe"
 	}
 
-	if err := os.WriteFile(filepath.Join(tmpDir, progSource), program, 0600); err != nil {
+	if err := os.WriteFile(filepath.Join(tmpDir, progSource), program, 0o600); err != nil {
 		return nil, err
 	}
 
