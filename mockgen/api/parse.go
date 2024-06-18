@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package main
+package api
 
 // This file contains the model construction by parsing source files.
 
@@ -36,8 +36,8 @@ import (
 )
 
 // sourceMode generates mocks via source file.
-func sourceMode(source string) (*model.Package, error) {
-	srcDir, err := filepath.Abs(filepath.Dir(source))
+func sourceMode(c Config) (*model.Package, error) {
+	srcDir, err := filepath.Abs(filepath.Dir(c.Source))
 	if err != nil {
 		return nil, fmt.Errorf("failed getting source directory: %v", err)
 	}
@@ -48,9 +48,9 @@ func sourceMode(source string) (*model.Package, error) {
 	}
 
 	fs := token.NewFileSet()
-	file, err := parser.ParseFile(fs, source, nil, 0)
+	file, err := parser.ParseFile(fs, c.Source, nil, 0)
 	if err != nil {
-		return nil, fmt.Errorf("failed parsing source file %v: %v", source, err)
+		return nil, fmt.Errorf("failed parsing source file %v: %v", c.Source, err)
 	}
 
 	p := &fileParser{
@@ -63,8 +63,8 @@ func sourceMode(source string) (*model.Package, error) {
 
 	// Handle -imports.
 	dotImports := make(map[string]bool)
-	if *imports != "" {
-		for _, kv := range strings.Split(*imports, ",") {
+	if c.Imports != "" {
+		for _, kv := range strings.Split(c.Imports, ",") {
 			eq := strings.Index(kv, "=")
 			k, v := kv[:eq], kv[eq+1:]
 			if k == "." {
@@ -75,12 +75,12 @@ func sourceMode(source string) (*model.Package, error) {
 		}
 	}
 
-	if *excludeInterfaces != "" {
-		p.excludeNamesSet = parseExcludeInterfaces(*excludeInterfaces)
+	if c.ExcludeInterfaces != "" {
+		p.excludeNamesSet = parseExcludeInterfaces(c.ExcludeInterfaces)
 	}
 
 	// Handle -aux_files.
-	if err := p.parseAuxFiles(*auxFiles); err != nil {
+	if err := p.parseAuxFiles(c.AuxFiles); err != nil {
 		return nil, err
 	}
 	p.addAuxInterfacesFromFile(packageImport, file) // this file

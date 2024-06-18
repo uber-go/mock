@@ -1,4 +1,4 @@
-package main
+package api
 
 import (
 	"go/parser"
@@ -8,7 +8,7 @@ import (
 
 func TestFileParser_ParseFile(t *testing.T) {
 	fs := token.NewFileSet()
-	file, err := parser.ParseFile(fs, "internal/tests/custom_package_name/greeter/greeter.go", nil, 0)
+	file, err := parser.ParseFile(fs, "../internal/tests/custom_package_name/greeter/greeter.go", nil, 0)
 	if err != nil {
 		t.Fatalf("Unexpected error: %v", err)
 	}
@@ -39,7 +39,7 @@ func TestFileParser_ParseFile(t *testing.T) {
 
 func TestFileParser_ParsePackage(t *testing.T) {
 	fs := token.NewFileSet()
-	_, err := parser.ParseFile(fs, "internal/tests/custom_package_name/greeter/greeter.go", nil, 0)
+	_, err := parser.ParseFile(fs, "../internal/tests/custom_package_name/greeter/greeter.go", nil, 0)
 	if err != nil {
 		t.Fatalf("Unexpected error: %v", err)
 	}
@@ -60,7 +60,7 @@ func TestFileParser_ParsePackage(t *testing.T) {
 
 func TestImportsOfFile(t *testing.T) {
 	fs := token.NewFileSet()
-	file, err := parser.ParseFile(fs, "internal/tests/custom_package_name/greeter/greeter.go", nil, 0)
+	file, err := parser.ParseFile(fs, "../internal/tests/custom_package_name/greeter/greeter.go", nil, 0)
 	if err != nil {
 		t.Fatalf("Unexpected error: %v", err)
 	}
@@ -107,15 +107,17 @@ func checkGreeterImports(t *testing.T, imports map[string]importedPackage) {
 }
 
 func Benchmark_parseFile(b *testing.B) {
-	source := "internal/tests/performance/big_interface/big_interface.go"
+	source := "../internal/tests/performance/big_interface/big_interface.go"
 	for n := 0; n < b.N; n++ {
-		sourceMode(source)
+		sourceMode(Config{
+			Source: source,
+		})
 	}
 }
 
 func TestParseArrayWithConstLength(t *testing.T) {
 	fs := token.NewFileSet()
-	srcDir := "internal/tests/const_array_length/input.go"
+	srcDir := "../internal/tests/const_array_length/input.go"
 
 	file, err := parser.ParseFile(fs, srcDir, nil, 0)
 	if err != nil {
