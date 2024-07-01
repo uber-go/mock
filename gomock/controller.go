@@ -20,6 +20,8 @@ import (
 	"reflect"
 	"runtime"
 	"sync"
+
+	"github.com/google/go-cmp/cmp"
 )
 
 // A TestReporter is something that can be used to report test failures.  It
@@ -76,6 +78,7 @@ type Controller struct {
 	mu            sync.Mutex
 	expectedCalls *callSet
 	finished      bool
+	cmpOpts       cmp.Options
 }
 
 // NewController returns a new Controller. It is the preferred way to create a Controller.
@@ -119,6 +122,20 @@ func WithOverridableExpectations() overridableExpectationsOption {
 
 func (o overridableExpectationsOption) apply(ctrl *Controller) {
 	ctrl.expectedCalls = newOverridableCallSet()
+}
+
+type cmpOptions struct {
+	opts []cmp.Option
+}
+
+func (o cmpOptions) apply(ctrl *Controller) {
+	ctrl.cmpOpts = o.opts
+}
+
+// WithCmpOpts is a ControllerOption that configures the options to pass to
+// cmp.Diff.
+func WithCmpOpts(opts ...cmp.Option) cmpOptions {
+	return cmpOptions{opts: opts}
 }
 
 type cancelReporter struct {
@@ -181,7 +198,7 @@ func (ctrl *Controller) RecordCall(receiver any, method string, args ...any) *Ca
 func (ctrl *Controller) RecordCallWithMethodType(receiver any, method string, methodType reflect.Type, args ...any) *Call {
 	ctrl.T.Helper()
 
-	call := newCall(ctrl.T, receiver, method, methodType, args...)
+	call := newCall(ctrl.T, receiver, method, methodType, ctrl.cmpOpts, args...)
 
 	ctrl.mu.Lock()
 	defer ctrl.mu.Unlock()

@@ -20,6 +20,8 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/google/go-cmp/cmp/cmpopts"
+
 	"go.uber.org/mock/gomock"
 )
 
@@ -74,8 +76,11 @@ func (e *ErrorReporter) assertFatal(fn func(), expectedErrMsgs ...string) {
 				// check the last actualErrMsg, because the previous messages come from previous errors
 				actualErrMsg := e.log[len(e.log)-1]
 				for _, expectedErrMsg := range expectedErrMsgs {
-					if !strings.Contains(actualErrMsg, expectedErrMsg) {
+					i := strings.Index(actualErrMsg, expectedErrMsg)
+					if i == -1 {
 						e.t.Errorf("Error message:\ngot: %q\nwant to contain: %q\n", actualErrMsg, expectedErrMsg)
+					} else {
+						actualErrMsg = actualErrMsg[i+len(expectedErrMsg):]
 					}
 				}
 			}
@@ -149,8 +154,9 @@ func (s *Subject) VariadicMethod(arg int, vararg ...string) {}
 
 // A type purely for ActOnTestStructMethod
 type TestStruct struct {
-	Number  int
-	Message string
+	Number        int
+	Message       string
+	secretMessage string
 }
 
 func (s *Subject) ActOnTestStructMethod(arg TestStruct, arg1 int) int {
@@ -171,7 +177,9 @@ func createFixtures(t *testing.T) (reporter *ErrorReporter, ctrl *gomock.Control
 	// Controller. We use it to test that the mock considered tests
 	// successful or failed.
 	reporter = NewErrorReporter(t)
-	ctrl = gomock.NewController(reporter)
+	ctrl = gomock.NewController(
+		reporter, gomock.WithCmpOpts(cmpopts.IgnoreUnexported(TestStruct{})),
+	)
 	return
 }
 
@@ -298,13 +306,13 @@ func TestUnexpectedArgValue_FirstArg(t *testing.T) {
 		// the method argument (of TestStruct type) has 1 unexpected value (for the Message field)
 		ctrl.Call(subject, "ActOnTestStructMethod", TestStruct{Number: 123, Message: "no message"}, 15)
 	}, "Unexpected call to", "doesn't match the argument at index 0",
-		"Got: {123 no message} (gomock_test.TestStruct)\nWant: is equal to {123 hello %s} (gomock_test.TestStruct)")
+		"Diff (-want +got):", "gomock_test.TestStruct{", "Number:  123", "-", "Message: \"hello %s\",", "+", "Message: \"no message\",", "}")
 
 	reporter.assertFatal(func() {
 		// the method argument (of TestStruct type) has 2 unexpected values (for both fields)
 		ctrl.Call(subject, "ActOnTestStructMethod", TestStruct{Number: 11, Message: "no message"}, 15)
 	}, "Unexpected call to", "doesn't match the argument at index 0",
-		"Got: {11 no message} (gomock_test.TestStruct)\nWant: is equal to {123 hello %s} (gomock_test.TestStruct)")
+		"Diff (-want +got):", "gomock_test.TestStruct{", "-", "Number:  123,", "+", "Number:  11,", "-", "Message: \"hello %s\",", "+", "Message: \"no message\",", "}")
 
 	reporter.assertFatal(func() {
 		// The expected call wasn't made.
@@ -323,7 +331,7 @@ func TestUnexpectedArgValue_SecondArg(t *testing.T) {
 	reporter.assertFatal(func() {
 		ctrl.Call(subject, "ActOnTestStructMethod", TestStruct{Number: 123, Message: "hello"}, 3)
 	}, "Unexpected call to", "doesn't match the argument at index 1",
-		"Got: 3 (int)\nWant: is equal to 15 (int)")
+		"Diff (-want +got):", "int(", "-", "15,", "+", "3,", ")")
 
 	reporter.assertFatal(func() {
 		// The expected call wasn't made.
@@ -742,8 +750,8 @@ func TestVariadicNoMatch(t *testing.T) {
 	ctrl.RecordCall(s, "VariadicMethod", 0)
 	rep.assertFatal(func() {
 		ctrl.Call(s, "VariadicMethod", 1)
-	}, "expected call at", "doesn't match the argument at index 0",
-		"Got: 1 (int)\nWant: is equal to 0 (int)")
+	}, "expected call at", "doesn't match the argument at index 0:",
+		"Diff (-want +got):", "int(", "-", "0,", "+", "1,", ")")
 	ctrl.Call(s, "VariadicMethod", 0)
 }
 
