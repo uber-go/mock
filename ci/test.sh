@@ -3,10 +3,6 @@
 
 set -euo pipefail
 
-if [[ $(go version) != *"go1.18"* ]]; then
-  exit 0
-fi
-
 for i in $(find $PWD -name go.mod); do
   pushd $(dirname $i)
   go mod tidy
