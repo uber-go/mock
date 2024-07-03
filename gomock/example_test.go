@@ -12,6 +12,7 @@ import (
 
 type Foo interface {
 	Bar(string) string
+	String() string
 }
 
 func ExampleCall_DoAndReturn_latency() {

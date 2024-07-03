@@ -39,6 +39,11 @@ func (m *UserServiceMock) EXPECT() *UserServiceMockMockRecorder {
 	return m.recorder
 }
 
+// ISGOMOCK indicates that this struct is a gomock mock.
+func (m *UserServiceMock) ISGOMOCK() struct{} {
+	return struct{}{}
+}
+
 // Create mocks base method.
 func (m *UserServiceMock) Create(arg0 string) (*user.User, error) {
 	m.ctrl.T.Helper()

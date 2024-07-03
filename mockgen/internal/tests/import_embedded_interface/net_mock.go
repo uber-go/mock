@@ -39,6 +39,11 @@ func (m *MockNet) EXPECT() *MockNetMockRecorder {
 	return m.recorder
 }
 
+// ISGOMOCK indicates that this struct is a gomock mock.
+func (m *MockNet) ISGOMOCK() struct{} {
+	return struct{}{}
+}
+
 // Header mocks base method.
 func (m *MockNet) Header() http.Header {
 	m.ctrl.T.Helper()
