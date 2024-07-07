@@ -39,6 +39,11 @@ func (m *MockVendorsDep) EXPECT() *MockVendorsDepMockRecorder {
 	return m.recorder
 }
 
+// ISGOMOCK indicates that this struct is a gomock mock.
+func (m *MockVendorsDep) ISGOMOCK() struct{} {
+	return struct{}{}
+}
+
 // Foo mocks base method.
 func (m *MockVendorsDep) Foo() present.Elem {
 	m.ctrl.T.Helper()

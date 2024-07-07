@@ -49,6 +49,11 @@ func (m *MockIndex) EXPECT() *MockIndexMockRecorder {
 	return m.recorder
 }
 
+// ISGOMOCK indicates that this struct is a gomock mock.
+func (m *MockIndex) ISGOMOCK() struct{} {
+	return struct{}{}
+}
+
 // Anon mocks base method.
 func (m *MockIndex) Anon(arg0 string) {
 	m.ctrl.T.Helper()
@@ -358,6 +363,11 @@ func (m *MockEmbed) EXPECT() *MockEmbedMockRecorder {
 	return m.recorder
 }
 
+// ISGOMOCK indicates that this struct is a gomock mock.
+func (m *MockEmbed) ISGOMOCK() struct{} {
+	return struct{}{}
+}
+
 // EmbeddedMethod mocks base method.
 func (m *MockEmbed) EmbeddedMethod() {
 	m.ctrl.T.Helper()
@@ -429,6 +439,11 @@ func NewMockEmbedded(ctrl *gomock.Controller) *MockEmbedded {
 // EXPECT returns an object that allows the caller to indicate expected use.
 func (m *MockEmbedded) EXPECT() *MockEmbeddedMockRecorder {
 	return m.recorder
+}
+
+// ISGOMOCK indicates that this struct is a gomock mock.
+func (m *MockEmbedded) ISGOMOCK() struct{} {
+	return struct{}{}
 }
 
 // EmbeddedMethod mocks base method.

@@ -39,6 +39,11 @@ func (m *MockInputMaker) EXPECT() *MockInputMakerMockRecorder {
 	return m.recorder
 }
 
+// ISGOMOCK indicates that this struct is a gomock mock.
+func (m *MockInputMaker) ISGOMOCK() struct{} {
+	return struct{}{}
+}
+
 // MakeInput mocks base method.
 func (m *MockInputMaker) MakeInput() client.GreetInput {
 	m.ctrl.T.Helper()
