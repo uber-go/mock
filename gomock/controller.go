@@ -48,8 +48,7 @@ type cleanuper interface {
 // A Controller represents the top-level control of a mock ecosystem.  It
 // defines the scope and lifetime of mock objects, as well as their
 // expectations.  It is safe to call Controller's methods from multiple
-// goroutines. Each test should create a new Controller and invoke Finish via
-// defer.
+// goroutines. Each test should create a new Controller.
 //
 //	func TestFoo(t *testing.T) {
 //	  ctrl := gomock.NewController(t)
@@ -240,6 +239,9 @@ func (ctrl *Controller) Call(receiver any, method string, args ...any) []any {
 
 // Finish checks to see if all the methods that were expected to be called were called.
 // It is not idempotent and therefore can only be invoked once.
+//
+// Note: If you pass a *testing.T into [NewController], you no longer
+// need to call ctrl.Finish() in your test methods.
 func (ctrl *Controller) Finish() {
 	// If we're currently panicking, probably because this is a deferred call.
 	// This must be recovered in the deferred function.
