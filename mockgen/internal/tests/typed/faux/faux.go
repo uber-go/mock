@@ -6,6 +6,6 @@ type Foreign interface {
 	error
 }
 
-type Embedded any
+type Embedded interface{}
 
-type Return any
+type Return interface{}
