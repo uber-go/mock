@@ -42,3 +42,8 @@ func NewMockEmpty(ctrl *gomock.Controller) *MockEmpty {
 func (m *MockEmpty) EXPECT() *MockEmptyMockRecorder {
 	return m.recorder
 }
+
+// ISGOMOCK indicates that this struct is a gomock mock.
+func (m *MockEmpty) ISGOMOCK() struct{} {
+	return struct{}{}
+}

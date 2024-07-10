@@ -38,6 +38,11 @@ func (m *MockMath) EXPECT() *MockMathMockRecorder {
 	return m.recorder
 }
 
+// ISGOMOCK indicates that this struct is a gomock mock.
+func (m *MockMath) ISGOMOCK() struct{} {
+	return struct{}{}
+}
+
 // Sum mocks base method.
 func (m *MockMath) Sum(arg0, arg1 int) int {
 	m.ctrl.T.Helper()

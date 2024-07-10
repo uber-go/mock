@@ -40,6 +40,11 @@ func (m *PostServiceMock) EXPECT() *PostServiceMockMockRecorder {
 	return m.recorder
 }
 
+// ISGOMOCK indicates that this struct is a gomock mock.
+func (m *PostServiceMock) ISGOMOCK() struct{} {
+	return struct{}{}
+}
+
 // Create mocks base method.
 func (m *PostServiceMock) Create(arg0, arg1 string, arg2 *user.User) (*post.Post, error) {
 	m.ctrl.T.Helper()

@@ -40,6 +40,11 @@ func (m *MockWithImports) EXPECT() *MockWithImportsMockRecorder {
 	return m.recorder
 }
 
+// ISGOMOCK indicates that this struct is a gomock mock.
+func (m *MockWithImports) ISGOMOCK() struct{} {
+	return struct{}{}
+}
+
 // Method1 mocks base method.
 func (m *MockWithImports) Method1() b_mock.Buffer {
 	m.ctrl.T.Helper()
