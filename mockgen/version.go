@@ -20,9 +20,18 @@ import (
 	"runtime/debug"
 )
 
+func moduleVersion() (string, bool) {
+	bi, exists := debug.ReadBuildInfo()
+	if !exists {
+		return "", false
+	}
+
+	return bi.Main.Version, true
+}
+
 func printModuleVersion() {
-	if bi, exists := debug.ReadBuildInfo(); exists {
-		fmt.Println(bi.Main.Version)
+	if mv, exists := moduleVersion(); exists {
+		fmt.Println(mv)
 	} else {
 		log.Printf("No version information found. Make sure to use " +
 			"GO111MODULE=on when running 'go get' in order to use specific " +
