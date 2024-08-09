@@ -104,7 +104,8 @@ func main() {
 				log.Fatalf("Parse package name failed: %v", err)
 			}
 		}
-		pkg, err = reflectMode(packageName, interfaces)
+		parser := importModeParser{}
+		pkg, err = parser.parsePackage(packageName, interfaces)
 	}
 	if err != nil {
 		log.Fatalf("Loading input failed: %v", err)
