@@ -27,12 +27,12 @@ func Test_importModeParser_parsePackage(t *testing.T) {
 			expectedErr: "load package: package  not found",
 		},
 		{
-			name: "error: interface does not exists",
+			name: "error: interface does not exist",
 			args: args{
 				packageName: "go.uber.org/mock/mockgen/internal/tests/import_mode",
 				ifaces:      []string{"Alien"},
 			},
-			expectedErr: "extract interfaces from package: interface Alien does not exists",
+			expectedErr: "extract interfaces from package: interface Alien does not exist",
 		},
 		{
 			name: "error: search for struct instead of interface",

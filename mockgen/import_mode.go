@@ -97,7 +97,7 @@ func (p *importModeParser) extractInterfacesFromPackage(pkg *packages.Package, i
 	for i, iface := range ifaces {
 		obj := pkg.Types.Scope().Lookup(iface)
 		if obj == nil {
-			return nil, fmt.Errorf("interface %s does not exists", iface)
+			return nil, fmt.Errorf("interface %s does not exist", iface)
 		}
 
 		modelIface, err := p.parseInterface(obj)
