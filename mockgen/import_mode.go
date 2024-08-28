@@ -20,12 +20,12 @@ func (p *importModeParser) parsePackage(packageName string, ifaces []string) (*m
 
 	pkg, err := p.loadPackage(packageName)
 	if err != nil {
-		return nil, fmt.Errorf("failed to load package: %w", err)
+		return nil, fmt.Errorf("load package: %w", err)
 	}
 
 	interfaces, err := p.extractInterfacesFromPackage(pkg, ifaces)
 	if err != nil {
-		return nil, fmt.Errorf("failed to extract interfaces from package: %w", err)
+		return nil, fmt.Errorf("extract interfaces from package: %w", err)
 	}
 
 	return &model.Package{
@@ -47,13 +47,13 @@ func (p *importModeParser) loadPackage(packageName string) (*packages.Package, e
 	dirName := "mockgen_" + p.generateSalt()
 	err := os.Mkdir(dirName, 0755)
 	if err != nil {
-		return nil, fmt.Errorf("failed to create temp dir for fake package: %w", err)
+		return nil, fmt.Errorf("create temp dir for fake package: %w", err)
 	}
 	defer os.RemoveAll(dirName)
 
 	err = os.WriteFile(dirName+"/main.go", []byte(fmt.Sprintf(fakeFileTemplate, packageName)), 0666)
 	if err != nil {
-		return nil, fmt.Errorf("failed to write fake main.go: %w", err)
+		return nil, fmt.Errorf("write fake main.go: %w", err)
 	}
 
 	fileSet := token.NewFileSet()
@@ -65,7 +65,7 @@ func (p *importModeParser) loadPackage(packageName string) (*packages.Package, e
 	}
 	pkgs, err := packages.Load(cfg)
 	if err != nil {
-		return nil, fmt.Errorf("failed to load packages: %w", err)
+		return nil, fmt.Errorf("load packages: %w", err)
 	}
 
 	if len(pkgs) != 1 {
@@ -102,7 +102,7 @@ func (p *importModeParser) extractInterfacesFromPackage(pkg *packages.Package, i
 
 		modelIface, err := p.parseInterface(obj)
 		if err != nil {
-			return nil, fmt.Errorf("failed to parse interface: %w", err)
+			return nil, newParseTypeError("parse interface", obj.String(), err)
 		}
 
 		interfaces[i] = modelIface
@@ -122,9 +122,7 @@ func (p *importModeParser) parseInterface(obj types.Object) (*model.Interface, e
 		return nil, fmt.Errorf("%s is not an interface. it is a %s", obj.Name(), obj.Type().Underlying().String())
 	}
 
-	iface = iface.Complete()
-
-	if !p.checkInterfaceIsNotConstraint(iface) {
+	if p.isConstraint(iface) {
 		return nil, fmt.Errorf("interface %s is a constraint", obj.Name())
 	}
 
@@ -138,7 +136,7 @@ func (p *importModeParser) parseInterface(obj types.Object) (*model.Interface, e
 
 		modelFunc, err := p.parseFunc(typedMethod)
 		if err != nil {
-			return nil, fmt.Errorf("failed to parse method: %w", err)
+			return nil, newParseTypeError("parse method", typedMethod.String(), err)
 		}
 
 		methods[i] = &model.Method{
@@ -156,7 +154,7 @@ func (p *importModeParser) parseInterface(obj types.Object) (*model.Interface, e
 			param := named.TypeParams().At(i)
 			typeParam, err := p.parseConstraint(param)
 			if err != nil {
-				return nil, fmt.Errorf("failed to parse type parameter: %w", err)
+				return nil, newParseTypeError("parse type parameter", param.String(), err)
 			}
 
 			typeParams[i] = &model.Parameter{Name: param.Obj().Name(), Type: typeParam}
@@ -166,15 +164,15 @@ func (p *importModeParser) parseInterface(obj types.Object) (*model.Interface, e
 	return &model.Interface{Name: obj.Name(), Methods: methods, TypeParams: typeParams}, nil
 }
 
-func (o *importModeParser) checkInterfaceIsNotConstraint(t *types.Interface) bool {
+func (o *importModeParser) isConstraint(t *types.Interface) bool {
 	for i := 0; i < t.NumEmbeddeds(); i++ {
 		embed := t.EmbeddedType(i)
 		if _, ok := embed.Underlying().(*types.Interface); !ok {
-			return false
+			return true
 		}
 	}
 
-	return true
+	return false
 }
 
 func (p *importModeParser) parseType(t types.Type) (model.Type, error) {
@@ -182,13 +180,13 @@ func (p *importModeParser) parseType(t types.Type) (model.Type, error) {
 	case *types.Array:
 		elementType, err := p.parseType(t.Elem())
 		if err != nil {
-			return nil, fmt.Errorf("failed to parse array type: %w", err)
+			return nil, newParseTypeError("parse array type", t.Elem().String(), err)
 		}
 		return &model.ArrayType{Len: int(t.Len()), Type: elementType}, nil
 	case *types.Slice:
 		elementType, err := p.parseType(t.Elem())
 		if err != nil {
-			return nil, fmt.Errorf("failed to parse array type: %w", err)
+			return nil, newParseTypeError("parse slice type", t.Elem().String(), err)
 		}
 
 		return &model.ArrayType{Len: -1, Type: elementType}, nil
@@ -203,35 +201,39 @@ func (p *importModeParser) parseType(t types.Type) (model.Type, error) {
 
 		chanType, err := p.parseType(t.Elem())
 		if err != nil {
-			return nil, fmt.Errorf("failed to parse chan type: %w", err)
+			return nil, newParseTypeError("parse chan type", t.Elem().String(), err)
 		}
 
 		return &model.ChanType{Dir: dir, Type: chanType}, nil
 	case *types.Signature:
 		sig, err := p.parseFunc(t)
 		if err != nil {
-			return nil, fmt.Errorf("failed to parse signature: %w", err)
+			return nil, newParseTypeError("parse signature", t.String(), err)
 		}
 
 		return sig, nil
 	case *types.Named:
-		var typeParams *model.TypeParametersType
-		if t.TypeArgs() != nil {
-			typeParams = &model.TypeParametersType{TypeParameters: make([]model.Type, t.TypeArgs().Len())}
-			for i := 0; i < t.TypeArgs().Len(); i++ {
-				typeParam := t.TypeArgs().At(i)
-				typedParam, err := p.parseType(typeParam)
-				if err != nil {
-					return nil, fmt.Errorf("failed to parse type parameter: %w", err)
-				}
-
-				typeParams.TypeParameters[i] = typedParam
-			}
-		}
-
 		var pkg string
 		if t.Obj().Pkg() != nil {
 			pkg = t.Obj().Pkg().Path()
+		}
+
+		if t.TypeArgs() == nil {
+			return &model.NamedType{
+				Package: pkg,
+				Type:    t.Obj().Name(),
+			}, nil
+		}
+
+		typeParams := &model.TypeParametersType{TypeParameters: make([]model.Type, t.TypeArgs().Len())}
+		for i := 0; i < t.TypeArgs().Len(); i++ {
+			typeParam := t.TypeArgs().At(i)
+			typedParam, err := p.parseType(typeParam)
+			if err != nil {
+				return nil, newParseTypeError("parse type parameter", typeParam.String(), err)
+			}
+
+			typeParams.TypeParameters[i] = typedParam
 		}
 
 		return &model.NamedType{
@@ -248,18 +250,18 @@ func (p *importModeParser) parseType(t types.Type) (model.Type, error) {
 	case *types.Map:
 		key, err := p.parseType(t.Key())
 		if err != nil {
-			return nil, fmt.Errorf("failed to parse map key type: %w", err)
+			return nil, newParseTypeError("parse map key", t.Key().String(), err)
 		}
 		value, err := p.parseType(t.Elem())
 		if err != nil {
-			return nil, fmt.Errorf("failed to parse map value type: %w", err)
+			return nil, newParseTypeError("parse map value", t.Elem().String(), err)
 		}
 
 		return &model.MapType{Key: key, Value: value}, nil
 	case *types.Pointer:
 		valueType, err := p.parseType(t.Elem())
 		if err != nil {
-			return nil, fmt.Errorf("failed to parse pointer type: %w", err)
+			return nil, newParseTypeError("parse pointer type", t.Elem().String(), err)
 		}
 
 		return &model.PointerType{Type: valueType}, nil
@@ -291,7 +293,7 @@ func (p *importModeParser) parseFunc(sig *types.Signature) (*model.FuncType, err
 		if isVariadicParam {
 			sliceType, ok := param.Type().(*types.Slice)
 			if !ok {
-				return nil, fmt.Errorf("variadic parameter is not a slice")
+				return nil, newParseTypeError("variadic parameter is not a slice", param.String(), nil)
 			}
 
 			parseType = sliceType.Elem()
@@ -299,7 +301,7 @@ func (p *importModeParser) parseFunc(sig *types.Signature) (*model.FuncType, err
 
 		paramType, err := p.parseType(parseType)
 		if err != nil {
-			return nil, fmt.Errorf("failed to parse parameter type: %w", err)
+			return nil, newParseTypeError("parse parameter type", parseType.String(), err)
 		}
 
 		modelParameter := &model.Parameter{Type: paramType, Name: param.Name()}
@@ -321,7 +323,7 @@ func (p *importModeParser) parseFunc(sig *types.Signature) (*model.FuncType, err
 
 		resultType, err := p.parseType(result.Type())
 		if err != nil {
-			return nil, fmt.Errorf("failed to parse result type: %w", err)
+			return nil, newParseTypeError("parse result type", result.Type().String(), err)
 		}
 
 		results[i] = &model.Parameter{Type: resultType, Name: result.Name()}
@@ -345,8 +347,30 @@ func (p *importModeParser) parseConstraint(t *types.TypeParam) (model.Type, erro
 
 	typeParam, err := p.parseType(t.Constraint())
 	if err != nil {
-		return nil, fmt.Errorf("failed to parse type parameter: %w", err)
+		return nil, newParseTypeError("parse constraint type", t.Constraint().String(), err)
 	}
 
 	return typeParam, nil
+}
+
+type parseTypeError struct {
+	message    string
+	typeString string
+	error      error
+}
+
+func newParseTypeError(message string, typeString string, error error) *parseTypeError {
+	return &parseTypeError{typeString: typeString, error: error, message: message}
+}
+
+func (p parseTypeError) Error() string {
+	if p.error != nil {
+		return fmt.Sprintf("%s: error parsing %s: %s", p.message, p.typeString, p.error)
+	}
+
+	return fmt.Sprintf("%s: error parsing type %s", p.message, p.typeString)
+}
+
+func (p parseTypeError) Unwrap() error {
+	return p.error
 }

@@ -24,7 +24,7 @@ func Test_importModeParser_parsePackage(t *testing.T) {
 				packageName: "",
 				ifaces:      []string{"ImmortalHelldiver"},
 			},
-			expectedErr: "failed to load package: package  not found",
+			expectedErr: "load package: package  not found",
 		},
 		{
 			name: "error: interface does not exists",
@@ -32,7 +32,7 @@ func Test_importModeParser_parsePackage(t *testing.T) {
 				packageName: "go.uber.org/mock/mockgen/internal/tests/import_mode",
 				ifaces:      []string{"Alien"},
 			},
-			expectedErr: "failed to extract interfaces from package: interface Alien does not exists",
+			expectedErr: "extract interfaces from package: interface Alien does not exists",
 		},
 		{
 			name: "error: search for struct instead of interface",
@@ -40,7 +40,8 @@ func Test_importModeParser_parsePackage(t *testing.T) {
 				packageName: "go.uber.org/mock/mockgen/internal/tests/import_mode",
 				ifaces:      []string{"Work"},
 			},
-			expectedErr: "failed to extract interfaces from package: failed to parse interface: " +
+			expectedErr: "extract interfaces from package: parse interface: " +
+				"error parsing type go.uber.org/mock/mockgen/internal/tests/import_mode.Work struct{Name string}: " +
 				"Work is not an interface. it is a struct{Name string}",
 		},
 		{
@@ -49,7 +50,8 @@ func Test_importModeParser_parsePackage(t *testing.T) {
 				packageName: "go.uber.org/mock/mockgen/internal/tests/import_mode",
 				ifaces:      []string{"Counter"},
 			},
-			expectedErr: "failed to extract interfaces from package: failed to parse interface: " +
+			expectedErr: "extract interfaces from package: parse interface: " +
+				"error parsing type go.uber.org/mock/mockgen/internal/tests/import_mode.Counter interface{int}: " +
 				"interface Counter is a constraint",
 		},
 		{
