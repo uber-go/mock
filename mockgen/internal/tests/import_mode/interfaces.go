@@ -1,72 +1,59 @@
 package import_mode
 
-// This package is used for unit testing of import_mode.go.
-// All the entities described here are inspired by the video game Helldivers 2
-
-//go:generate mockgen -typed -package=mock -destination=mock/interfaces.go . DemocracyFan,SuperEarthCitizen,Projectile,Gun,Shooter,HelldiverRifleShooter,HelldiverRocketMan,PotentialTraitor,AgitationCampaign
+//go:generate mockgen -typed -package=mock -destination=mock/interfaces.go . Food,Eater,Animal,Human,Primate,Car,Driver,UrbanResident,Farmer,PromotionCampaign
 
 import (
-	"go.uber.org/mock/mockgen/internal/tests/import_mode/guns"
-	"go.uber.org/mock/mockgen/internal/tests/import_mode/projectiles"
-	. "go.uber.org/mock/mockgen/internal/tests/import_mode/stratagems"
+	"time"
+
+	"go.uber.org/mock/mockgen/internal/tests/import_mode/cars"
+	"go.uber.org/mock/mockgen/internal/tests/import_mode/fuel"
 )
 
-type DemocracyFan interface {
-	ILoveDemocracy()
-	YouWillNeverDestroyOurWayOfLife()
+type Food interface {
+	Calories() int
 }
 
-type SuperEarthCitizen DemocracyFan
-
-type Projectile interface {
-	Speed() int
-	FlightRange() int
-	Explosive() bool
+type Eater interface {
+	Eat(foods ...Food)
 }
 
-type Gun[ProjectileType Projectile] interface {
-	Shoot(times int) []ProjectileType
-	Ammo() int
+type Animal interface {
+	Eater
+	Breathe()
+	Sleep(duration time.Duration)
 }
 
-type Shooter[ProjectileType Projectile, GunType Gun[ProjectileType]] interface {
-	Gun() GunType
-	Shoot(times int, targets ...*Enemy) (bool, error)
-	Reload() bool
+type Primate Animal
+
+type Human = Primate
+
+type Car[FuelType fuel.Fuel] interface {
+	Brand() string
+	FuelTank() cars.FuelTank[FuelType]
+	Refuel(fuel FuelType, volume int) error
 }
 
-type Helldiver interface {
-	DemocracyFan
-	StratagemCarrier
+type Driver[FuelType fuel.Fuel, CarType Car[FuelType]] interface {
+	Wroom() error
+	Drive(car CarType)
 }
 
-type HelldiverRifleShooter interface {
-	Helldiver
-	Shooter[projectiles.Bullet, *guns.Rifle]
+type UrbanResident interface {
+	Human
+	Driver[fuel.Gasoline, cars.HyundaiSolaris]
+	Do(work *Work) error
+	LivesInACity()
 }
 
-type HelldiverRocketMan interface {
-	Helldiver
-	Shooter[projectiles.Missle, *guns.RocketLauncher]
+type Farmer interface {
+	Human
+	Driver[fuel.Diesel, cars.FordF150]
+	Do(work *Work) error
+	LivesInAVillage()
 }
 
-type PotentialTraitor interface {
-	StratagemCarrier
-	Shooter[projectiles.Bullet, *guns.Rifle]
-}
-
-type AgitationCampaign interface {
-	interface {
-		BecomeAHero()
-		BecomeALegend()
-		BecomeAHelldiver()
-	}
-}
-
-type Enemy struct {
-	Name     string
-	Fraction string
-	Hp       int
+type Work struct {
+	Name string
 }
 
 type Counter interface {

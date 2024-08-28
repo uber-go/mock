@@ -30,18 +30,18 @@ func Test_importModeParser_parsePackage(t *testing.T) {
 			name: "error: interface does not exists",
 			args: args{
 				packageName: "go.uber.org/mock/mockgen/internal/tests/import_mode",
-				ifaces:      []string{"ImmortalHelldiver"},
+				ifaces:      []string{"Alien"},
 			},
-			expectedErr: "failed to extract interfaces from package: interface ImmortalHelldiver does not exists",
+			expectedErr: "failed to extract interfaces from package: interface Alien does not exists",
 		},
 		{
 			name: "error: search for struct instead of interface",
 			args: args{
 				packageName: "go.uber.org/mock/mockgen/internal/tests/import_mode",
-				ifaces:      []string{"Enemy"},
+				ifaces:      []string{"Work"},
 			},
 			expectedErr: "failed to extract interfaces from package: failed to parse interface: " +
-				"Enemy is not an interface. it is a struct{Name string; Fraction string; Hp int}",
+				"Work is not an interface. it is a struct{Name string}",
 		},
 		{
 			name: "error: search for constraint instead of interface",
@@ -56,17 +56,49 @@ func Test_importModeParser_parsePackage(t *testing.T) {
 			name: "success: simple interface",
 			args: args{
 				packageName: "go.uber.org/mock/mockgen/internal/tests/import_mode",
-				ifaces:      []string{"DemocracyFan"},
+				ifaces:      []string{"Food"},
 			},
 			expected: &model.Package{
 				Name:    "import_mode",
 				PkgPath: "go.uber.org/mock/mockgen/internal/tests/import_mode",
 				Interfaces: []*model.Interface{
 					{
-						Name: "DemocracyFan",
+						Name: "Food",
 						Methods: []*model.Method{
-							{Name: "ILoveDemocracy"},
-							{Name: "YouWillNeverDestroyOurWayOfLife"},
+							{
+								Name: "Calories",
+								Out: []*model.Parameter{
+									{Type: model.PredeclaredType("int")},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "success: interface with variadic args",
+			args: args{
+				packageName: "go.uber.org/mock/mockgen/internal/tests/import_mode",
+				ifaces:      []string{"Eater"},
+			},
+			expected: &model.Package{
+				Name:    "import_mode",
+				PkgPath: "go.uber.org/mock/mockgen/internal/tests/import_mode",
+				Interfaces: []*model.Interface{
+					{
+						Name: "Eater",
+						Methods: []*model.Method{
+							{
+								Name: "Eat",
+								Variadic: &model.Parameter{
+									Name: "foods",
+									Type: &model.NamedType{
+										Package: "go.uber.org/mock/mockgen/internal/tests/import_mode",
+										Type:    "Food",
+									},
+								},
+							},
 						},
 					},
 				},
@@ -76,67 +108,62 @@ func Test_importModeParser_parsePackage(t *testing.T) {
 			name: "success: interface with generic",
 			args: args{
 				packageName: "go.uber.org/mock/mockgen/internal/tests/import_mode",
-				ifaces:      []string{"Shooter"},
+				ifaces:      []string{"Car"},
 			},
 			expected: &model.Package{
 				Name:    "import_mode",
 				PkgPath: "go.uber.org/mock/mockgen/internal/tests/import_mode",
 				Interfaces: []*model.Interface{
 					{
-						Name: "Shooter",
+						Name: "Car",
 						Methods: []*model.Method{
 							{
-								Name: "Gun",
+								Name: "Brand",
 								Out: []*model.Parameter{
-									{Type: &model.NamedType{Type: "GunType"}},
+									{Type: model.PredeclaredType("string")},
 								},
 							},
 							{
-								Name: "Reload",
+								Name: "FuelTank",
 								Out: []*model.Parameter{
-									{Type: model.PredeclaredType("bool")},
-								},
-							},
-							{
-								Name: "Shoot",
-								In: []*model.Parameter{
-									{Name: "times", Type: model.PredeclaredType("int")},
-								},
-								Out: []*model.Parameter{
-									{Type: model.PredeclaredType("bool")},
-									{Type: &model.NamedType{Type: "error"}},
-								},
-								Variadic: &model.Parameter{
-									Name: "targets",
-									Type: &model.PointerType{
+									{
 										Type: &model.NamedType{
-											Package: "go.uber.org/mock/mockgen/internal/tests/import_mode",
-											Type:    "Enemy",
+											Package: "go.uber.org/mock/mockgen/internal/tests/import_mode/cars",
+											Type:    "FuelTank",
+											TypeParams: &model.TypeParametersType{
+												TypeParameters: []model.Type{
+													&model.NamedType{
+														Type: "FuelType",
+													},
+												},
+											},
 										},
 									},
+								},
+							},
+							{
+								Name: "Refuel",
+								In: []*model.Parameter{
+									{
+										Name: "fuel",
+										Type: &model.NamedType{Type: "FuelType"},
+									},
+									{
+										Name: "volume",
+										Type: model.PredeclaredType("int"),
+									},
+								},
+								Out: []*model.Parameter{
+									{Type: &model.NamedType{Type: "error"}},
 								},
 							},
 						},
 						TypeParams: []*model.Parameter{
 							{
-								Name: "ProjectileType",
+								Name: "FuelType",
 								Type: &model.NamedType{
-									Package: "go.uber.org/mock/mockgen/internal/tests/import_mode",
-									Type:    "Projectile",
-								},
-							},
-							{
-								Name: "GunType",
-								Type: &model.NamedType{
-									Package: "go.uber.org/mock/mockgen/internal/tests/import_mode",
-									Type:    "Gun",
-									TypeParams: &model.TypeParametersType{
-										TypeParameters: []model.Type{
-											&model.NamedType{
-												Type: "ProjectileType",
-											},
-										},
-									},
+									Package: "go.uber.org/mock/mockgen/internal/tests/import_mode/fuel",
+									Type:    "Fuel",
 								},
 							},
 						},
@@ -148,31 +175,79 @@ func Test_importModeParser_parsePackage(t *testing.T) {
 			name: "success: interface with embedded interfaces",
 			args: args{
 				packageName: "go.uber.org/mock/mockgen/internal/tests/import_mode",
-				ifaces:      []string{"Helldiver"},
+				ifaces:      []string{"Animal"},
 			},
 			expected: &model.Package{
 				Name:    "import_mode",
 				PkgPath: "go.uber.org/mock/mockgen/internal/tests/import_mode",
 				Interfaces: []*model.Interface{
 					{
-						Name: "Helldiver",
+						Name: "Animal",
 						Methods: []*model.Method{
+							{Name: "Breathe"},
 							{
-								Name: "AvailableStratagems",
-								Out: []*model.Parameter{
+								Name: "Eat",
+								Variadic: &model.Parameter{
+									Name: "foods",
+									Type: &model.NamedType{
+										Package: "go.uber.org/mock/mockgen/internal/tests/import_mode",
+										Type:    "Food",
+									},
+								},
+							},
+							{
+								Name: "Sleep",
+								In: []*model.Parameter{
 									{
-										Type: &model.ArrayType{
-											Len: -1,
-											Type: &model.NamedType{
-												Package: "go.uber.org/mock/mockgen/internal/tests/import_mode/stratagems",
-												Type:    "Stratagem",
-											},
+										Name: "duration",
+										Type: &model.NamedType{
+											Package: "time",
+											Type:    "Duration",
 										},
 									},
 								},
 							},
-							{Name: "ILoveDemocracy"},
-							{Name: "YouWillNeverDestroyOurWayOfLife"},
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "success: subtype of interface",
+			args: args{
+				packageName: "go.uber.org/mock/mockgen/internal/tests/import_mode",
+				ifaces:      []string{"Primate"},
+			},
+			expected: &model.Package{
+				Name:    "import_mode",
+				PkgPath: "go.uber.org/mock/mockgen/internal/tests/import_mode",
+				Interfaces: []*model.Interface{
+					{
+						Name: "Primate",
+						Methods: []*model.Method{
+							{Name: "Breathe"},
+							{
+								Name: "Eat",
+								Variadic: &model.Parameter{
+									Name: "foods",
+									Type: &model.NamedType{
+										Package: "go.uber.org/mock/mockgen/internal/tests/import_mode",
+										Type:    "Food",
+									},
+								},
+							},
+							{
+								Name: "Sleep",
+								In: []*model.Parameter{
+									{
+										Name: "duration",
+										Type: &model.NamedType{
+											Package: "time",
+											Type:    "Duration",
+										},
+									},
+								},
+							},
 						},
 					},
 				},
@@ -182,38 +257,38 @@ func Test_importModeParser_parsePackage(t *testing.T) {
 			name: "success: alias to interface",
 			args: args{
 				packageName: "go.uber.org/mock/mockgen/internal/tests/import_mode",
-				ifaces:      []string{"SuperEarthCitizen"},
+				ifaces:      []string{"Human"},
 			},
 			expected: &model.Package{
 				Name:    "import_mode",
 				PkgPath: "go.uber.org/mock/mockgen/internal/tests/import_mode",
 				Interfaces: []*model.Interface{
 					{
-						Name: "SuperEarthCitizen",
+						Name: "Human",
 						Methods: []*model.Method{
-							{Name: "ILoveDemocracy"},
-							{Name: "YouWillNeverDestroyOurWayOfLife"},
-						},
-					},
-				},
-			},
-		},
-		{
-			name: "success: embedded anonymous interface",
-			args: args{
-				packageName: "go.uber.org/mock/mockgen/internal/tests/import_mode",
-				ifaces:      []string{"AgitationCampaign"},
-			},
-			expected: &model.Package{
-				Name:    "import_mode",
-				PkgPath: "go.uber.org/mock/mockgen/internal/tests/import_mode",
-				Interfaces: []*model.Interface{
-					{
-						Name: "AgitationCampaign",
-						Methods: []*model.Method{
-							{Name: "BecomeAHelldiver"},
-							{Name: "BecomeAHero"},
-							{Name: "BecomeALegend"},
+							{Name: "Breathe"},
+							{
+								Name: "Eat",
+								Variadic: &model.Parameter{
+									Name: "foods",
+									Type: &model.NamedType{
+										Package: "go.uber.org/mock/mockgen/internal/tests/import_mode",
+										Type:    "Food",
+									},
+								},
+							},
+							{
+								Name: "Sleep",
+								In: []*model.Parameter{
+									{
+										Name: "duration",
+										Type: &model.NamedType{
+											Package: "time",
+											Type:    "Duration",
+										},
+									},
+								},
+							},
 						},
 					},
 				},
