@@ -467,3 +467,104 @@ func TestParseExcludeInterfaces(t *testing.T) {
 		})
 	}
 }
+
+func Test_filterInterfaces(t *testing.T) {
+	type args struct {
+		all       []*model.Interface
+		requested []string
+	}
+	tests := []struct {
+		name    string
+		args    args
+		want    []*model.Interface
+		wantErr bool
+	}{
+		{
+			name: "no filter",
+			args: args{
+				all: []*model.Interface{
+					{
+						Name: "Foo",
+					},
+					{
+						Name: "Bar",
+					},
+				},
+				requested: []string{},
+			},
+			want:    nil,
+			wantErr: true,
+		},
+		{
+			name: "filter by Foo",
+			args: args{
+				all: []*model.Interface{
+					{
+						Name: "Foo",
+					},
+					{
+						Name: "Bar",
+					},
+				},
+				requested: []string{"Foo"},
+			},
+			want: []*model.Interface{
+				{
+					Name: "Foo",
+				},
+			},
+			wantErr: false,
+		},
+		{
+			name: "filter by Foo and Bar",
+			args: args{
+				all: []*model.Interface{
+					{
+						Name: "Foo",
+					},
+					{
+						Name: "Bar",
+					},
+				},
+				requested: []string{"Foo", "Bar"},
+			},
+			want: []*model.Interface{
+				{
+					Name: "Foo",
+				},
+				{
+					Name: "Bar",
+				},
+			},
+			wantErr: false,
+		},
+		{
+			name: "incorrect filter by Foo and Baz",
+			args: args{
+				all: []*model.Interface{
+					{
+						Name: "Foo",
+					},
+					{
+						Name: "Bar",
+					},
+				},
+				requested: []string{"Foo", "Baz"},
+			},
+			want:    nil,
+			wantErr: true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := filterInterfaces(tt.args.all, tt.args.requested)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("filterInterfaces() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("filterInterfaces() got = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
