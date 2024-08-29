@@ -467,5 +467,3 @@ func TestParseExcludeInterfaces(t *testing.T) {
 		})
 	}
 }
-
-

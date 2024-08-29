@@ -5,7 +5,7 @@ import (
 	"go/token"
 	"testing"
 	"reflect"
-	
+
 	"go.uber.org/mock/mockgen/model"
 )
 
