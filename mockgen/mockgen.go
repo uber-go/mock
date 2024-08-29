@@ -116,7 +116,6 @@ func main() {
 		return
 	}
 
-
 	outputPackageName := *packageOut
 	if outputPackageName == "" {
 		// pkg.Name in reflect mode is the base name of the import path,
@@ -895,29 +894,4 @@ func parsePackageImport(srcDir string) (string, error) {
 		}
 	}
 	return "", errOutsideGoPath
-}
-
-func filterInterfaces(all []*model.Interface, requested []string) ([]*model.Interface, error) {
-	if len(requested) == 0 {
-		return nil, fmt.Errorf("no interfaces requested, other provide them or remove flag -interfaces")
-	}
-	requestedIfaces := make(map[string]struct{})
-	for _, iface := range requested {
-		requestedIfaces[iface] = struct{}{}
-	}
-	result := make([]*model.Interface, 0, len(all))
-	for _, iface := range all {
-		if _, ok := requestedIfaces[iface.Name]; ok {
-			result = append(result, iface)
-			delete(requestedIfaces, iface.Name)
-		}
-	}
-	if len(requestedIfaces) > 0 {
-		var missing []string
-		for iface := range requestedIfaces {
-			missing = append(missing, iface)
-		}
-		return nil, fmt.Errorf("missing interfaces: %s", strings.Join(missing, ", "))
-	}
-	return result, nil
 }
