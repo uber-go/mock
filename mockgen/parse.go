@@ -92,6 +92,15 @@ func sourceMode(source string) (*model.Package, error) {
 	for pkgPath := range dotImports {
 		pkg.DotImports = append(pkg.DotImports, pkgPath)
 	}
+
+	if len(*interfaces) > 0 {
+		ifaces := strings.Split(*interfaces, ",")
+		if pkg.Interfaces, err = filterInterfaces(pkg.Interfaces, ifaces); err != nil {
+			log.Fatalf("Filtering interfaces failed: %v", err)
+		}
+
+	}
+	
 	return pkg, nil
 }
 
