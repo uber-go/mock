@@ -68,6 +68,7 @@ var (
 	imports                = flag.String("imports", "", "(source mode) Comma-separated name=path pairs of explicit imports to use.")
 	auxFiles               = flag.String("aux_files", "", "(source mode) Comma-separated pkg=path pairs of auxiliary Go source files.")
 	excludeInterfaces      = flag.String("exclude_interfaces", "", "Comma-separated names of interfaces to be excluded")
+	private                = flag.Bool("private", false, "Generate private mocks whose names begin with a lowercase letter")
 
 	debugParser = flag.Bool("debug_parser", false, "Print out parser results only.")
 	showVersion = flag.Bool("version", false, "Print version.")
@@ -439,7 +440,12 @@ func (g *generator) mockName(typeName string) string {
 		return mockName
 	}
 
-	return "Mock" + typeName
+	prefix := "Mock"
+	if *private {
+		prefix = "mock"
+	}
+
+	return prefix + typeName
 }
 
 // formattedTypeParams returns a long and short form of type param info used for
@@ -471,29 +477,36 @@ func (g *generator) GenerateMockInterface(intf *model.Interface, outputPackagePa
 	mockType := g.mockName(intf.Name)
 	longTp, shortTp := g.formattedTypeParams(intf, outputPackagePath)
 
+	mockRecorder := "MockRecorder"
+	constructorPrefix := "New"
+	if *private {
+		mockRecorder = "mockRecorder"
+		constructorPrefix = "new"
+	}
+
 	g.p("")
 	g.p("// %v is a mock of %v interface.", mockType, intf.Name)
 	g.p("type %v%v struct {", mockType, longTp)
 	g.in()
 	g.p("ctrl     *gomock.Controller")
-	g.p("recorder *%vMockRecorder%v", mockType, shortTp)
+	g.p("recorder *%v%s%v", mockType, mockRecorder, shortTp)
 	g.out()
 	g.p("}")
 	g.p("")
 
-	g.p("// %vMockRecorder is the mock recorder for %v.", mockType, mockType)
-	g.p("type %vMockRecorder%v struct {", mockType, longTp)
+	g.p("// %v%s is the mock recorder for %v.", mockType, mockRecorder, mockType)
+	g.p("type %v%s%v struct {", mockType, mockRecorder, longTp)
 	g.in()
 	g.p("mock *%v%v", mockType, shortTp)
 	g.out()
 	g.p("}")
 	g.p("")
 
-	g.p("// New%v creates a new mock instance.", mockType)
-	g.p("func New%v%v(ctrl *gomock.Controller) *%v%v {", mockType, longTp, mockType, shortTp)
+	g.p("// %s%v creates a new mock instance.", constructorPrefix, mockType)
+	g.p("func %s%v%v(ctrl *gomock.Controller) *%v%v {", constructorPrefix, strings.Title(mockType), longTp, mockType, shortTp)
 	g.in()
 	g.p("mock := &%v%v{ctrl: ctrl}", mockType, shortTp)
-	g.p("mock.recorder = &%vMockRecorder%v{mock}", mockType, shortTp)
+	g.p("mock.recorder = &%v%s%v{mock}", mockType, mockRecorder, shortTp)
 	g.p("return mock")
 	g.out()
 	g.p("}")
@@ -501,7 +514,7 @@ func (g *generator) GenerateMockInterface(intf *model.Interface, outputPackagePa
 
 	// XXX: possible name collision here if someone has EXPECT in their interface.
 	g.p("// EXPECT returns an object that allows the caller to indicate expected use.")
-	g.p("func (m *%v%v) EXPECT() *%vMockRecorder%v {", mockType, shortTp, mockType, shortTp)
+	g.p("func (m *%v%v) EXPECT() *%v%s%v {", mockType, shortTp, mockType, mockRecorder, shortTp)
 	g.in()
 	g.p("return m.recorder")
 	g.out()
@@ -624,6 +637,11 @@ func (g *generator) GenerateMockRecorderMethod(intf *model.Interface, m *model.M
 	mockType := g.mockName(intf.Name)
 	argNames := g.getArgNames(m, true)
 
+	mockRecorder := "MockRecorder"
+	if *private {
+		mockRecorder = "mockRecorder"
+	}
+
 	var argString string
 	if m.Variadic == nil {
 		argString = strings.Join(argNames, ", ")
@@ -646,9 +664,9 @@ func (g *generator) GenerateMockRecorderMethod(intf *model.Interface, m *model.M
 
 	g.p("// %v indicates an expected call of %v.", m.Name, m.Name)
 	if typed {
-		g.p("func (%s *%vMockRecorder%v) %v(%v) *%s%sCall%s {", idRecv, mockType, shortTp, m.Name, argString, mockType, m.Name, shortTp)
+		g.p("func (%s *%v%s%v) %v(%v) *%s%sCall%s {", idRecv, mockType, mockRecorder, shortTp, m.Name, argString, mockType, m.Name, shortTp)
 	} else {
-		g.p("func (%s *%vMockRecorder%v) %v(%v) *gomock.Call {", idRecv, mockType, shortTp, m.Name, argString)
+		g.p("func (%s *%v%s%v) %v(%v) *gomock.Call {", idRecv, mockType, mockRecorder, shortTp, m.Name, argString)
 	}
 
 	g.in()
