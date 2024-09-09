@@ -112,7 +112,7 @@ func (p *importModeParser) extractInterfacesFromPackage(pkg *packages.Package, i
 }
 
 func (p *importModeParser) parseInterface(obj types.Object) (*model.Interface, error) {
-	named, ok := obj.Type().(*types.Named)
+	named, ok := types.Unalias(obj.Type()).(*types.Named)
 	if !ok {
 		return nil, fmt.Errorf("%s is not an interface. it is a %s", obj.Name(), obj.Type().Underlying().String())
 	}
