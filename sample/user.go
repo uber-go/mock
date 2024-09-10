@@ -5,13 +5,13 @@ package user
 
 // Random bunch of imports to test mockgen.
 import (
-	"io"
-
-	btz "bytes"
 	"hash"
+	"io"
 	"log"
 	"net"
 	"net/http"
+
+	btz "bytes"
 
 	// Two imports with the same base name.
 	t1 "html/template"

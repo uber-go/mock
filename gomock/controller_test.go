@@ -563,8 +563,8 @@ func TestSetArgSlice(t *testing.T) {
 	_, ctrl := createFixtures(t)
 	subject := new(Subject)
 
-	var in = []byte{4, 5, 6}
-	var set = []byte{1, 2, 3}
+	in := []byte{4, 5, 6}
+	set := []byte{1, 2, 3}
 	ctrl.RecordCall(subject, "SetArgMethod", in, nil, nil).SetArg(0, set)
 	ctrl.Call(subject, "SetArgMethod", in, nil, nil)
 
@@ -584,8 +584,8 @@ func TestSetArgMap(t *testing.T) {
 	_, ctrl := createFixtures(t)
 	subject := new(Subject)
 
-	var in = map[any]any{"int": 1, "string": "random string", 1: "1", 0: 0}
-	var set = map[any]any{"int": 2, 1: "2", 2: 100}
+	in := map[any]any{"int": 1, "string": "random string", 1: "1", 0: 0}
+	set := map[any]any{"int": 2, 1: "2", 2: 100}
 	ctrl.RecordCall(subject, "SetArgMethod", nil, nil, in).SetArg(2, set)
 	ctrl.Call(subject, "SetArgMethod", nil, nil, in)
 
