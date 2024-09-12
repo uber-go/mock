@@ -1,6 +1,6 @@
 package import_mode
 
-//go:generate mockgen -typed -package=mock -destination=mock/interfaces.go . Food,Eater,Animal,Human,Primate,Car,Driver,UrbanResident,Farmer
+//go:generate mockgen -typed -package=mock -destination=mock/interfaces.go . Food,Eater,Animal,Human,Primate,Car,Driver,UrbanResident,Farmer,Earth
 
 import (
 	"time"
@@ -58,4 +58,11 @@ type Work struct {
 
 type Counter interface {
 	int
+}
+
+type HumansCount = int
+
+type Earth interface {
+	GiveBirth(HumansCount) []Human
+	HumanPopulation() HumansCount
 }

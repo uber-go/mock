@@ -21,10 +21,10 @@ func Test_importModeParser_parsePackage(t *testing.T) {
 		{
 			name: "error: no found package",
 			args: args{
-				packageName: "",
-				ifaces:      []string{"ImmortalHelldiver"},
+				packageName: "foo/bar/another_package",
+				ifaces:      []string{"Human"},
 			},
-			expectedErr: "load package: package  not found",
+			expectedErr: "load package: -: package foo/bar/another_package is not in std",
 		},
 		{
 			name: "error: interface does not exist",
@@ -296,6 +296,57 @@ func Test_importModeParser_parsePackage(t *testing.T) {
 				},
 			},
 		},
+		{
+			name: "success: interfaces with aliases in params and returns",
+			args: args{
+				packageName: "go.uber.org/mock/mockgen/internal/tests/import_mode",
+				ifaces:      []string{"Earth"},
+			},
+			expected: &model.Package{
+				Name:    "import_mode",
+				PkgPath: "go.uber.org/mock/mockgen/internal/tests/import_mode",
+				Interfaces: []*model.Interface{
+					{
+						Name: "Earth",
+						Methods: []*model.Method{
+							{
+								Name: "GiveBirth",
+								In: []*model.Parameter{
+									{
+										Type: &model.NamedType{
+											Package: "go.uber.org/mock/mockgen/internal/tests/import_mode",
+											Type:    "HumansCount",
+										},
+									},
+								},
+								Out: []*model.Parameter{
+									{
+										Type: &model.ArrayType{
+											Len: -1, // slice
+											Type: &model.NamedType{
+												Package: "go.uber.org/mock/mockgen/internal/tests/import_mode",
+												Type:    "Human",
+											},
+										},
+									},
+								},
+							},
+							{
+								Name: "HumanPopulation",
+								Out: []*model.Parameter{
+									{
+										Type: &model.NamedType{
+											Package: "go.uber.org/mock/mockgen/internal/tests/import_mode",
+											Type:    "HumansCount",
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
 	}
 
 	for _, tt := range tests {
@@ -304,7 +355,7 @@ func Test_importModeParser_parsePackage(t *testing.T) {
 			actual, err := parser.parsePackage(tt.args.packageName, tt.args.ifaces)
 
 			if tt.expectedErr != "" {
-				assert.EqualError(t, err, tt.expectedErr)
+				assert.ErrorContains(t, err, tt.expectedErr)
 			} else {
 				assert.NoError(t, err)
 			}

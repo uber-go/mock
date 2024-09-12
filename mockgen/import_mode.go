@@ -1,11 +1,10 @@
 package main
 
 import (
+	"errors"
 	"fmt"
-	"go/token"
 	"go/types"
 	"math/rand"
-	"os"
 
 	"go.uber.org/mock/mockgen/model"
 	"golang.org/x/tools/go/packages"
@@ -36,34 +35,10 @@ func (p *importModeParser) parsePackage(packageName string, ifaces []string) (*m
 }
 
 func (p *importModeParser) loadPackage(packageName string) (*packages.Package, error) {
-	const fakeFileTemplate = `
-		package main
-		
-		import (
-			"%s"
-		)
-	`
-
-	dirName := "mockgen_" + p.generateSalt()
-	err := os.Mkdir(dirName, 0755)
-	if err != nil {
-		return nil, fmt.Errorf("create temp dir for fake package: %w", err)
-	}
-	defer os.RemoveAll(dirName)
-
-	err = os.WriteFile(dirName+"/main.go", []byte(fmt.Sprintf(fakeFileTemplate, packageName)), 0666)
-	if err != nil {
-		return nil, fmt.Errorf("write fake main.go: %w", err)
-	}
-
-	fileSet := token.NewFileSet()
-
 	cfg := &packages.Config{
 		Mode: packages.NeedDeps | packages.NeedImports | packages.NeedTypes | packages.NeedTypesInfo | packages.NeedEmbedFiles,
-		Dir:  dirName,
-		Fset: fileSet,
 	}
-	pkgs, err := packages.Load(cfg)
+	pkgs, err := packages.Load(cfg, packageName)
 	if err != nil {
 		return nil, fmt.Errorf("load packages: %w", err)
 	}
@@ -72,13 +47,16 @@ func (p *importModeParser) loadPackage(packageName string) (*packages.Package, e
 		return nil, fmt.Errorf("packages length must be 1: %d", len(pkgs))
 	}
 
-	pkg := pkgs[0]
-	searchedPkg, ok := pkg.Imports[packageName]
-	if !ok {
-		return nil, fmt.Errorf("package %s not found", packageName)
+	if len(pkgs[0].Errors) > 0 {
+		errs := make([]error, len(pkgs[0].Errors))
+		for i, err := range pkgs[0].Errors {
+			errs[i] = err
+		}
+
+		return nil, errors.Join(errs...)
 	}
 
-	return searchedPkg, nil
+	return pkgs[0], nil
 }
 
 func (p *importModeParser) generateSalt() string {
@@ -212,22 +190,23 @@ func (p *importModeParser) parseType(t types.Type) (model.Type, error) {
 		}
 
 		return sig, nil
-	case *types.Named:
+	case *types.Named, *types.Alias:
+		named := t.(namedType)
 		var pkg string
-		if t.Obj().Pkg() != nil {
-			pkg = t.Obj().Pkg().Path()
+		if named.Obj().Pkg() != nil {
+			pkg = named.Obj().Pkg().Path()
 		}
 
-		if t.TypeArgs() == nil {
+		if named.TypeArgs() == nil {
 			return &model.NamedType{
 				Package: pkg,
-				Type:    t.Obj().Name(),
+				Type:    named.Obj().Name(),
 			}, nil
 		}
 
-		typeParams := &model.TypeParametersType{TypeParameters: make([]model.Type, t.TypeArgs().Len())}
-		for i := 0; i < t.TypeArgs().Len(); i++ {
-			typeParam := t.TypeArgs().At(i)
+		typeParams := &model.TypeParametersType{TypeParameters: make([]model.Type, named.TypeArgs().Len())}
+		for i := 0; i < named.TypeArgs().Len(); i++ {
+			typeParam := named.TypeArgs().At(i)
 			typedParam, err := p.parseType(typeParam)
 			if err != nil {
 				return nil, newParseTypeError("parse type parameter", typeParam.String(), err)
@@ -238,7 +217,7 @@ func (p *importModeParser) parseType(t types.Type) (model.Type, error) {
 
 		return &model.NamedType{
 			Package:    pkg,
-			Type:       t.Obj().Name(),
+			Type:       named.Obj().Name(),
 			TypeParams: typeParams,
 		}, nil
 	case *types.Interface:
@@ -373,4 +352,10 @@ func (p parseTypeError) Error() string {
 
 func (p parseTypeError) Unwrap() error {
 	return p.error
+}
+
+// namedType is an interface for combining Named and Alias
+type namedType interface {
+	Obj() *types.TypeName
+	TypeArgs() *types.TypeList
 }
