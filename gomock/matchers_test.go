@@ -26,10 +26,12 @@ import (
 	"go.uber.org/mock/gomock/internal/mock_gomock"
 )
 
-type A []string
-type B struct {
-	Name string
-}
+type (
+	A []string
+	B struct {
+		Name string
+	}
+)
 
 func TestMatchers(t *testing.T) {
 	type e any
@@ -39,21 +41,27 @@ func TestMatchers(t *testing.T) {
 		yes, no []e
 	}{
 		{"test Any", gomock.Any(), []e{3, nil, "foo"}, nil},
-		{"test AnyOf", gomock.AnyOf(gomock.Nil(), gomock.Len(2), 1, 2, 3),
+		{
+			"test AnyOf", gomock.AnyOf(gomock.Nil(), gomock.Len(2), 1, 2, 3),
 			[]e{nil, "hi", "to", 1, 2, 3},
-			[]e{"s", "", 0, 4, 10}},
+			[]e{"s", "", 0, 4, 10},
+		},
 		{"test All", gomock.Eq(4), []e{4}, []e{3, "blah", nil, int64(4)}},
-		{"test Nil", gomock.Nil(),
+		{
+			"test Nil", gomock.Nil(),
 			[]e{nil, (error)(nil), (chan bool)(nil), (*int)(nil)},
-			[]e{"", 0, make(chan bool), errors.New("err"), new(int)}},
+			[]e{"", 0, make(chan bool), errors.New("err"), new(int)},
+		},
 		{"test Not", gomock.Not(gomock.Eq(4)), []e{3, "blah", nil, int64(4)}, []e{4}},
 		{"test Regex", gomock.Regex("[0-9]{2}:[0-9]{2}"), []e{"23:02", "[23:02]: Hello world", []byte("23:02")}, []e{4, "23-02", "hello world", true, []byte("23-02")}},
 		{"test All", gomock.All(gomock.Any(), gomock.Eq(4)), []e{4}, []e{3, "blah", nil, int64(4)}},
-		{"test Len", gomock.Len(2),
+		{
+			"test Len", gomock.Len(2),
 			[]e{[]int{1, 2}, "ab", map[string]int{"a": 0, "b": 1}, [2]string{"a", "b"}},
 			[]e{[]int{1}, "a", 42, 42.0, false, [1]string{"a"}},
 		},
-		{"test assignable types", gomock.Eq(A{"a", "b"}),
+		{
+			"test assignable types", gomock.Eq(A{"a", "b"}),
 			[]e{[]string{"a", "b"}, A{"a", "b"}},
 			[]e{[]string{"a"}, A{"b"}},
 		},
