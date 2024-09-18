@@ -24,6 +24,7 @@ import (
 type MockEmpty struct {
 	ctrl     *gomock.Controller
 	recorder *MockEmptyMockRecorder
+	isgomock struct{}
 }
 
 // MockEmptyMockRecorder is the mock recorder for MockEmpty.
@@ -41,9 +42,4 @@ func NewMockEmpty(ctrl *gomock.Controller) *MockEmpty {
 // EXPECT returns an object that allows the caller to indicate expected use.
 func (m *MockEmpty) EXPECT() *MockEmptyMockRecorder {
 	return m.recorder
-}
-
-// ISGOMOCK indicates that this struct is a gomock mock.
-func (m *MockEmpty) ISGOMOCK() struct{} {
-	return struct{}{}
 }

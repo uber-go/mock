@@ -22,6 +22,7 @@ import (
 type MockExternalConstraint[I constraints.Integer, F constraints.Float] struct {
 	ctrl     *gomock.Controller
 	recorder *MockExternalConstraintMockRecorder[I, F]
+	isgomock struct{}
 }
 
 // MockExternalConstraintMockRecorder is the mock recorder for MockExternalConstraint.
@@ -39,11 +40,6 @@ func NewMockExternalConstraint[I constraints.Integer, F constraints.Float](ctrl 
 // EXPECT returns an object that allows the caller to indicate expected use.
 func (m *MockExternalConstraint[I, F]) EXPECT() *MockExternalConstraintMockRecorder[I, F] {
 	return m.recorder
-}
-
-// ISGOMOCK indicates that this struct is a gomock mock.
-func (m *MockExternalConstraint[I, F]) ISGOMOCK() struct{} {
-	return struct{}{}
 }
 
 // Eight mocks base method.

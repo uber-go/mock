@@ -21,6 +21,7 @@ import (
 type PostServiceMock struct {
 	ctrl     *gomock.Controller
 	recorder *PostServiceMockMockRecorder
+	isgomock struct{}
 }
 
 // PostServiceMockMockRecorder is the mock recorder for PostServiceMock.
@@ -38,11 +39,6 @@ func NewPostServiceMock(ctrl *gomock.Controller) *PostServiceMock {
 // EXPECT returns an object that allows the caller to indicate expected use.
 func (m *PostServiceMock) EXPECT() *PostServiceMockMockRecorder {
 	return m.recorder
-}
-
-// ISGOMOCK indicates that this struct is a gomock mock.
-func (m *PostServiceMock) ISGOMOCK() struct{} {
-	return struct{}{}
 }
 
 // Create mocks base method.

@@ -19,6 +19,7 @@ import (
 type MockReadWriteCloser struct {
 	ctrl     *gomock.Controller
 	recorder *MockReadWriteCloserMockRecorder
+	isgomock struct{}
 }
 
 // MockReadWriteCloserMockRecorder is the mock recorder for MockReadWriteCloser.
@@ -36,11 +37,6 @@ func NewMockReadWriteCloser(ctrl *gomock.Controller) *MockReadWriteCloser {
 // EXPECT returns an object that allows the caller to indicate expected use.
 func (m *MockReadWriteCloser) EXPECT() *MockReadWriteCloserMockRecorder {
 	return m.recorder
-}
-
-// ISGOMOCK indicates that this struct is a gomock mock.
-func (m *MockReadWriteCloser) ISGOMOCK() struct{} {
-	return struct{}{}
 }
 
 // Close mocks base method.

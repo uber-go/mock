@@ -22,6 +22,7 @@ import (
 type MockBar[T any, R any] struct {
 	ctrl     *gomock.Controller
 	recorder *MockBarMockRecorder[T, R]
+	isgomock struct{}
 }
 
 // MockBarMockRecorder is the mock recorder for MockBar.
@@ -39,11 +40,6 @@ func NewMockBar[T any, R any](ctrl *gomock.Controller) *MockBar[T, R] {
 // EXPECT returns an object that allows the caller to indicate expected use.
 func (m *MockBar[T, R]) EXPECT() *MockBarMockRecorder[T, R] {
 	return m.recorder
-}
-
-// ISGOMOCK indicates that this struct is a gomock mock.
-func (m *MockBar[T, R]) ISGOMOCK() struct{} {
-	return struct{}{}
 }
 
 // Eight mocks base method.
@@ -320,6 +316,7 @@ func (mr *MockBarMockRecorder[T, R]) Two(arg0 any) *gomock.Call {
 type MockUniverse[T constraints.Signed] struct {
 	ctrl     *gomock.Controller
 	recorder *MockUniverseMockRecorder[T]
+	isgomock struct{}
 }
 
 // MockUniverseMockRecorder is the mock recorder for MockUniverse.
@@ -337,11 +334,6 @@ func NewMockUniverse[T constraints.Signed](ctrl *gomock.Controller) *MockUnivers
 // EXPECT returns an object that allows the caller to indicate expected use.
 func (m *MockUniverse[T]) EXPECT() *MockUniverseMockRecorder[T] {
 	return m.recorder
-}
-
-// ISGOMOCK indicates that this struct is a gomock mock.
-func (m *MockUniverse[T]) ISGOMOCK() struct{} {
-	return struct{}{}
 }
 
 // Water mocks base method.
@@ -362,6 +354,7 @@ func (mr *MockUniverseMockRecorder[T]) Water(arg0 any) *gomock.Call {
 type MockMilkyWay[R constraints.Integer] struct {
 	ctrl     *gomock.Controller
 	recorder *MockMilkyWayMockRecorder[R]
+	isgomock struct{}
 }
 
 // MockMilkyWayMockRecorder is the mock recorder for MockMilkyWay.
@@ -379,11 +372,6 @@ func NewMockMilkyWay[R constraints.Integer](ctrl *gomock.Controller) *MockMilkyW
 // EXPECT returns an object that allows the caller to indicate expected use.
 func (m *MockMilkyWay[R]) EXPECT() *MockMilkyWayMockRecorder[R] {
 	return m.recorder
-}
-
-// ISGOMOCK indicates that this struct is a gomock mock.
-func (m *MockMilkyWay[R]) ISGOMOCK() struct{} {
-	return struct{}{}
 }
 
 // Water mocks base method.
@@ -404,6 +392,7 @@ func (mr *MockMilkyWayMockRecorder[R]) Water(arg0 any) *gomock.Call {
 type MockSolarSystem[T constraints.Ordered] struct {
 	ctrl     *gomock.Controller
 	recorder *MockSolarSystemMockRecorder[T]
+	isgomock struct{}
 }
 
 // MockSolarSystemMockRecorder is the mock recorder for MockSolarSystem.
@@ -421,11 +410,6 @@ func NewMockSolarSystem[T constraints.Ordered](ctrl *gomock.Controller) *MockSol
 // EXPECT returns an object that allows the caller to indicate expected use.
 func (m *MockSolarSystem[T]) EXPECT() *MockSolarSystemMockRecorder[T] {
 	return m.recorder
-}
-
-// ISGOMOCK indicates that this struct is a gomock mock.
-func (m *MockSolarSystem[T]) ISGOMOCK() struct{} {
-	return struct{}{}
 }
 
 // Water mocks base method.
@@ -446,6 +430,7 @@ func (mr *MockSolarSystemMockRecorder[T]) Water(arg0 any) *gomock.Call {
 type MockEarth[R any] struct {
 	ctrl     *gomock.Controller
 	recorder *MockEarthMockRecorder[R]
+	isgomock struct{}
 }
 
 // MockEarthMockRecorder is the mock recorder for MockEarth.
@@ -463,11 +448,6 @@ func NewMockEarth[R any](ctrl *gomock.Controller) *MockEarth[R] {
 // EXPECT returns an object that allows the caller to indicate expected use.
 func (m *MockEarth[R]) EXPECT() *MockEarthMockRecorder[R] {
 	return m.recorder
-}
-
-// ISGOMOCK indicates that this struct is a gomock mock.
-func (m *MockEarth[R]) ISGOMOCK() struct{} {
-	return struct{}{}
 }
 
 // Water mocks base method.
@@ -488,6 +468,7 @@ func (mr *MockEarthMockRecorder[R]) Water(arg0 any) *gomock.Call {
 type MockWater[R any, C generics.UnsignedInteger] struct {
 	ctrl     *gomock.Controller
 	recorder *MockWaterMockRecorder[R, C]
+	isgomock struct{}
 }
 
 // MockWaterMockRecorder is the mock recorder for MockWater.
@@ -505,11 +486,6 @@ func NewMockWater[R any, C generics.UnsignedInteger](ctrl *gomock.Controller) *M
 // EXPECT returns an object that allows the caller to indicate expected use.
 func (m *MockWater[R, C]) EXPECT() *MockWaterMockRecorder[R, C] {
 	return m.recorder
-}
-
-// ISGOMOCK indicates that this struct is a gomock mock.
-func (m *MockWater[R, C]) ISGOMOCK() struct{} {
-	return struct{}{}
 }
 
 // Fish mocks base method.
