@@ -20,6 +20,7 @@ import (
 type MockInputMaker struct {
 	ctrl     *gomock.Controller
 	recorder *MockInputMakerMockRecorder
+	isgomock struct{}
 }
 
 // MockInputMakerMockRecorder is the mock recorder for MockInputMaker.
@@ -37,11 +38,6 @@ func NewMockInputMaker(ctrl *gomock.Controller) *MockInputMaker {
 // EXPECT returns an object that allows the caller to indicate expected use.
 func (m *MockInputMaker) EXPECT() *MockInputMakerMockRecorder {
 	return m.recorder
-}
-
-// ISGOMOCK indicates that this struct is a gomock mock.
-func (m *MockInputMaker) ISGOMOCK() struct{} {
-	return struct{}{}
 }
 
 // MakeInput mocks base method.

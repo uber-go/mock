@@ -20,6 +20,7 @@ import (
 type MockNet struct {
 	ctrl     *gomock.Controller
 	recorder *MockNetMockRecorder
+	isgomock struct{}
 }
 
 // MockNetMockRecorder is the mock recorder for MockNet.
@@ -37,11 +38,6 @@ func NewMockNet(ctrl *gomock.Controller) *MockNet {
 // EXPECT returns an object that allows the caller to indicate expected use.
 func (m *MockNet) EXPECT() *MockNetMockRecorder {
 	return m.recorder
-}
-
-// ISGOMOCK indicates that this struct is a gomock mock.
-func (m *MockNet) ISGOMOCK() struct{} {
-	return struct{}{}
 }
 
 // Header mocks base method.

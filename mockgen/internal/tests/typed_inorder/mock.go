@@ -19,6 +19,7 @@ import (
 type MockAnimal struct {
 	ctrl     *gomock.Controller
 	recorder *MockAnimalMockRecorder
+	isgomock struct{}
 }
 
 // MockAnimalMockRecorder is the mock recorder for MockAnimal.
@@ -36,11 +37,6 @@ func NewMockAnimal(ctrl *gomock.Controller) *MockAnimal {
 // EXPECT returns an object that allows the caller to indicate expected use.
 func (m *MockAnimal) EXPECT() *MockAnimalMockRecorder {
 	return m.recorder
-}
-
-// ISGOMOCK indicates that this struct is a gomock mock.
-func (m *MockAnimal) ISGOMOCK() struct{} {
-	return struct{}{}
 }
 
 // Feed mocks base method.

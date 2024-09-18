@@ -21,6 +21,7 @@ import (
 type MockBar[T any, R any] struct {
 	ctrl     *gomock.Controller
 	recorder *MockBarMockRecorder[T, R]
+	isgomock struct{}
 }
 
 // MockBarMockRecorder is the mock recorder for MockBar.
@@ -38,11 +39,6 @@ func NewMockBar[T any, R any](ctrl *gomock.Controller) *MockBar[T, R] {
 // EXPECT returns an object that allows the caller to indicate expected use.
 func (m *MockBar[T, R]) EXPECT() *MockBarMockRecorder[T, R] {
 	return m.recorder
-}
-
-// ISGOMOCK indicates that this struct is a gomock mock.
-func (m *MockBar[T, R]) ISGOMOCK() struct{} {
-	return struct{}{}
 }
 
 // Eight mocks base method.
