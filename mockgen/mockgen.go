@@ -64,6 +64,7 @@ var (
 	writeSourceComment     = flag.Bool("write_source_comment", true, "Writes original file (source mode) or interface names (reflect mode) comment if true.")
 	writeGenerateDirective = flag.Bool("write_generate_directive", false, "Add //go:generate directive to regenerate the mock")
 	copyrightFile          = flag.String("copyright_file", "", "Copyright file used to add copyright header")
+	copyrightFileComments  = flag.Bool("copyright_file_comments", false, "Indicates, that copyright file already contains comments if true")
 	typed                  = flag.Bool("typed", false, "Generate Type-safe 'Return', 'Do', 'DoAndReturn' function")
 	imports                = flag.String("imports", "", "(source mode) Comma-separated name=path pairs of explicit imports to use.")
 	auxFiles               = flag.String("aux_files", "", "(source mode) Comma-separated pkg=path pairs of auxiliary Go source files.")
@@ -301,7 +302,11 @@ func (g *generator) Generate(pkg *model.Package, outputPkgName string, outputPac
 	if g.copyrightHeader != "" {
 		lines := strings.Split(g.copyrightHeader, "\n")
 		for _, line := range lines {
-			g.p("// %s", line)
+			if *copyrightFileComments {
+				g.p(line)
+			} else {
+				g.p("// %s", line)
+			}
 		}
 		g.p("")
 	}
