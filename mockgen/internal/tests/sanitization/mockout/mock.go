@@ -20,6 +20,7 @@ import (
 type MockAnyMock struct {
 	ctrl     *gomock.Controller
 	recorder *MockAnyMockMockRecorder
+	isgomock struct{}
 }
 
 // MockAnyMockMockRecorder is the mock recorder for MockAnyMock.
@@ -37,11 +38,6 @@ func NewMockAnyMock(ctrl *gomock.Controller) *MockAnyMock {
 // EXPECT returns an object that allows the caller to indicate expected use.
 func (m *MockAnyMock) EXPECT() *MockAnyMockMockRecorder {
 	return m.recorder
-}
-
-// ISGOMOCK indicates that this struct is a gomock mock.
-func (m *MockAnyMock) ISGOMOCK() struct{} {
-	return struct{}{}
 }
 
 // Do mocks base method.

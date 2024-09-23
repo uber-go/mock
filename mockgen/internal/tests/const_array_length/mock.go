@@ -19,6 +19,7 @@ import (
 type MockI struct {
 	ctrl     *gomock.Controller
 	recorder *MockIMockRecorder
+	isgomock struct{}
 }
 
 // MockIMockRecorder is the mock recorder for MockI.
@@ -36,11 +37,6 @@ func NewMockI(ctrl *gomock.Controller) *MockI {
 // EXPECT returns an object that allows the caller to indicate expected use.
 func (m *MockI) EXPECT() *MockIMockRecorder {
 	return m.recorder
-}
-
-// ISGOMOCK indicates that this struct is a gomock mock.
-func (m *MockI) ISGOMOCK() struct{} {
-	return struct{}{}
 }
 
 // Bar mocks base method.

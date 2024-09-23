@@ -20,6 +20,7 @@ import (
 type UserServiceMock struct {
 	ctrl     *gomock.Controller
 	recorder *UserServiceMockMockRecorder
+	isgomock struct{}
 }
 
 // UserServiceMockMockRecorder is the mock recorder for UserServiceMock.
@@ -37,11 +38,6 @@ func NewUserServiceMock(ctrl *gomock.Controller) *UserServiceMock {
 // EXPECT returns an object that allows the caller to indicate expected use.
 func (m *UserServiceMock) EXPECT() *UserServiceMockMockRecorder {
 	return m.recorder
-}
-
-// ISGOMOCK indicates that this struct is a gomock mock.
-func (m *UserServiceMock) ISGOMOCK() struct{} {
-	return struct{}{}
 }
 
 // Create mocks base method.

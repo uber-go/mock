@@ -23,6 +23,7 @@ import (
 type MockExternalConstraint[I constraints.Integer, F any] struct {
 	ctrl     *gomock.Controller
 	recorder *MockExternalConstraintMockRecorder[I, F]
+	isgomock struct{}
 }
 
 // MockExternalConstraintMockRecorder is the mock recorder for MockExternalConstraint.
@@ -40,11 +41,6 @@ func NewMockExternalConstraint[I constraints.Integer, F any](ctrl *gomock.Contro
 // EXPECT returns an object that allows the caller to indicate expected use.
 func (m *MockExternalConstraint[I, F]) EXPECT() *MockExternalConstraintMockRecorder[I, F] {
 	return m.recorder
-}
-
-// ISGOMOCK indicates that this struct is a gomock mock.
-func (m *MockExternalConstraint[I, F]) ISGOMOCK() struct{} {
-	return struct{}{}
 }
 
 // Eight mocks base method.
@@ -233,6 +229,7 @@ func (mr *MockExternalConstraintMockRecorder[I, F]) Two(arg0 any) *gomock.Call {
 type MockEmbeddingIface[T constraints.Integer, R constraints.Float] struct {
 	ctrl     *gomock.Controller
 	recorder *MockEmbeddingIfaceMockRecorder[T, R]
+	isgomock struct{}
 }
 
 // MockEmbeddingIfaceMockRecorder is the mock recorder for MockEmbeddingIface.
@@ -250,11 +247,6 @@ func NewMockEmbeddingIface[T constraints.Integer, R constraints.Float](ctrl *gom
 // EXPECT returns an object that allows the caller to indicate expected use.
 func (m *MockEmbeddingIface[T, R]) EXPECT() *MockEmbeddingIfaceMockRecorder[T, R] {
 	return m.recorder
-}
-
-// ISGOMOCK indicates that this struct is a gomock mock.
-func (m *MockEmbeddingIface[T, R]) ISGOMOCK() struct{} {
-	return struct{}{}
 }
 
 // Eight mocks base method.
@@ -542,6 +534,7 @@ func (mr *MockEmbeddingIfaceMockRecorder[T, R]) Water(arg0 any) *gomock.Call {
 type MockGenerator[T any] struct {
 	ctrl     *gomock.Controller
 	recorder *MockGeneratorMockRecorder[T]
+	isgomock struct{}
 }
 
 // MockGeneratorMockRecorder is the mock recorder for MockGenerator.
@@ -559,11 +552,6 @@ func NewMockGenerator[T any](ctrl *gomock.Controller) *MockGenerator[T] {
 // EXPECT returns an object that allows the caller to indicate expected use.
 func (m *MockGenerator[T]) EXPECT() *MockGeneratorMockRecorder[T] {
 	return m.recorder
-}
-
-// ISGOMOCK indicates that this struct is a gomock mock.
-func (m *MockGenerator[T]) ISGOMOCK() struct{} {
-	return struct{}{}
 }
 
 // Generate mocks base method.
@@ -584,6 +572,7 @@ func (mr *MockGeneratorMockRecorder[T]) Generate() *gomock.Call {
 type MockGroup[T generics.Generator[any]] struct {
 	ctrl     *gomock.Controller
 	recorder *MockGroupMockRecorder[T]
+	isgomock struct{}
 }
 
 // MockGroupMockRecorder is the mock recorder for MockGroup.
@@ -601,11 +590,6 @@ func NewMockGroup[T generics.Generator[any]](ctrl *gomock.Controller) *MockGroup
 // EXPECT returns an object that allows the caller to indicate expected use.
 func (m *MockGroup[T]) EXPECT() *MockGroupMockRecorder[T] {
 	return m.recorder
-}
-
-// ISGOMOCK indicates that this struct is a gomock mock.
-func (m *MockGroup[T]) ISGOMOCK() struct{} {
-	return struct{}{}
 }
 
 // Join mocks base method.

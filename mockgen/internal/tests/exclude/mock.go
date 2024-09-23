@@ -19,6 +19,7 @@ import (
 type MockGenerateMockForMe struct {
 	ctrl     *gomock.Controller
 	recorder *MockGenerateMockForMeMockRecorder
+	isgomock struct{}
 }
 
 // MockGenerateMockForMeMockRecorder is the mock recorder for MockGenerateMockForMe.
@@ -36,11 +37,6 @@ func NewMockGenerateMockForMe(ctrl *gomock.Controller) *MockGenerateMockForMe {
 // EXPECT returns an object that allows the caller to indicate expected use.
 func (m *MockGenerateMockForMe) EXPECT() *MockGenerateMockForMeMockRecorder {
 	return m.recorder
-}
-
-// ISGOMOCK indicates that this struct is a gomock mock.
-func (m *MockGenerateMockForMe) ISGOMOCK() struct{} {
-	return struct{}{}
 }
 
 // B mocks base method.

@@ -478,6 +478,7 @@ func (g *generator) GenerateMockInterface(intf *model.Interface, outputPackagePa
 	g.in()
 	g.p("ctrl     *gomock.Controller")
 	g.p("recorder *%vMockRecorder%v", mockType, shortTp)
+	g.p("isgomock struct{}")
 	g.out()
 	g.p("}")
 	g.p("")
@@ -505,14 +506,6 @@ func (g *generator) GenerateMockInterface(intf *model.Interface, outputPackagePa
 	g.p("func (m *%v%v) EXPECT() *%vMockRecorder%v {", mockType, shortTp, mockType, shortTp)
 	g.in()
 	g.p("return m.recorder")
-	g.out()
-	g.p("}")
-
-	// XXX: possible name collision here if someone has ISGOMOCK in their interface.
-	g.p("// ISGOMOCK indicates that this struct is a gomock mock.")
-	g.p("func (m *%v%v) ISGOMOCK() struct{} {", mockType, shortTp)
-	g.in()
-	g.p("return struct{}{}")
 	g.out()
 	g.p("}")
 

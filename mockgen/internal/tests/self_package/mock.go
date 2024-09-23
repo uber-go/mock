@@ -19,6 +19,7 @@ import (
 type MockMethods struct {
 	ctrl     *gomock.Controller
 	recorder *MockMethodsMockRecorder
+	isgomock struct{}
 }
 
 // MockMethodsMockRecorder is the mock recorder for MockMethods.
@@ -36,11 +37,6 @@ func NewMockMethods(ctrl *gomock.Controller) *MockMethods {
 // EXPECT returns an object that allows the caller to indicate expected use.
 func (m *MockMethods) EXPECT() *MockMethodsMockRecorder {
 	return m.recorder
-}
-
-// ISGOMOCK indicates that this struct is a gomock mock.
-func (m *MockMethods) ISGOMOCK() struct{} {
-	return struct{}{}
 }
 
 // getInfo mocks base method.

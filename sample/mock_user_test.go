@@ -30,6 +30,7 @@ import (
 type MockIndex struct {
 	ctrl     *gomock.Controller
 	recorder *MockIndexMockRecorder
+	isgomock struct{}
 }
 
 // MockIndexMockRecorder is the mock recorder for MockIndex.
@@ -47,11 +48,6 @@ func NewMockIndex(ctrl *gomock.Controller) *MockIndex {
 // EXPECT returns an object that allows the caller to indicate expected use.
 func (m *MockIndex) EXPECT() *MockIndexMockRecorder {
 	return m.recorder
-}
-
-// ISGOMOCK indicates that this struct is a gomock mock.
-func (m *MockIndex) ISGOMOCK() struct{} {
-	return struct{}{}
 }
 
 // Anon mocks base method.
@@ -344,6 +340,7 @@ func (mr *MockIndexMockRecorder) Templates(a, b any) *gomock.Call {
 type MockEmbed struct {
 	ctrl     *gomock.Controller
 	recorder *MockEmbedMockRecorder
+	isgomock struct{}
 }
 
 // MockEmbedMockRecorder is the mock recorder for MockEmbed.
@@ -361,11 +358,6 @@ func NewMockEmbed(ctrl *gomock.Controller) *MockEmbed {
 // EXPECT returns an object that allows the caller to indicate expected use.
 func (m *MockEmbed) EXPECT() *MockEmbedMockRecorder {
 	return m.recorder
-}
-
-// ISGOMOCK indicates that this struct is a gomock mock.
-func (m *MockEmbed) ISGOMOCK() struct{} {
-	return struct{}{}
 }
 
 // EmbeddedMethod mocks base method.
@@ -422,6 +414,7 @@ func (mr *MockEmbedMockRecorder) RegularMethod() *gomock.Call {
 type MockEmbedded struct {
 	ctrl     *gomock.Controller
 	recorder *MockEmbeddedMockRecorder
+	isgomock struct{}
 }
 
 // MockEmbeddedMockRecorder is the mock recorder for MockEmbedded.
@@ -439,11 +432,6 @@ func NewMockEmbedded(ctrl *gomock.Controller) *MockEmbedded {
 // EXPECT returns an object that allows the caller to indicate expected use.
 func (m *MockEmbedded) EXPECT() *MockEmbeddedMockRecorder {
 	return m.recorder
-}
-
-// ISGOMOCK indicates that this struct is a gomock mock.
-func (m *MockEmbedded) ISGOMOCK() struct{} {
-	return struct{}{}
 }
 
 // EmbeddedMethod mocks base method.

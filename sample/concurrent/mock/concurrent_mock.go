@@ -19,6 +19,7 @@ import (
 type MockMath struct {
 	ctrl     *gomock.Controller
 	recorder *MockMathMockRecorder
+	isgomock struct{}
 }
 
 // MockMathMockRecorder is the mock recorder for MockMath.
@@ -36,11 +37,6 @@ func NewMockMath(ctrl *gomock.Controller) *MockMath {
 // EXPECT returns an object that allows the caller to indicate expected use.
 func (m *MockMath) EXPECT() *MockMathMockRecorder {
 	return m.recorder
-}
-
-// ISGOMOCK indicates that this struct is a gomock mock.
-func (m *MockMath) ISGOMOCK() struct{} {
-	return struct{}{}
 }
 
 // Sum mocks base method.
