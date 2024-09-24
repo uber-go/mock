@@ -23,6 +23,7 @@ import (
 type MockExternalConstraint[I constraints.Integer, F any] struct {
 	ctrl     *gomock.Controller
 	recorder *MockExternalConstraintMockRecorder[I, F]
+	isgomock struct{}
 }
 
 // MockExternalConstraintMockRecorder is the mock recorder for MockExternalConstraint.
@@ -40,11 +41,6 @@ func NewMockExternalConstraint[I constraints.Integer, F any](ctrl *gomock.Contro
 // EXPECT returns an object that allows the caller to indicate expected use.
 func (m *MockExternalConstraint[I, F]) EXPECT() *MockExternalConstraintMockRecorder[I, F] {
 	return m.recorder
-}
-
-// ISGOMOCK indicates that this struct is a gomock mock.
-func (m *MockExternalConstraint[I, F]) ISGOMOCK() struct{} {
-	return struct{}{}
 }
 
 // Eight mocks base method.
@@ -202,17 +198,17 @@ func (mr *MockExternalConstraintMockRecorder[I, F]) Three(arg0 any) *gomock.Call
 }
 
 // Twelve mocks base method.
-func (m *MockExternalConstraint[I, F]) Twelve(arg0 context.Context) <-chan []I {
+func (m *MockExternalConstraint[I, F]) Twelve(ctx context.Context) <-chan []I {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Twelve", arg0)
+	ret := m.ctrl.Call(m, "Twelve", ctx)
 	ret0, _ := ret[0].(<-chan []I)
 	return ret0
 }
 
 // Twelve indicates an expected call of Twelve.
-func (mr *MockExternalConstraintMockRecorder[I, F]) Twelve(arg0 any) *gomock.Call {
+func (mr *MockExternalConstraintMockRecorder[I, F]) Twelve(ctx any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Twelve", reflect.TypeOf((*MockExternalConstraint[I, F])(nil).Twelve), arg0)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Twelve", reflect.TypeOf((*MockExternalConstraint[I, F])(nil).Twelve), ctx)
 }
 
 // Two mocks base method.
@@ -233,6 +229,7 @@ func (mr *MockExternalConstraintMockRecorder[I, F]) Two(arg0 any) *gomock.Call {
 type MockEmbeddingIface[T constraints.Integer, R constraints.Float] struct {
 	ctrl     *gomock.Controller
 	recorder *MockEmbeddingIfaceMockRecorder[T, R]
+	isgomock struct{}
 }
 
 // MockEmbeddingIfaceMockRecorder is the mock recorder for MockEmbeddingIface.
@@ -250,11 +247,6 @@ func NewMockEmbeddingIface[T constraints.Integer, R constraints.Float](ctrl *gom
 // EXPECT returns an object that allows the caller to indicate expected use.
 func (m *MockEmbeddingIface[T, R]) EXPECT() *MockEmbeddingIfaceMockRecorder[T, R] {
 	return m.recorder
-}
-
-// ISGOMOCK indicates that this struct is a gomock mock.
-func (m *MockEmbeddingIface[T, R]) ISGOMOCK() struct{} {
-	return struct{}{}
 }
 
 // Eight mocks base method.
@@ -382,18 +374,18 @@ func (mr *MockEmbeddingIfaceMockRecorder[T, R]) One(arg0 any) *gomock.Call {
 }
 
 // Read mocks base method.
-func (m *MockEmbeddingIface[T, R]) Read(arg0 []byte) (int, error) {
+func (m *MockEmbeddingIface[T, R]) Read(p []byte) (int, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Read", arg0)
+	ret := m.ctrl.Call(m, "Read", p)
 	ret0, _ := ret[0].(int)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // Read indicates an expected call of Read.
-func (mr *MockEmbeddingIfaceMockRecorder[T, R]) Read(arg0 any) *gomock.Call {
+func (mr *MockEmbeddingIfaceMockRecorder[T, R]) Read(p any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Read", reflect.TypeOf((*MockEmbeddingIface[T, R])(nil).Read), arg0)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Read", reflect.TypeOf((*MockEmbeddingIface[T, R])(nil).Read), p)
 }
 
 // Second mocks base method.
@@ -497,17 +489,17 @@ func (mr *MockEmbeddingIfaceMockRecorder[T, R]) Three(arg0 any) *gomock.Call {
 }
 
 // Twelve mocks base method.
-func (m *MockEmbeddingIface[T, R]) Twelve(arg0 context.Context) <-chan []T {
+func (m *MockEmbeddingIface[T, R]) Twelve(ctx context.Context) <-chan []T {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Twelve", arg0)
+	ret := m.ctrl.Call(m, "Twelve", ctx)
 	ret0, _ := ret[0].(<-chan []T)
 	return ret0
 }
 
 // Twelve indicates an expected call of Twelve.
-func (mr *MockEmbeddingIfaceMockRecorder[T, R]) Twelve(arg0 any) *gomock.Call {
+func (mr *MockEmbeddingIfaceMockRecorder[T, R]) Twelve(ctx any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Twelve", reflect.TypeOf((*MockEmbeddingIface[T, R])(nil).Twelve), arg0)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Twelve", reflect.TypeOf((*MockEmbeddingIface[T, R])(nil).Twelve), ctx)
 }
 
 // Two mocks base method.
@@ -542,6 +534,7 @@ func (mr *MockEmbeddingIfaceMockRecorder[T, R]) Water(arg0 any) *gomock.Call {
 type MockGenerator[T any] struct {
 	ctrl     *gomock.Controller
 	recorder *MockGeneratorMockRecorder[T]
+	isgomock struct{}
 }
 
 // MockGeneratorMockRecorder is the mock recorder for MockGenerator.
@@ -559,11 +552,6 @@ func NewMockGenerator[T any](ctrl *gomock.Controller) *MockGenerator[T] {
 // EXPECT returns an object that allows the caller to indicate expected use.
 func (m *MockGenerator[T]) EXPECT() *MockGeneratorMockRecorder[T] {
 	return m.recorder
-}
-
-// ISGOMOCK indicates that this struct is a gomock mock.
-func (m *MockGenerator[T]) ISGOMOCK() struct{} {
-	return struct{}{}
 }
 
 // Generate mocks base method.
@@ -584,6 +572,7 @@ func (mr *MockGeneratorMockRecorder[T]) Generate() *gomock.Call {
 type MockGroup[T generics.Generator[any]] struct {
 	ctrl     *gomock.Controller
 	recorder *MockGroupMockRecorder[T]
+	isgomock struct{}
 }
 
 // MockGroupMockRecorder is the mock recorder for MockGroup.
@@ -603,21 +592,16 @@ func (m *MockGroup[T]) EXPECT() *MockGroupMockRecorder[T] {
 	return m.recorder
 }
 
-// ISGOMOCK indicates that this struct is a gomock mock.
-func (m *MockGroup[T]) ISGOMOCK() struct{} {
-	return struct{}{}
-}
-
 // Join mocks base method.
-func (m *MockGroup[T]) Join(arg0 context.Context) []T {
+func (m *MockGroup[T]) Join(ctx context.Context) []T {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Join", arg0)
+	ret := m.ctrl.Call(m, "Join", ctx)
 	ret0, _ := ret[0].([]T)
 	return ret0
 }
 
 // Join indicates an expected call of Join.
-func (mr *MockGroupMockRecorder[T]) Join(arg0 any) *gomock.Call {
+func (mr *MockGroupMockRecorder[T]) Join(ctx any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Join", reflect.TypeOf((*MockGroup[T])(nil).Join), arg0)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Join", reflect.TypeOf((*MockGroup[T])(nil).Join), ctx)
 }
