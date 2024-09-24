@@ -41,8 +41,8 @@ func Test_importModeParser_parsePackage(t *testing.T) {
 				ifaces:      []string{"Work"},
 			},
 			expectedErr: "extract interfaces from package: parse interface: " +
-				"error parsing type go.uber.org/mock/mockgen/internal/tests/import_mode.Work struct{Name string}: " +
-				"Work is not an interface. it is a struct{Name string}",
+				"error parsing Work: " +
+				"Work is not an interface. it is a *types.Struct",
 		},
 		{
 			name: "error: search for constraint instead of interface",
@@ -51,7 +51,7 @@ func Test_importModeParser_parsePackage(t *testing.T) {
 				ifaces:      []string{"Counter"},
 			},
 			expectedErr: "extract interfaces from package: parse interface: " +
-				"error parsing type go.uber.org/mock/mockgen/internal/tests/import_mode.Counter interface{int}: " +
+				"error parsing Counter: " +
 				"interface Counter is a constraint",
 		},
 		{

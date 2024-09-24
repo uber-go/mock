@@ -80,7 +80,7 @@ func (p *importModeParser) extractInterfacesFromPackage(pkg *packages.Package, i
 
 		modelIface, err := p.parseInterface(obj)
 		if err != nil {
-			return nil, newParseTypeError("parse interface", obj.String(), err)
+			return nil, newParseTypeError("parse interface", obj.Name(), err)
 		}
 
 		interfaces[i] = modelIface
@@ -92,12 +92,12 @@ func (p *importModeParser) extractInterfacesFromPackage(pkg *packages.Package, i
 func (p *importModeParser) parseInterface(obj types.Object) (*model.Interface, error) {
 	named, ok := types.Unalias(obj.Type()).(*types.Named)
 	if !ok {
-		return nil, fmt.Errorf("%s is not an interface. it is a %s", obj.Name(), obj.Type().Underlying().String())
+		return nil, fmt.Errorf("%s is not an interface. it is a %T", obj.Name(), obj.Type().Underlying())
 	}
 
 	iface, ok := named.Underlying().(*types.Interface)
 	if !ok {
-		return nil, fmt.Errorf("%s is not an interface. it is a %s", obj.Name(), obj.Type().Underlying().String())
+		return nil, fmt.Errorf("%s is not an interface. it is a %T", obj.Name(), obj.Type().Underlying())
 	}
 
 	if p.isConstraint(iface) {

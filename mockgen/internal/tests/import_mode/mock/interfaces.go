@@ -23,6 +23,7 @@ import (
 type MockFood struct {
 	ctrl     *gomock.Controller
 	recorder *MockFoodMockRecorder
+	isgomock struct{}
 }
 
 // MockFoodMockRecorder is the mock recorder for MockFood.
@@ -40,11 +41,6 @@ func NewMockFood(ctrl *gomock.Controller) *MockFood {
 // EXPECT returns an object that allows the caller to indicate expected use.
 func (m *MockFood) EXPECT() *MockFoodMockRecorder {
 	return m.recorder
-}
-
-// ISGOMOCK indicates that this struct is a gomock mock.
-func (m *MockFood) ISGOMOCK() struct{} {
-	return struct{}{}
 }
 
 // Calories mocks base method.
@@ -89,6 +85,7 @@ func (c *MockFoodCaloriesCall) DoAndReturn(f func() int) *MockFoodCaloriesCall {
 type MockEater struct {
 	ctrl     *gomock.Controller
 	recorder *MockEaterMockRecorder
+	isgomock struct{}
 }
 
 // MockEaterMockRecorder is the mock recorder for MockEater.
@@ -106,11 +103,6 @@ func NewMockEater(ctrl *gomock.Controller) *MockEater {
 // EXPECT returns an object that allows the caller to indicate expected use.
 func (m *MockEater) EXPECT() *MockEaterMockRecorder {
 	return m.recorder
-}
-
-// ISGOMOCK indicates that this struct is a gomock mock.
-func (m *MockEater) ISGOMOCK() struct{} {
-	return struct{}{}
 }
 
 // Eat mocks base method.
@@ -157,6 +149,7 @@ func (c *MockEaterEatCall) DoAndReturn(f func(...import_mode.Food)) *MockEaterEa
 type MockAnimal struct {
 	ctrl     *gomock.Controller
 	recorder *MockAnimalMockRecorder
+	isgomock struct{}
 }
 
 // MockAnimalMockRecorder is the mock recorder for MockAnimal.
@@ -174,11 +167,6 @@ func NewMockAnimal(ctrl *gomock.Controller) *MockAnimal {
 // EXPECT returns an object that allows the caller to indicate expected use.
 func (m *MockAnimal) EXPECT() *MockAnimalMockRecorder {
 	return m.recorder
-}
-
-// ISGOMOCK indicates that this struct is a gomock mock.
-func (m *MockAnimal) ISGOMOCK() struct{} {
-	return struct{}{}
 }
 
 // Breathe mocks base method.
@@ -297,6 +285,7 @@ func (c *MockAnimalSleepCall) DoAndReturn(f func(time.Duration)) *MockAnimalSlee
 type MockHuman struct {
 	ctrl     *gomock.Controller
 	recorder *MockHumanMockRecorder
+	isgomock struct{}
 }
 
 // MockHumanMockRecorder is the mock recorder for MockHuman.
@@ -314,11 +303,6 @@ func NewMockHuman(ctrl *gomock.Controller) *MockHuman {
 // EXPECT returns an object that allows the caller to indicate expected use.
 func (m *MockHuman) EXPECT() *MockHumanMockRecorder {
 	return m.recorder
-}
-
-// ISGOMOCK indicates that this struct is a gomock mock.
-func (m *MockHuman) ISGOMOCK() struct{} {
-	return struct{}{}
 }
 
 // Breathe mocks base method.
@@ -437,6 +421,7 @@ func (c *MockHumanSleepCall) DoAndReturn(f func(time.Duration)) *MockHumanSleepC
 type MockPrimate struct {
 	ctrl     *gomock.Controller
 	recorder *MockPrimateMockRecorder
+	isgomock struct{}
 }
 
 // MockPrimateMockRecorder is the mock recorder for MockPrimate.
@@ -454,11 +439,6 @@ func NewMockPrimate(ctrl *gomock.Controller) *MockPrimate {
 // EXPECT returns an object that allows the caller to indicate expected use.
 func (m *MockPrimate) EXPECT() *MockPrimateMockRecorder {
 	return m.recorder
-}
-
-// ISGOMOCK indicates that this struct is a gomock mock.
-func (m *MockPrimate) ISGOMOCK() struct{} {
-	return struct{}{}
 }
 
 // Breathe mocks base method.
@@ -577,6 +557,7 @@ func (c *MockPrimateSleepCall) DoAndReturn(f func(time.Duration)) *MockPrimateSl
 type MockCar[FuelType fuel.Fuel] struct {
 	ctrl     *gomock.Controller
 	recorder *MockCarMockRecorder[FuelType]
+	isgomock struct{}
 }
 
 // MockCarMockRecorder is the mock recorder for MockCar.
@@ -594,11 +575,6 @@ func NewMockCar[FuelType fuel.Fuel](ctrl *gomock.Controller) *MockCar[FuelType] 
 // EXPECT returns an object that allows the caller to indicate expected use.
 func (m *MockCar[FuelType]) EXPECT() *MockCarMockRecorder[FuelType] {
 	return m.recorder
-}
-
-// ISGOMOCK indicates that this struct is a gomock mock.
-func (m *MockCar[FuelType]) ISGOMOCK() struct{} {
-	return struct{}{}
 }
 
 // Brand mocks base method.
@@ -719,6 +695,7 @@ func (c *MockCarRefuelCall[FuelType]) DoAndReturn(f func(FuelType, int) error) *
 type MockDriver[FuelType fuel.Fuel, CarType import_mode.Car[FuelType]] struct {
 	ctrl     *gomock.Controller
 	recorder *MockDriverMockRecorder[FuelType, CarType]
+	isgomock struct{}
 }
 
 // MockDriverMockRecorder is the mock recorder for MockDriver.
@@ -736,11 +713,6 @@ func NewMockDriver[FuelType fuel.Fuel, CarType import_mode.Car[FuelType]](ctrl *
 // EXPECT returns an object that allows the caller to indicate expected use.
 func (m *MockDriver[FuelType, CarType]) EXPECT() *MockDriverMockRecorder[FuelType, CarType] {
 	return m.recorder
-}
-
-// ISGOMOCK indicates that this struct is a gomock mock.
-func (m *MockDriver[FuelType, CarType]) ISGOMOCK() struct{} {
-	return struct{}{}
 }
 
 // Drive mocks base method.
@@ -821,6 +793,7 @@ func (c *MockDriverWroomCall[FuelType, CarType]) DoAndReturn(f func() error) *Mo
 type MockUrbanResident struct {
 	ctrl     *gomock.Controller
 	recorder *MockUrbanResidentMockRecorder
+	isgomock struct{}
 }
 
 // MockUrbanResidentMockRecorder is the mock recorder for MockUrbanResident.
@@ -838,11 +811,6 @@ func NewMockUrbanResident(ctrl *gomock.Controller) *MockUrbanResident {
 // EXPECT returns an object that allows the caller to indicate expected use.
 func (m *MockUrbanResident) EXPECT() *MockUrbanResidentMockRecorder {
 	return m.recorder
-}
-
-// ISGOMOCK indicates that this struct is a gomock mock.
-func (m *MockUrbanResident) ISGOMOCK() struct{} {
-	return struct{}{}
 }
 
 // Breathe mocks base method.
@@ -1109,6 +1077,7 @@ func (c *MockUrbanResidentWroomCall) DoAndReturn(f func() error) *MockUrbanResid
 type MockFarmer struct {
 	ctrl     *gomock.Controller
 	recorder *MockFarmerMockRecorder
+	isgomock struct{}
 }
 
 // MockFarmerMockRecorder is the mock recorder for MockFarmer.
@@ -1126,11 +1095,6 @@ func NewMockFarmer(ctrl *gomock.Controller) *MockFarmer {
 // EXPECT returns an object that allows the caller to indicate expected use.
 func (m *MockFarmer) EXPECT() *MockFarmerMockRecorder {
 	return m.recorder
-}
-
-// ISGOMOCK indicates that this struct is a gomock mock.
-func (m *MockFarmer) ISGOMOCK() struct{} {
-	return struct{}{}
 }
 
 // Breathe mocks base method.
@@ -1397,6 +1361,7 @@ func (c *MockFarmerWroomCall) DoAndReturn(f func() error) *MockFarmerWroomCall {
 type MockEarth struct {
 	ctrl     *gomock.Controller
 	recorder *MockEarthMockRecorder
+	isgomock struct{}
 }
 
 // MockEarthMockRecorder is the mock recorder for MockEarth.
@@ -1414,11 +1379,6 @@ func NewMockEarth(ctrl *gomock.Controller) *MockEarth {
 // EXPECT returns an object that allows the caller to indicate expected use.
 func (m *MockEarth) EXPECT() *MockEarthMockRecorder {
 	return m.recorder
-}
-
-// ISGOMOCK indicates that this struct is a gomock mock.
-func (m *MockEarth) ISGOMOCK() struct{} {
-	return struct{}{}
 }
 
 // GiveBirth mocks base method.
