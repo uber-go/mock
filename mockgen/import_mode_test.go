@@ -310,7 +310,7 @@ func Test_importModeParser_parsePackage(t *testing.T) {
 						Name: "Earth",
 						Methods: []*model.Method{
 							{
-								Name: "GiveBirth",
+								Name: "AddHumans",
 								In: []*model.Parameter{
 									{
 										Type: &model.NamedType{

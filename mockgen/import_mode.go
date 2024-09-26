@@ -4,7 +4,6 @@ import (
 	"errors"
 	"fmt"
 	"go/types"
-	"math/rand"
 
 	"go.uber.org/mock/mockgen/model"
 	"golang.org/x/tools/go/packages"
@@ -59,17 +58,6 @@ func (p *importModeParser) loadPackage(packageName string) (*packages.Package, e
 	return pkgs[0], nil
 }
 
-func (p *importModeParser) generateSalt() string {
-	var numbers = []byte("0123456789")
-
-	result := make([]byte, 8)
-	for i := range result {
-		result[i] = numbers[rand.Intn(len(numbers))]
-	}
-
-	return string(result)
-}
-
 func (p *importModeParser) extractInterfacesFromPackage(pkg *packages.Package, ifaces []string) ([]*model.Interface, error) {
 	interfaces := make([]*model.Interface, len(ifaces))
 	for i, iface := range ifaces {
@@ -105,7 +93,7 @@ func (p *importModeParser) parseInterface(obj types.Object) (*model.Interface, e
 	}
 
 	methods := make([]*model.Method, iface.NumMethods())
-	for i := 0; i < iface.NumMethods(); i++ {
+	for i := range iface.NumMethods() {
 		method := iface.Method(i)
 		typedMethod, ok := method.Type().(*types.Signature)
 		if !ok {
@@ -125,25 +113,26 @@ func (p *importModeParser) parseInterface(obj types.Object) (*model.Interface, e
 		}
 	}
 
-	var typeParams []*model.Parameter
-	if named.TypeParams() != nil {
-		typeParams = make([]*model.Parameter, named.TypeParams().Len())
-		for i := 0; i < named.TypeParams().Len(); i++ {
-			param := named.TypeParams().At(i)
-			typeParam, err := p.parseConstraint(param)
-			if err != nil {
-				return nil, newParseTypeError("parse type parameter", param.String(), err)
-			}
+	if named.TypeParams() == nil {
+		return &model.Interface{Name: obj.Name(), Methods: methods}, nil
+	}
 
-			typeParams[i] = &model.Parameter{Name: param.Obj().Name(), Type: typeParam}
+	typeParams := make([]*model.Parameter, named.TypeParams().Len())
+	for i := range named.TypeParams().Len() {
+		param := named.TypeParams().At(i)
+		typeParam, err := p.parseConstraint(param)
+		if err != nil {
+			return nil, newParseTypeError("parse type parameter", param.String(), err)
 		}
+
+		typeParams[i] = &model.Parameter{Name: param.Obj().Name(), Type: typeParam}
 	}
 
 	return &model.Interface{Name: obj.Name(), Methods: methods, TypeParams: typeParams}, nil
 }
 
 func (o *importModeParser) isConstraint(t *types.Interface) bool {
-	for i := 0; i < t.NumEmbeddeds(); i++ {
+	for i := range t.NumEmbeddeds() {
 		embed := t.EmbeddedType(i)
 		if _, ok := embed.Underlying().(*types.Interface); !ok {
 			return true
@@ -191,22 +180,24 @@ func (p *importModeParser) parseType(t types.Type) (model.Type, error) {
 
 		return sig, nil
 	case *types.Named, *types.Alias:
-		named := t.(namedType)
+		object := t.(interface{ Obj() *types.TypeName })
 		var pkg string
-		if named.Obj().Pkg() != nil {
-			pkg = named.Obj().Pkg().Path()
+		if object.Obj().Pkg() != nil {
+			pkg = object.Obj().Pkg().Path()
 		}
 
-		if named.TypeArgs() == nil {
+		// TypeArgs method not available for aliases in go1.22
+		genericType, ok := t.(interface{ TypeArgs() *types.TypeList })
+		if !ok || genericType.TypeArgs() == nil {
 			return &model.NamedType{
 				Package: pkg,
-				Type:    named.Obj().Name(),
+				Type:    object.Obj().Name(),
 			}, nil
 		}
 
-		typeParams := &model.TypeParametersType{TypeParameters: make([]model.Type, named.TypeArgs().Len())}
-		for i := 0; i < named.TypeArgs().Len(); i++ {
-			typeParam := named.TypeArgs().At(i)
+		typeParams := &model.TypeParametersType{TypeParameters: make([]model.Type, genericType.TypeArgs().Len())}
+		for i := range genericType.TypeArgs().Len() {
+			typeParam := genericType.TypeArgs().At(i)
 			typedParam, err := p.parseType(typeParam)
 			if err != nil {
 				return nil, newParseTypeError("parse type parameter", typeParam.String(), err)
@@ -217,7 +208,7 @@ func (p *importModeParser) parseType(t types.Type) (model.Type, error) {
 
 		return &model.NamedType{
 			Package:    pkg,
-			Type:       named.Obj().Name(),
+			Type:       object.Obj().Name(),
 			TypeParams: typeParams,
 		}, nil
 	case *types.Interface:
@@ -264,7 +255,7 @@ func (p *importModeParser) parseType(t types.Type) (model.Type, error) {
 func (p *importModeParser) parseFunc(sig *types.Signature) (*model.FuncType, error) {
 	var variadic *model.Parameter
 	params := make([]*model.Parameter, 0, sig.Params().Len())
-	for i := 0; i < sig.Params().Len(); i++ {
+	for i := range sig.Params().Len() {
 		param := sig.Params().At(i)
 
 		isVariadicParam := i == sig.Params().Len()-1 && sig.Variadic()
@@ -297,7 +288,7 @@ func (p *importModeParser) parseFunc(sig *types.Signature) (*model.FuncType, err
 	}
 
 	results := make([]*model.Parameter, sig.Results().Len())
-	for i := 0; i < sig.Results().Len(); i++ {
+	for i := range sig.Results().Len() {
 		result := sig.Results().At(i)
 
 		resultType, err := p.parseType(result.Type())
@@ -352,10 +343,4 @@ func (p parseTypeError) Error() string {
 
 func (p parseTypeError) Unwrap() error {
 	return p.error
-}
-
-// namedType is an interface for combining Named and Alias
-type namedType interface {
-	Obj() *types.TypeName
-	TypeArgs() *types.TypeList
 }

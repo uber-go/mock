@@ -63,6 +63,6 @@ type Counter interface {
 type HumansCount = int
 
 type Earth interface {
-	GiveBirth(HumansCount) []Human
+	AddHumans(HumansCount) []Human
 	HumanPopulation() HumansCount
 }

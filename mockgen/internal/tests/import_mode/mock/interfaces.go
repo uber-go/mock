@@ -1381,40 +1381,40 @@ func (m *MockEarth) EXPECT() *MockEarthMockRecorder {
 	return m.recorder
 }
 
-// GiveBirth mocks base method.
-func (m *MockEarth) GiveBirth(arg0 import_mode.HumansCount) []import_mode.Human {
+// AddHumans mocks base method.
+func (m *MockEarth) AddHumans(arg0 import_mode.HumansCount) []import_mode.Human {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GiveBirth", arg0)
+	ret := m.ctrl.Call(m, "AddHumans", arg0)
 	ret0, _ := ret[0].([]import_mode.Human)
 	return ret0
 }
 
-// GiveBirth indicates an expected call of GiveBirth.
-func (mr *MockEarthMockRecorder) GiveBirth(arg0 any) *MockEarthGiveBirthCall {
+// AddHumans indicates an expected call of AddHumans.
+func (mr *MockEarthMockRecorder) AddHumans(arg0 any) *MockEarthAddHumansCall {
 	mr.mock.ctrl.T.Helper()
-	call := mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GiveBirth", reflect.TypeOf((*MockEarth)(nil).GiveBirth), arg0)
-	return &MockEarthGiveBirthCall{Call: call}
+	call := mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddHumans", reflect.TypeOf((*MockEarth)(nil).AddHumans), arg0)
+	return &MockEarthAddHumansCall{Call: call}
 }
 
-// MockEarthGiveBirthCall wrap *gomock.Call
-type MockEarthGiveBirthCall struct {
+// MockEarthAddHumansCall wrap *gomock.Call
+type MockEarthAddHumansCall struct {
 	*gomock.Call
 }
 
 // Return rewrite *gomock.Call.Return
-func (c *MockEarthGiveBirthCall) Return(arg0 []import_mode.Human) *MockEarthGiveBirthCall {
+func (c *MockEarthAddHumansCall) Return(arg0 []import_mode.Human) *MockEarthAddHumansCall {
 	c.Call = c.Call.Return(arg0)
 	return c
 }
 
 // Do rewrite *gomock.Call.Do
-func (c *MockEarthGiveBirthCall) Do(f func(import_mode.HumansCount) []import_mode.Human) *MockEarthGiveBirthCall {
+func (c *MockEarthAddHumansCall) Do(f func(import_mode.HumansCount) []import_mode.Human) *MockEarthAddHumansCall {
 	c.Call = c.Call.Do(f)
 	return c
 }
 
 // DoAndReturn rewrite *gomock.Call.DoAndReturn
-func (c *MockEarthGiveBirthCall) DoAndReturn(f func(import_mode.HumansCount) []import_mode.Human) *MockEarthGiveBirthCall {
+func (c *MockEarthAddHumansCall) DoAndReturn(f func(import_mode.HumansCount) []import_mode.Human) *MockEarthAddHumansCall {
 	c.Call = c.Call.DoAndReturn(f)
 	return c
 }
