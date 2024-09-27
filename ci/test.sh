@@ -1,9 +1,6 @@
 #!/bin/bash
 # This script is used to ensure that the go.mod file is up to date.
 
-# Compatibility for Go 1.22
-export GODEBUG=gotypesalias=1
-
 set -euo pipefail
 
 for i in $(find $PWD -name go.mod); do

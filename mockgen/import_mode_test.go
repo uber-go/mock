@@ -313,10 +313,7 @@ func Test_importModeParser_parsePackage(t *testing.T) {
 								Name: "AddHumans",
 								In: []*model.Parameter{
 									{
-										Type: &model.NamedType{
-											Package: "go.uber.org/mock/mockgen/internal/tests/import_mode",
-											Type:    "HumansCount",
-										},
+										Type: model.PredeclaredType("int"),
 									},
 								},
 								Out: []*model.Parameter{
@@ -325,7 +322,7 @@ func Test_importModeParser_parsePackage(t *testing.T) {
 											Len: -1, // slice
 											Type: &model.NamedType{
 												Package: "go.uber.org/mock/mockgen/internal/tests/import_mode",
-												Type:    "Human",
+												Type:    "Primate",
 											},
 										},
 									},
@@ -335,10 +332,7 @@ func Test_importModeParser_parsePackage(t *testing.T) {
 								Name: "HumanPopulation",
 								Out: []*model.Parameter{
 									{
-										Type: &model.NamedType{
-											Package: "go.uber.org/mock/mockgen/internal/tests/import_mode",
-											Type:    "HumansCount",
-										},
+										Type: model.PredeclaredType("int"),
 									},
 								},
 							},

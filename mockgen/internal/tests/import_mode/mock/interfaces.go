@@ -1382,10 +1382,10 @@ func (m *MockEarth) EXPECT() *MockEarthMockRecorder {
 }
 
 // AddHumans mocks base method.
-func (m *MockEarth) AddHumans(arg0 import_mode.HumansCount) []import_mode.Human {
+func (m *MockEarth) AddHumans(arg0 int) []import_mode.Primate {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "AddHumans", arg0)
-	ret0, _ := ret[0].([]import_mode.Human)
+	ret0, _ := ret[0].([]import_mode.Primate)
 	return ret0
 }
 
@@ -1402,28 +1402,28 @@ type MockEarthAddHumansCall struct {
 }
 
 // Return rewrite *gomock.Call.Return
-func (c *MockEarthAddHumansCall) Return(arg0 []import_mode.Human) *MockEarthAddHumansCall {
+func (c *MockEarthAddHumansCall) Return(arg0 []import_mode.Primate) *MockEarthAddHumansCall {
 	c.Call = c.Call.Return(arg0)
 	return c
 }
 
 // Do rewrite *gomock.Call.Do
-func (c *MockEarthAddHumansCall) Do(f func(import_mode.HumansCount) []import_mode.Human) *MockEarthAddHumansCall {
+func (c *MockEarthAddHumansCall) Do(f func(int) []import_mode.Primate) *MockEarthAddHumansCall {
 	c.Call = c.Call.Do(f)
 	return c
 }
 
 // DoAndReturn rewrite *gomock.Call.DoAndReturn
-func (c *MockEarthAddHumansCall) DoAndReturn(f func(import_mode.HumansCount) []import_mode.Human) *MockEarthAddHumansCall {
+func (c *MockEarthAddHumansCall) DoAndReturn(f func(int) []import_mode.Primate) *MockEarthAddHumansCall {
 	c.Call = c.Call.DoAndReturn(f)
 	return c
 }
 
 // HumanPopulation mocks base method.
-func (m *MockEarth) HumanPopulation() import_mode.HumansCount {
+func (m *MockEarth) HumanPopulation() int {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "HumanPopulation")
-	ret0, _ := ret[0].(import_mode.HumansCount)
+	ret0, _ := ret[0].(int)
 	return ret0
 }
 
@@ -1440,19 +1440,19 @@ type MockEarthHumanPopulationCall struct {
 }
 
 // Return rewrite *gomock.Call.Return
-func (c *MockEarthHumanPopulationCall) Return(arg0 import_mode.HumansCount) *MockEarthHumanPopulationCall {
+func (c *MockEarthHumanPopulationCall) Return(arg0 int) *MockEarthHumanPopulationCall {
 	c.Call = c.Call.Return(arg0)
 	return c
 }
 
 // Do rewrite *gomock.Call.Do
-func (c *MockEarthHumanPopulationCall) Do(f func() import_mode.HumansCount) *MockEarthHumanPopulationCall {
+func (c *MockEarthHumanPopulationCall) Do(f func() int) *MockEarthHumanPopulationCall {
 	c.Call = c.Call.Do(f)
 	return c
 }
 
 // DoAndReturn rewrite *gomock.Call.DoAndReturn
-func (c *MockEarthHumanPopulationCall) DoAndReturn(f func() import_mode.HumansCount) *MockEarthHumanPopulationCall {
+func (c *MockEarthHumanPopulationCall) DoAndReturn(f func() int) *MockEarthHumanPopulationCall {
 	c.Call = c.Call.DoAndReturn(f)
 	return c
 }
