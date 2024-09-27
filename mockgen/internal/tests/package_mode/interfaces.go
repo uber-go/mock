@@ -1,12 +1,12 @@
-package import_mode
+package package_mode
 
 //go:generate mockgen -typed -package=mock -destination=mock/interfaces.go . Food,Eater,Animal,Human,Primate,Car,Driver,UrbanResident,Farmer,Earth
 
 import (
 	"time"
 
-	"go.uber.org/mock/mockgen/internal/tests/import_mode/cars"
-	"go.uber.org/mock/mockgen/internal/tests/import_mode/fuel"
+	"go.uber.org/mock/mockgen/internal/tests/package_mode/cars"
+	"go.uber.org/mock/mockgen/internal/tests/package_mode/fuel"
 )
 
 type Food interface {

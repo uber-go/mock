@@ -7,7 +7,7 @@ import (
 	"go.uber.org/mock/mockgen/model"
 )
 
-func Test_importModeParser_parsePackage(t *testing.T) {
+func Test_packageModeParser_parsePackage(t *testing.T) {
 	type args struct {
 		packageName string
 		ifaces      []string
@@ -29,7 +29,7 @@ func Test_importModeParser_parsePackage(t *testing.T) {
 		{
 			name: "error: interface does not exist",
 			args: args{
-				packageName: "go.uber.org/mock/mockgen/internal/tests/import_mode",
+				packageName: "go.uber.org/mock/mockgen/internal/tests/package_mode",
 				ifaces:      []string{"Alien"},
 			},
 			expectedErr: "extract interfaces from package: interface Alien does not exist",
@@ -37,7 +37,7 @@ func Test_importModeParser_parsePackage(t *testing.T) {
 		{
 			name: "error: search for struct instead of interface",
 			args: args{
-				packageName: "go.uber.org/mock/mockgen/internal/tests/import_mode",
+				packageName: "go.uber.org/mock/mockgen/internal/tests/package_mode",
 				ifaces:      []string{"Work"},
 			},
 			expectedErr: "extract interfaces from package: parse interface: " +
@@ -47,7 +47,7 @@ func Test_importModeParser_parsePackage(t *testing.T) {
 		{
 			name: "error: search for constraint instead of interface",
 			args: args{
-				packageName: "go.uber.org/mock/mockgen/internal/tests/import_mode",
+				packageName: "go.uber.org/mock/mockgen/internal/tests/package_mode",
 				ifaces:      []string{"Counter"},
 			},
 			expectedErr: "extract interfaces from package: parse interface: " +
@@ -57,12 +57,12 @@ func Test_importModeParser_parsePackage(t *testing.T) {
 		{
 			name: "success: simple interface",
 			args: args{
-				packageName: "go.uber.org/mock/mockgen/internal/tests/import_mode",
+				packageName: "go.uber.org/mock/mockgen/internal/tests/package_mode",
 				ifaces:      []string{"Food"},
 			},
 			expected: &model.Package{
-				Name:    "import_mode",
-				PkgPath: "go.uber.org/mock/mockgen/internal/tests/import_mode",
+				Name:    "package_mode",
+				PkgPath: "go.uber.org/mock/mockgen/internal/tests/package_mode",
 				Interfaces: []*model.Interface{
 					{
 						Name: "Food",
@@ -81,12 +81,12 @@ func Test_importModeParser_parsePackage(t *testing.T) {
 		{
 			name: "success: interface with variadic args",
 			args: args{
-				packageName: "go.uber.org/mock/mockgen/internal/tests/import_mode",
+				packageName: "go.uber.org/mock/mockgen/internal/tests/package_mode",
 				ifaces:      []string{"Eater"},
 			},
 			expected: &model.Package{
-				Name:    "import_mode",
-				PkgPath: "go.uber.org/mock/mockgen/internal/tests/import_mode",
+				Name:    "package_mode",
+				PkgPath: "go.uber.org/mock/mockgen/internal/tests/package_mode",
 				Interfaces: []*model.Interface{
 					{
 						Name: "Eater",
@@ -96,7 +96,7 @@ func Test_importModeParser_parsePackage(t *testing.T) {
 								Variadic: &model.Parameter{
 									Name: "foods",
 									Type: &model.NamedType{
-										Package: "go.uber.org/mock/mockgen/internal/tests/import_mode",
+										Package: "go.uber.org/mock/mockgen/internal/tests/package_mode",
 										Type:    "Food",
 									},
 								},
@@ -109,12 +109,12 @@ func Test_importModeParser_parsePackage(t *testing.T) {
 		{
 			name: "success: interface with generic",
 			args: args{
-				packageName: "go.uber.org/mock/mockgen/internal/tests/import_mode",
+				packageName: "go.uber.org/mock/mockgen/internal/tests/package_mode",
 				ifaces:      []string{"Car"},
 			},
 			expected: &model.Package{
-				Name:    "import_mode",
-				PkgPath: "go.uber.org/mock/mockgen/internal/tests/import_mode",
+				Name:    "package_mode",
+				PkgPath: "go.uber.org/mock/mockgen/internal/tests/package_mode",
 				Interfaces: []*model.Interface{
 					{
 						Name: "Car",
@@ -130,7 +130,7 @@ func Test_importModeParser_parsePackage(t *testing.T) {
 								Out: []*model.Parameter{
 									{
 										Type: &model.NamedType{
-											Package: "go.uber.org/mock/mockgen/internal/tests/import_mode/cars",
+											Package: "go.uber.org/mock/mockgen/internal/tests/package_mode/cars",
 											Type:    "FuelTank",
 											TypeParams: &model.TypeParametersType{
 												TypeParameters: []model.Type{
@@ -164,7 +164,7 @@ func Test_importModeParser_parsePackage(t *testing.T) {
 							{
 								Name: "FuelType",
 								Type: &model.NamedType{
-									Package: "go.uber.org/mock/mockgen/internal/tests/import_mode/fuel",
+									Package: "go.uber.org/mock/mockgen/internal/tests/package_mode/fuel",
 									Type:    "Fuel",
 								},
 							},
@@ -176,12 +176,12 @@ func Test_importModeParser_parsePackage(t *testing.T) {
 		{
 			name: "success: interface with embedded interfaces",
 			args: args{
-				packageName: "go.uber.org/mock/mockgen/internal/tests/import_mode",
+				packageName: "go.uber.org/mock/mockgen/internal/tests/package_mode",
 				ifaces:      []string{"Animal"},
 			},
 			expected: &model.Package{
-				Name:    "import_mode",
-				PkgPath: "go.uber.org/mock/mockgen/internal/tests/import_mode",
+				Name:    "package_mode",
+				PkgPath: "go.uber.org/mock/mockgen/internal/tests/package_mode",
 				Interfaces: []*model.Interface{
 					{
 						Name: "Animal",
@@ -192,7 +192,7 @@ func Test_importModeParser_parsePackage(t *testing.T) {
 								Variadic: &model.Parameter{
 									Name: "foods",
 									Type: &model.NamedType{
-										Package: "go.uber.org/mock/mockgen/internal/tests/import_mode",
+										Package: "go.uber.org/mock/mockgen/internal/tests/package_mode",
 										Type:    "Food",
 									},
 								},
@@ -217,12 +217,12 @@ func Test_importModeParser_parsePackage(t *testing.T) {
 		{
 			name: "success: subtype of interface",
 			args: args{
-				packageName: "go.uber.org/mock/mockgen/internal/tests/import_mode",
+				packageName: "go.uber.org/mock/mockgen/internal/tests/package_mode",
 				ifaces:      []string{"Primate"},
 			},
 			expected: &model.Package{
-				Name:    "import_mode",
-				PkgPath: "go.uber.org/mock/mockgen/internal/tests/import_mode",
+				Name:    "package_mode",
+				PkgPath: "go.uber.org/mock/mockgen/internal/tests/package_mode",
 				Interfaces: []*model.Interface{
 					{
 						Name: "Primate",
@@ -233,7 +233,7 @@ func Test_importModeParser_parsePackage(t *testing.T) {
 								Variadic: &model.Parameter{
 									Name: "foods",
 									Type: &model.NamedType{
-										Package: "go.uber.org/mock/mockgen/internal/tests/import_mode",
+										Package: "go.uber.org/mock/mockgen/internal/tests/package_mode",
 										Type:    "Food",
 									},
 								},
@@ -258,12 +258,12 @@ func Test_importModeParser_parsePackage(t *testing.T) {
 		{
 			name: "success: alias to interface",
 			args: args{
-				packageName: "go.uber.org/mock/mockgen/internal/tests/import_mode",
+				packageName: "go.uber.org/mock/mockgen/internal/tests/package_mode",
 				ifaces:      []string{"Human"},
 			},
 			expected: &model.Package{
-				Name:    "import_mode",
-				PkgPath: "go.uber.org/mock/mockgen/internal/tests/import_mode",
+				Name:    "package_mode",
+				PkgPath: "go.uber.org/mock/mockgen/internal/tests/package_mode",
 				Interfaces: []*model.Interface{
 					{
 						Name: "Human",
@@ -274,7 +274,7 @@ func Test_importModeParser_parsePackage(t *testing.T) {
 								Variadic: &model.Parameter{
 									Name: "foods",
 									Type: &model.NamedType{
-										Package: "go.uber.org/mock/mockgen/internal/tests/import_mode",
+										Package: "go.uber.org/mock/mockgen/internal/tests/package_mode",
 										Type:    "Food",
 									},
 								},
@@ -299,12 +299,12 @@ func Test_importModeParser_parsePackage(t *testing.T) {
 		{
 			name: "success: interfaces with aliases in params and returns",
 			args: args{
-				packageName: "go.uber.org/mock/mockgen/internal/tests/import_mode",
+				packageName: "go.uber.org/mock/mockgen/internal/tests/package_mode",
 				ifaces:      []string{"Earth"},
 			},
 			expected: &model.Package{
-				Name:    "import_mode",
-				PkgPath: "go.uber.org/mock/mockgen/internal/tests/import_mode",
+				Name:    "package_mode",
+				PkgPath: "go.uber.org/mock/mockgen/internal/tests/package_mode",
 				Interfaces: []*model.Interface{
 					{
 						Name: "Earth",
@@ -321,7 +321,7 @@ func Test_importModeParser_parsePackage(t *testing.T) {
 										Type: &model.ArrayType{
 											Len: -1, // slice
 											Type: &model.NamedType{
-												Package: "go.uber.org/mock/mockgen/internal/tests/import_mode",
+												Package: "go.uber.org/mock/mockgen/internal/tests/package_mode",
 												Type:    "Primate",
 											},
 										},
@@ -345,7 +345,7 @@ func Test_importModeParser_parsePackage(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			parser := importModeParser{}
+			parser := packageModeParser{}
 			actual, err := parser.parsePackage(tt.args.packageName, tt.args.ifaces)
 
 			if tt.expectedErr != "" {

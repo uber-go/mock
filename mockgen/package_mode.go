@@ -9,11 +9,11 @@ import (
 	"golang.org/x/tools/go/packages"
 )
 
-type importModeParser struct {
+type packageModeParser struct {
 	pkgName string
 }
 
-func (p *importModeParser) parsePackage(packageName string, ifaces []string) (*model.Package, error) {
+func (p *packageModeParser) parsePackage(packageName string, ifaces []string) (*model.Package, error) {
 	p.pkgName = packageName
 
 	pkg, err := p.loadPackage(packageName)
@@ -33,7 +33,7 @@ func (p *importModeParser) parsePackage(packageName string, ifaces []string) (*m
 	}, nil
 }
 
-func (p *importModeParser) loadPackage(packageName string) (*packages.Package, error) {
+func (p *packageModeParser) loadPackage(packageName string) (*packages.Package, error) {
 	cfg := &packages.Config{
 		Mode: packages.NeedDeps | packages.NeedImports | packages.NeedTypes | packages.NeedTypesInfo | packages.NeedEmbedFiles,
 	}
@@ -58,7 +58,7 @@ func (p *importModeParser) loadPackage(packageName string) (*packages.Package, e
 	return pkgs[0], nil
 }
 
-func (p *importModeParser) extractInterfacesFromPackage(pkg *packages.Package, ifaces []string) ([]*model.Interface, error) {
+func (p *packageModeParser) extractInterfacesFromPackage(pkg *packages.Package, ifaces []string) ([]*model.Interface, error) {
 	interfaces := make([]*model.Interface, len(ifaces))
 	for i, iface := range ifaces {
 		obj := pkg.Types.Scope().Lookup(iface)
@@ -77,7 +77,7 @@ func (p *importModeParser) extractInterfacesFromPackage(pkg *packages.Package, i
 	return interfaces, nil
 }
 
-func (p *importModeParser) parseInterface(obj types.Object) (*model.Interface, error) {
+func (p *packageModeParser) parseInterface(obj types.Object) (*model.Interface, error) {
 	named, ok := types.Unalias(obj.Type()).(*types.Named)
 	if !ok {
 		return nil, fmt.Errorf("%s is not an interface. it is a %T", obj.Name(), obj.Type().Underlying())
@@ -131,7 +131,7 @@ func (p *importModeParser) parseInterface(obj types.Object) (*model.Interface, e
 	return &model.Interface{Name: obj.Name(), Methods: methods, TypeParams: typeParams}, nil
 }
 
-func (o *importModeParser) isConstraint(t *types.Interface) bool {
+func (o *packageModeParser) isConstraint(t *types.Interface) bool {
 	for i := range t.NumEmbeddeds() {
 		embed := t.EmbeddedType(i)
 		if _, ok := embed.Underlying().(*types.Interface); !ok {
@@ -142,7 +142,7 @@ func (o *importModeParser) isConstraint(t *types.Interface) bool {
 	return false
 }
 
-func (p *importModeParser) parseType(t types.Type) (model.Type, error) {
+func (p *packageModeParser) parseType(t types.Type) (model.Type, error) {
 	switch t := t.(type) {
 	case *types.Array:
 		elementType, err := p.parseType(t.Elem())
@@ -252,7 +252,7 @@ func (p *importModeParser) parseType(t types.Type) (model.Type, error) {
 	}
 }
 
-func (p *importModeParser) parseFunc(sig *types.Signature) (*model.FuncType, error) {
+func (p *packageModeParser) parseFunc(sig *types.Signature) (*model.FuncType, error) {
 	var variadic *model.Parameter
 	params := make([]*model.Parameter, 0, sig.Params().Len())
 	for i := range sig.Params().Len() {
@@ -310,7 +310,7 @@ func (p *importModeParser) parseFunc(sig *types.Signature) (*model.FuncType, err
 	}, nil
 }
 
-func (p *importModeParser) parseConstraint(t *types.TypeParam) (model.Type, error) {
+func (p *packageModeParser) parseConstraint(t *types.TypeParam) (model.Type, error) {
 	if t == nil {
 		return nil, fmt.Errorf("nil type param")
 	}
