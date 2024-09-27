@@ -77,6 +77,8 @@ func main() {
 	flag.Usage = usage
 	flag.Parse()
 
+	notifyAboutDeprecatedFlags()
+
 	if *showVersion {
 		printVersion()
 		return
