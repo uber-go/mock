@@ -7,15 +7,13 @@ import (
 )
 
 const (
-	deprecatedFlagProgOnly   = "prog_only"
-	deprecatedFlagExecOnly   = "exec_only"
-	deprecatedFlagBuildFlags = "build_flags"
+	deprecatedFlagProgOnly = "prog_only"
+	deprecatedFlagExecOnly = "exec_only"
 )
 
 var (
 	_ = flag.Bool("prog_only", false, "DEPRECATED (reflect mode) Only generate the reflection program; write it to stdout and exit.")
 	_ = flag.String("exec_only", "", "DEPRECATED (reflect mode) If set, execute this reflection program.")
-	_ = flag.String("build_flags", "", "DEPRECATED (reflect mode) Additional flags for go build.")
 )
 
 // notifyAboutDeprecatedFlags prints a warning message for a deprecated flags if they are set.
@@ -29,8 +27,6 @@ func notifyAboutDeprecatedFlags() {
 			logger.Println("The -prog_only flag is deprecated and has no effect.", resetColorPostfix)
 		case deprecatedFlagExecOnly:
 			logger.Println("The -exec_only flag is deprecated and has no effect.", resetColorPostfix)
-		case deprecatedFlagBuildFlags:
-			logger.Println("The -build_flags flag is deprecated and has no effect.", resetColorPostfix)
 		}
 	})
 }

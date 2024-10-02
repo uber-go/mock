@@ -2,11 +2,17 @@ package main
 
 import (
 	"errors"
+	"flag"
 	"fmt"
 	"go/types"
+	"strings"
 
 	"go.uber.org/mock/mockgen/model"
 	"golang.org/x/tools/go/packages"
+)
+
+var (
+	buildFlags = flag.String("build_flags", "", "(package mode) Additional flags for go build.")
 )
 
 type packageModeParser struct {
@@ -34,8 +40,14 @@ func (p *packageModeParser) parsePackage(packageName string, ifaces []string) (*
 }
 
 func (p *packageModeParser) loadPackage(packageName string) (*packages.Package, error) {
+	var buildFlagsSet []string
+	if *buildFlags != "" {
+		buildFlagsSet = strings.Split(*buildFlags, " ")
+	}
+
 	cfg := &packages.Config{
-		Mode: packages.NeedDeps | packages.NeedImports | packages.NeedTypes | packages.NeedTypesInfo | packages.NeedEmbedFiles,
+		Mode:       packages.NeedDeps | packages.NeedImports | packages.NeedTypes | packages.NeedTypesInfo | packages.NeedEmbedFiles,
+		BuildFlags: buildFlagsSet,
 	}
 	pkgs, err := packages.Load(cfg, packageName)
 	if err != nil {
