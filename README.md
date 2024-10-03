@@ -97,6 +97,8 @@ It supports the following flags:
   `foo=bar/baz.go`, where `bar/baz.go` is the source file and `foo` is the
   package name of that file used by the -source file.
 
+- `-build_flags`: (package mode only) Flags passed verbatim to `go list`.
+
 - `-mock_names`: A list of custom names for generated mocks. This is specified
   as a comma-separated list of elements of the form
   `Repository=MockSensorRepository,Endpoint=MockSensorEndpoint`, where
