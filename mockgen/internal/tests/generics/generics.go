@@ -6,7 +6,7 @@ import (
 )
 
 //go:generate mockgen --source=generics.go --destination=source/mock_generics_mock.go --package source
-////go:generate mockgen --destination=reflect/mock_test.go --package reflect . Bar,Bar2
+//go:generate mockgen --destination=package_mode/mock_test.go --package=package_mode . Bar,Universe,MilkyWay,SolarSystem,Earth,Water
 
 type Bar[T any, R any] interface {
 	One(string) string
