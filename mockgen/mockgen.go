@@ -71,7 +71,6 @@ var (
 
 	debugParser = flag.Bool("debug_parser", false, "Print out parser results only.")
 	showVersion = flag.Bool("version", false, "Print version.")
-	interfaces      = flag.String("interfaces", "", "List of interfaces to generate mocks for; if empty, mockgen will generate mocks for all interfaces found in the input file(s).")
 )
 
 func main() {

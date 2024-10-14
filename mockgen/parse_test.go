@@ -3,8 +3,8 @@ package main
 import (
 	"go/parser"
 	"go/token"
-	"testing"
 	"reflect"
+	"testing"
 
 	"go.uber.org/mock/mockgen/model"
 )
@@ -159,7 +159,7 @@ func Test_filterInterfaces(t *testing.T) {
 		wantErr bool
 	}{
 		{
-			name: "no filter",
+			name: "no filter (returns all interfaces)",
 			args: args{
 				all: []*model.Interface{
 					{
@@ -171,8 +171,15 @@ func Test_filterInterfaces(t *testing.T) {
 				},
 				requested: []string{},
 			},
-			want:    nil,
-			wantErr: true,
+			want: []*model.Interface{
+				{
+					Name: "Foo",
+				},
+				{
+					Name: "Bar",
+				},
+			},
+			wantErr: false,
 		},
 		{
 			name: "filter by Foo",
@@ -229,6 +236,22 @@ func Test_filterInterfaces(t *testing.T) {
 					},
 				},
 				requested: []string{"Foo", "Baz"},
+			},
+			want:    nil,
+			wantErr: true,
+		},
+		{
+			name: "missing interface (Baz not found)",
+			args: args{
+				all: []*model.Interface{
+					{
+						Name: "Foo",
+					},
+					{
+						Name: "Bar",
+					},
+				},
+				requested: []string{"Baz"},
 			},
 			want:    nil,
 			wantErr: true,
