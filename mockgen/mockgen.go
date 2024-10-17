@@ -69,6 +69,7 @@ var (
 	imports                = flag.String("imports", "", "(source mode) Comma-separated name=path pairs of explicit imports to use.")
 	auxFiles               = flag.String("aux_files", "", "(source mode) Comma-separated pkg=path pairs of auxiliary Go source files.")
 	excludeInterfaces      = flag.String("exclude_interfaces", "", "(source mode) Comma-separated names of interfaces to be excluded")
+	modelGob               = flag.String("model_gob", "", "Skip package/source loading entirely and use the gob encoded model.Package at the given path")
 
 	debugParser = flag.Bool("debug_parser", false, "Print out parser results only.")
 	showVersion = flag.Bool("version", false, "Print version.")
@@ -88,7 +89,9 @@ func main() {
 	var pkg *model.Package
 	var err error
 	var packageName string
-	if *source != "" {
+	if *modelGob != "" {
+		pkg, err = gobMode(*modelGob)
+	} else if *source != "" {
 		pkg, err = sourceMode(*source)
 	} else {
 		if flag.NArg() != 2 {
