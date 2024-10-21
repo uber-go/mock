@@ -22,6 +22,7 @@ import (
 type MockBar[T any, R any] struct {
 	ctrl     *gomock.Controller
 	recorder *MockBarMockRecorder[T, R]
+	isgomock struct{}
 }
 
 // MockBarMockRecorder is the mock recorder for MockBar.
@@ -315,6 +316,7 @@ func (mr *MockBarMockRecorder[T, R]) Two(arg0 any) *gomock.Call {
 type MockUniverse[T constraints.Signed] struct {
 	ctrl     *gomock.Controller
 	recorder *MockUniverseMockRecorder[T]
+	isgomock struct{}
 }
 
 // MockUniverseMockRecorder is the mock recorder for MockUniverse.
@@ -352,6 +354,7 @@ func (mr *MockUniverseMockRecorder[T]) Water(arg0 any) *gomock.Call {
 type MockMilkyWay[R constraints.Integer] struct {
 	ctrl     *gomock.Controller
 	recorder *MockMilkyWayMockRecorder[R]
+	isgomock struct{}
 }
 
 // MockMilkyWayMockRecorder is the mock recorder for MockMilkyWay.
@@ -389,6 +392,7 @@ func (mr *MockMilkyWayMockRecorder[R]) Water(arg0 any) *gomock.Call {
 type MockSolarSystem[T constraints.Ordered] struct {
 	ctrl     *gomock.Controller
 	recorder *MockSolarSystemMockRecorder[T]
+	isgomock struct{}
 }
 
 // MockSolarSystemMockRecorder is the mock recorder for MockSolarSystem.
@@ -426,6 +430,7 @@ func (mr *MockSolarSystemMockRecorder[T]) Water(arg0 any) *gomock.Call {
 type MockEarth[R any] struct {
 	ctrl     *gomock.Controller
 	recorder *MockEarthMockRecorder[R]
+	isgomock struct{}
 }
 
 // MockEarthMockRecorder is the mock recorder for MockEarth.
@@ -463,6 +468,7 @@ func (mr *MockEarthMockRecorder[R]) Water(arg0 any) *gomock.Call {
 type MockWater[R any, C generics.UnsignedInteger] struct {
 	ctrl     *gomock.Controller
 	recorder *MockWaterMockRecorder[R, C]
+	isgomock struct{}
 }
 
 // MockWaterMockRecorder is the mock recorder for MockWater.

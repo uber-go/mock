@@ -9,7 +9,6 @@ func TestImpPath(t *testing.T) {
 	nonVendor := "github.com/foo/bar"
 	if nonVendor != impPath(nonVendor) {
 		t.Errorf("")
-
 	}
 	testCases := []struct {
 		input string

@@ -19,6 +19,7 @@ import (
 type MockReadWriteCloser struct {
 	ctrl     *gomock.Controller
 	recorder *MockReadWriteCloserMockRecorder
+	isgomock struct{}
 }
 
 // MockReadWriteCloserMockRecorder is the mock recorder for MockReadWriteCloser.

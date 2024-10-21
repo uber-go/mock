@@ -21,6 +21,7 @@ import (
 type MockWithImports struct {
 	ctrl     *gomock.Controller
 	recorder *MockWithImportsMockRecorder
+	isgomock struct{}
 }
 
 // MockWithImportsMockRecorder is the mock recorder for MockWithImports.

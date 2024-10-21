@@ -40,7 +40,7 @@ export PATH=$PATH:$(go env GOPATH)/bin
 
 ## Running mockgen
 
-`mockgen` has two modes of operation: source and reflect.
+`mockgen` has two modes of operation: source and package.
 
 ### Source mode
 
@@ -54,11 +54,10 @@ Example:
 mockgen -source=foo.go [other options]
 ```
 
-### Reflect mode
+### Package mode
 
-Reflect mode generates mock interfaces by building a program
-that uses reflection to understand interfaces. It is enabled
-by passing two non-flag arguments: an import path, and a
+Package mode works by specifying the package and interface names.
+It is enabled by passing two non-flag arguments: an import path, and a
 comma-separated list of symbols.
 
 You can use "." to refer to the current path's package.
@@ -98,7 +97,7 @@ It supports the following flags:
   `foo=bar/baz.go`, where `bar/baz.go` is the source file and `foo` is the
   package name of that file used by the -source file.
 
-- `-build_flags`: (reflect mode only) Flags passed verbatim to `go build`.
+- `-build_flags`: (package mode only) Flags passed verbatim to `go list`.
 
 - `-mock_names`: A list of custom names for generated mocks. This is specified
   as a comma-separated list of elements of the form
@@ -119,15 +118,11 @@ It supports the following flags:
 
 - `-debug_parser`: Print out parser results only.
 
-- `-exec_only`: (reflect mode) If set, execute this reflection program.
-
-- `-prog_only`: (reflect mode) Only generate the reflection program; write it to stdout and exit.
-
 - `-write_package_comment`: Writes package documentation comment (godoc) if true. (default true)
 
 - `-write_generate_directive`: Add //go:generate directive to regenerate the mock. (default false)
 
-- `-write_source_comment`: Writes original file (source mode) or interface names (reflect mode) comment if true. (default true)
+- `-write_source_comment`: Writes original file (source mode) or interface names (package mode) comment if true. (default true)
 
 - `-typed`: Generate Type-safe 'Return', 'Do', 'DoAndReturn' function. (default false)
 

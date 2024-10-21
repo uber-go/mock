@@ -19,6 +19,7 @@ import (
 type MockMath struct {
 	ctrl     *gomock.Controller
 	recorder *MockMathMockRecorder
+	isgomock struct{}
 }
 
 // MockMathMockRecorder is the mock recorder for MockMath.
@@ -39,15 +40,15 @@ func (m *MockMath) EXPECT() *MockMathMockRecorder {
 }
 
 // Sum mocks base method.
-func (m *MockMath) Sum(arg0, arg1 int) int {
+func (m *MockMath) Sum(a, b int) int {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Sum", arg0, arg1)
+	ret := m.ctrl.Call(m, "Sum", a, b)
 	ret0, _ := ret[0].(int)
 	return ret0
 }
 
 // Sum indicates an expected call of Sum.
-func (mr *MockMathMockRecorder) Sum(arg0, arg1 any) *gomock.Call {
+func (mr *MockMathMockRecorder) Sum(a, b any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Sum", reflect.TypeOf((*MockMath)(nil).Sum), arg0, arg1)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Sum", reflect.TypeOf((*MockMath)(nil).Sum), a, b)
 }

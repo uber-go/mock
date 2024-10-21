@@ -19,6 +19,7 @@ import (
 type MockFoo struct {
 	ctrl     *gomock.Controller
 	recorder *MockFooMockRecorder
+	isgomock struct{}
 }
 
 // MockFooMockRecorder is the mock recorder for MockFoo.
@@ -39,13 +40,13 @@ func (m *MockFoo) EXPECT() *MockFooMockRecorder {
 }
 
 // Bar mocks base method.
-func (m *MockFoo) Bar(arg0 []string, arg1 chan<- Message) {
+func (m *MockFoo) Bar(channels []string, message chan<- Message) {
 	m.ctrl.T.Helper()
-	m.ctrl.Call(m, "Bar", arg0, arg1)
+	m.ctrl.Call(m, "Bar", channels, message)
 }
 
 // Bar indicates an expected call of Bar.
-func (mr *MockFooMockRecorder) Bar(arg0, arg1 any) *gomock.Call {
+func (mr *MockFooMockRecorder) Bar(channels, message any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Bar", reflect.TypeOf((*MockFoo)(nil).Bar), arg0, arg1)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Bar", reflect.TypeOf((*MockFoo)(nil).Bar), channels, message)
 }

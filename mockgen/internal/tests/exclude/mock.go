@@ -19,6 +19,7 @@ import (
 type MockGenerateMockForMe struct {
 	ctrl     *gomock.Controller
 	recorder *MockGenerateMockForMeMockRecorder
+	isgomock struct{}
 }
 
 // MockGenerateMockForMeMockRecorder is the mock recorder for MockGenerateMockForMe.

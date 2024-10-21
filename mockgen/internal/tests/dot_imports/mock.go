@@ -22,6 +22,7 @@ import (
 type MockWithDotImports struct {
 	ctrl     *gomock.Controller
 	recorder *MockWithDotImportsMockRecorder
+	isgomock struct{}
 }
 
 // MockWithDotImportsMockRecorder is the mock recorder for MockWithDotImports.

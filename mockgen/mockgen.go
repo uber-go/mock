@@ -61,14 +61,16 @@ var (
 	selfPackage            = flag.String("self_package", "", "The full package import path for the generated code. The purpose of this flag is to prevent import cycles in the generated code by trying to include its own package. This can happen if the mock's package is set to one of its inputs (usually the main one) and the output is stdio so mockgen cannot detect the final output package. Setting this flag will then tell mockgen which import to exclude.")
 	writeCmdComment        = flag.Bool("write_command_comment", true, "Writes the command used as a comment if true.")
 	writePkgComment        = flag.Bool("write_package_comment", true, "Writes package documentation comment (godoc) if true.")
-	writeSourceComment     = flag.Bool("write_source_comment", true, "Writes original file (source mode) or interface names (reflect mode) comment if true.")
+	writeSourceComment     = flag.Bool("write_source_comment", true, "Writes original file (source mode) or interface names (package mode) comment if true.")
 	writeGenerateDirective = flag.Bool("write_generate_directive", false, "Add //go:generate directive to regenerate the mock")
 	copyrightFile          = flag.String("copyright_file", "", "Copyright file used to add copyright header")
 	embed                  = flag.Bool("embed", false, "Embed source interface into generated mock structure")
+	buildConstraint        = flag.String("build_constraint", "", "If non-empty, added as //go:build <constraint>")
 	typed                  = flag.Bool("typed", false, "Generate Type-safe 'Return', 'Do', 'DoAndReturn' function")
 	imports                = flag.String("imports", "", "(source mode) Comma-separated name=path pairs of explicit imports to use.")
 	auxFiles               = flag.String("aux_files", "", "(source mode) Comma-separated pkg=path pairs of auxiliary Go source files.")
-	excludeInterfaces      = flag.String("exclude_interfaces", "", "Comma-separated names of interfaces to be excluded")
+	excludeInterfaces      = flag.String("exclude_interfaces", "", "(source mode) Comma-separated names of interfaces to be excluded")
+	modelGob               = flag.String("model_gob", "", "Skip package/source loading entirely and use the gob encoded model.Package at the given path")
 
 	debugParser = flag.Bool("debug_parser", false, "Print out parser results only.")
 	showVersion = flag.Bool("version", false, "Print version.")
@@ -78,6 +80,8 @@ func main() {
 	flag.Usage = usage
 	flag.Parse()
 
+	notifyAboutDeprecatedFlags()
+
 	if *showVersion {
 		printVersion()
 		return
@@ -86,7 +90,9 @@ func main() {
 	var pkg *model.Package
 	var err error
 	var packageName string
-	if *source != "" {
+	if *modelGob != "" {
+		pkg, err = gobMode(*modelGob)
+	} else if *source != "" {
 		pkg, err = sourceMode(*source)
 	} else {
 		if flag.NArg() != 2 {
@@ -105,7 +111,8 @@ func main() {
 				log.Fatalf("Parse package name failed: %v", err)
 			}
 		}
-		pkg, err = reflectMode(packageName, interfaces)
+		parser := packageModeParser{}
+		pkg, err = parser.parsePackage(packageName, interfaces)
 	}
 	if err != nil {
 		log.Fatalf("Loading input failed: %v", err)
@@ -118,7 +125,7 @@ func main() {
 
 	outputPackageName := *packageOut
 	if outputPackageName == "" {
-		// pkg.Name in reflect mode is the base name of the import path,
+		// pkg.Name in package mode is the base name of the import path,
 		// which might have characters that are illegal to have in package names.
 		outputPackageName = "mock_" + sanitize(pkg.Name)
 	}
@@ -144,7 +151,9 @@ func main() {
 		}
 	}
 
-	g := new(generator)
+	g := &generator{
+		buildConstraint: *buildConstraint,
+	}
 	if *source != "" {
 		g.filename = *source
 	} else {
@@ -227,20 +236,21 @@ func usage() {
 	flag.PrintDefaults()
 }
 
-const usageText = `mockgen has two modes of operation: source and reflect.
+const usageText = `mockgen has two modes of operation: source and package.
 
 Source mode generates mock interfaces from a source file.
 It is enabled by using the -source flag. Other flags that
-may be useful in this mode are -imports and -aux_files.
+may be useful in this mode are -imports, -aux_files and -exclude_interfaces.
 Example:
 	mockgen -source=foo.go [other options]
 
-Reflect mode generates mock interfaces by building a program
-that uses reflection to understand interfaces. It is enabled
-by passing two non-flag arguments: an import path, and a
-comma-separated list of symbols.
+Package mode works by specifying the package and interface names.
+It is enabled by passing two non-flag arguments: an import path, and a
+comma-separated list of symbols. 
+You can use "." to refer to the current path's package.
 Example:
 	mockgen database/sql/driver Conn,Driver
+	mockgen . SomeInterface
 
 `
 
@@ -252,6 +262,7 @@ type generator struct {
 	destination               string            // may be empty
 	srcPackage, srcInterfaces string            // may be empty
 	copyrightHeader           string
+	buildConstraint           string // may be empty
 
 	packageMap map[string]string // map from import path to package name
 }
@@ -304,6 +315,12 @@ func (g *generator) Generate(pkg *model.Package, outputPkgName string, outputPac
 		for _, line := range lines {
 			g.p("// %s", line)
 		}
+		g.p("")
+	}
+
+	if g.buildConstraint != "" {
+		g.p("//go:build %s", g.buildConstraint)
+		// https://pkg.go.dev/cmd/go#hdr-Build_constraints:~:text=a%20build%20constraint%20should%20be%20followed%20by%20a%20blank%20line
 		g.p("")
 	}
 
@@ -399,11 +416,13 @@ func (g *generator) Generate(pkg *model.Package, outputPkgName string, outputPac
 		g.packageMap[g.srcPackage] = pkg.Name
 	}
 
-	if *writePkgComment {
-		// Ensure there's an empty line before the package to follow the recommendations:
-		// https://github.com/golang/go/wiki/CodeReviewComments#package-comments
-		g.p("")
+	// Ensure there is an empty line between “generated by” block and
+	// package documentation comments to follow the recommendations:
+	// https://go.dev/wiki/CodeReviewComments#package-comments
+	// That is, “generated by” should not be a package comment.
+	g.p("")
 
+	if *writePkgComment {
 		g.p("// Package %v is a generated GoMock package.", outputPkgName)
 	}
 	g.p("package %v", outputPkgName)
@@ -486,6 +505,7 @@ func (g *generator) GenerateMockInterface(pkgName string, intf *model.Interface,
 	}
 	g.p("ctrl     *gomock.Controller")
 	g.p("recorder *%vMockRecorder%v", mockType, shortTp)
+	g.p("isgomock struct{}")
 	g.out()
 	g.p("}")
 	g.p("")
@@ -513,14 +533,6 @@ func (g *generator) GenerateMockInterface(pkgName string, intf *model.Interface,
 	g.p("func (m *%v%v) EXPECT() *%vMockRecorder%v {", mockType, shortTp, mockType, shortTp)
 	g.in()
 	g.p("return m.recorder")
-	g.out()
-	g.p("}")
-
-	// XXX: possible name collision here if someone has ISGOMOCK in their interface.
-	g.p("// ISGOMOCK indicates that this struct is a gomock mock.")
-	g.p("func (m *%v%v) ISGOMOCK() struct{} {", mockType, shortTp)
-	g.in()
-	g.p("return struct{}{}")
 	g.out()
 	g.p("}")
 
@@ -838,7 +850,7 @@ func createPackageMap(importPaths []string) map[string]string {
 	}
 	pkgMap := make(map[string]string)
 	b := bytes.NewBuffer(nil)
-	args := []string{"list", "-json"}
+	args := []string{"list", "-json=ImportPath,Name"}
 	args = append(args, importPaths...)
 	cmd := exec.Command("go", args...)
 	cmd.Stdout = b

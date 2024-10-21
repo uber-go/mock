@@ -20,6 +20,7 @@ import (
 type MockInputMaker struct {
 	ctrl     *gomock.Controller
 	recorder *MockInputMakerMockRecorder
+	isgomock struct{}
 }
 
 // MockInputMakerMockRecorder is the mock recorder for MockInputMaker.
