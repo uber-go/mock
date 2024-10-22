@@ -654,17 +654,17 @@ func (c *MockCarFuelTankCall[FuelType]) DoAndReturn(f func() cars.FuelTank[FuelT
 }
 
 // Refuel mocks base method.
-func (m *MockCar[FuelType]) Refuel(fuel FuelType, volume int) error {
+func (m *MockCar[FuelType]) Refuel(arg0 FuelType, volume int) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Refuel", fuel, volume)
+	ret := m.ctrl.Call(m, "Refuel", arg0, volume)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // Refuel indicates an expected call of Refuel.
-func (mr *MockCarMockRecorder[FuelType]) Refuel(fuel, volume any) *MockCarRefuelCall[FuelType] {
+func (mr *MockCarMockRecorder[FuelType]) Refuel(arg0, volume any) *MockCarRefuelCall[FuelType] {
 	mr.mock.ctrl.T.Helper()
-	call := mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Refuel", reflect.TypeOf((*MockCar[FuelType])(nil).Refuel), fuel, volume)
+	call := mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Refuel", reflect.TypeOf((*MockCar[FuelType])(nil).Refuel), arg0, volume)
 	return &MockCarRefuelCall[FuelType]{Call: call}
 }
 
