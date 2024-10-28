@@ -1382,10 +1382,10 @@ func (m *MockEarth) EXPECT() *MockEarthMockRecorder {
 }
 
 // AddHumans mocks base method.
-func (m *MockEarth) AddHumans(arg0 int) []package_mode.Primate {
+func (m *MockEarth) AddHumans(arg0 int) []package_mode.Human {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "AddHumans", arg0)
-	ret0, _ := ret[0].([]package_mode.Primate)
+	ret0, _ := ret[0].([]package_mode.Human)
 	return ret0
 }
 
@@ -1402,19 +1402,19 @@ type MockEarthAddHumansCall struct {
 }
 
 // Return rewrite *gomock.Call.Return
-func (c *MockEarthAddHumansCall) Return(arg0 []package_mode.Primate) *MockEarthAddHumansCall {
+func (c *MockEarthAddHumansCall) Return(arg0 []package_mode.Human) *MockEarthAddHumansCall {
 	c.Call = c.Call.Return(arg0)
 	return c
 }
 
 // Do rewrite *gomock.Call.Do
-func (c *MockEarthAddHumansCall) Do(f func(int) []package_mode.Primate) *MockEarthAddHumansCall {
+func (c *MockEarthAddHumansCall) Do(f func(int) []package_mode.Human) *MockEarthAddHumansCall {
 	c.Call = c.Call.Do(f)
 	return c
 }
 
 // DoAndReturn rewrite *gomock.Call.DoAndReturn
-func (c *MockEarthAddHumansCall) DoAndReturn(f func(int) []package_mode.Primate) *MockEarthAddHumansCall {
+func (c *MockEarthAddHumansCall) DoAndReturn(f func(int) []package_mode.Human) *MockEarthAddHumansCall {
 	c.Call = c.Call.DoAndReturn(f)
 	return c
 }

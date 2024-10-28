@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/mockgen/model"
 )
 
@@ -322,7 +323,7 @@ func Test_packageModeParser_parsePackage(t *testing.T) {
 											Len: -1, // slice
 											Type: &model.NamedType{
 												Package: "go.uber.org/mock/mockgen/internal/tests/package_mode",
-												Type:    "Primate",
+												Type:    "Human",
 											},
 										},
 									},
@@ -355,6 +356,160 @@ func Test_packageModeParser_parsePackage(t *testing.T) {
 			}
 
 			assert.Equal(t, tt.expected, actual)
+		})
+	}
+}
+
+// This tests the alias replacement behavior of package mode.
+// TODO(joaks): Update this once we remove the replacement logic
+// when we bump go.mod to 1.23.
+func TestAliases(t *testing.T) {
+	packageName := "go.uber.org/mock/mockgen/internal/tests/alias"
+	for _, tt := range []struct {
+		desc     string
+		iface    string
+		expected *model.Interface
+	}{
+		{
+			desc:  "interface with alias references elsewhere",
+			iface: "Fooer",
+			expected: &model.Interface{
+				Name: "Fooer",
+				Methods: []*model.Method{{
+					Name: "Foo",
+				}},
+			},
+		},
+		{
+			desc:  "alias to an interface in the same package",
+			iface: "FooerAlias",
+			expected: &model.Interface{
+				Name: "FooerAlias",
+				Methods: []*model.Method{{
+					Name: "Foo",
+				}},
+			},
+		},
+		{
+			desc:  "interface that takes/returns aliases from same package",
+			iface: "Barer",
+			expected: &model.Interface{
+				Name: "Barer",
+				Methods: []*model.Method{{
+					Name: "Bar",
+					In: []*model.Parameter{{
+						Type: &model.NamedType{
+							Package: "go.uber.org/mock/mockgen/internal/tests/alias",
+							Type:    "FooerAlias",
+						},
+					}},
+					Out: []*model.Parameter{{
+						Type: &model.NamedType{
+							Package: "go.uber.org/mock/mockgen/internal/tests/alias",
+							Type:    "FooerAlias",
+						},
+					}},
+				}},
+			},
+		},
+		{
+			desc:  "alias to an interface that takes/returns aliases from same package",
+			iface: "BarerAlias",
+			expected: &model.Interface{
+				Name: "BarerAlias",
+				Methods: []*model.Method{{
+					Name: "Bar",
+					In: []*model.Parameter{{
+						Type: &model.NamedType{
+							Package: "go.uber.org/mock/mockgen/internal/tests/alias",
+							Type:    "FooerAlias",
+						},
+					}},
+					Out: []*model.Parameter{{
+						Type: &model.NamedType{
+							Package: "go.uber.org/mock/mockgen/internal/tests/alias",
+							Type:    "FooerAlias",
+						},
+					}},
+				}},
+			},
+		},
+		{
+			desc:  "interface that refers to underlying name when alias is referenced in package",
+			iface: "Bazer",
+			expected: &model.Interface{
+				Name: "Bazer",
+				Methods: []*model.Method{{
+					Name: "Baz",
+					In: []*model.Parameter{{
+						Type: &model.NamedType{
+							Package: "go.uber.org/mock/mockgen/internal/tests/alias",
+							Type:    "FooerAlias",
+						},
+					}},
+					Out: []*model.Parameter{{
+						Type: &model.NamedType{
+							Package: "go.uber.org/mock/mockgen/internal/tests/alias",
+							Type:    "FooerAlias",
+						},
+					}},
+				}},
+			},
+		},
+		{
+			desc:  "interface that refers to an alias to another package type",
+			iface: "QuxerConsumer",
+			expected: &model.Interface{
+				Name: "QuxerConsumer",
+				Methods: []*model.Method{{
+					Name: "Consume",
+					In: []*model.Parameter{{
+						Type: &model.NamedType{
+							Package: "go.uber.org/mock/mockgen/internal/tests/alias",
+							Type:    "QuxerAlias",
+						},
+					}},
+					Out: []*model.Parameter{{
+						Type: &model.NamedType{
+							Package: "go.uber.org/mock/mockgen/internal/tests/alias",
+							Type:    "QuxerAlias",
+						},
+					}},
+				}},
+			},
+		},
+		{
+			desc:  "interface that refers to another package alias to another package type",
+			iface: "QuuxerConsumer",
+			expected: &model.Interface{
+				Name: "QuuxerConsumer",
+				Methods: []*model.Method{{
+					Name: "Consume",
+					In: []*model.Parameter{{
+						Type: &model.NamedType{
+							Package: "go.uber.org/mock/mockgen/internal/tests/alias/subpkg",
+							Type:    "Quuxer",
+						},
+					}},
+					Out: []*model.Parameter{{
+						Type: &model.NamedType{
+							Package: "go.uber.org/mock/mockgen/internal/tests/alias/subpkg",
+							Type:    "Quuxer",
+						},
+					}},
+				}},
+			},
+		},
+	} {
+		t.Run(tt.desc, func(t *testing.T) {
+			var parser packageModeParser
+			actual, err := parser.parsePackage(packageName, []string{tt.iface})
+			require.NoError(t, err)
+			require.NotNil(t, actual)
+			require.Len(t, actual.Interfaces, 1)
+			assert.Equal(t, "alias", actual.Name)
+			assert.Equal(t, "go.uber.org/mock/mockgen/internal/tests/alias", actual.PkgPath)
+			assert.Equal(t, tt.expected, actual.Interfaces[0])
 		})
 	}
 }
