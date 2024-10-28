@@ -23,7 +23,7 @@ type packageModeParser struct {
 	//
 	// We prefer to use aliases used in the source rather than underlying type names
 	// as those may be unexported or internal.
-	// Once mock is Go1.23+ only, we can remove this
+	// TODO(joaks): Once mock is Go1.23+ only, we can remove this
 	// as the casing for types.Alias will automatically handle this
 	// in all cases.
 	aliasReplacements map[types.Type]aliasReplacement
@@ -147,7 +147,7 @@ func (p *packageModeParser) loadPackage(packageName string) (*packages.Package, 
 	}
 
 	cfg := &packages.Config{
-		Mode:       packages.NeedDeps | packages.NeedImports | packages.NeedTypes | packages.NeedTypesInfo | packages.NeedEmbedFiles | packages.LoadAllSyntax,
+		Mode:       packages.NeedDeps | packages.NeedImports | packages.NeedTypes | packages.NeedTypesInfo | packages.NeedEmbedFiles | packages.LoadSyntax,
 		BuildFlags: buildFlagsSet,
 	}
 	pkgs, err := packages.Load(cfg, packageName)

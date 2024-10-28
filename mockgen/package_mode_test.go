@@ -361,8 +361,8 @@ func Test_packageModeParser_parsePackage(t *testing.T) {
 }
 
 // This tests the alias replacement behavior of package mode.
-// Along with the functionality itself, that can be removed
-// once we bump go.mod to 1.23.
+// TODO(joaks): Update this once we remove the replacement logic
+// when we bump go.mod to 1.23.
 func TestAliases(t *testing.T) {
 	packageName := "go.uber.org/mock/mockgen/internal/tests/alias"
 	for _, tt := range []struct {
