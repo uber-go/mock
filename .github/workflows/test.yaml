@@ -8,14 +8,11 @@ on:
 permissions:
   contents: read
 
-env:
-  GO111MODULE: on
-
 jobs:
   test:
     strategy:
       matrix:
-        go-version: [1.19.x, 1.20.x]
+        go-version: [1.22.x, 1.23.x] # oldest version that can build go mock and official supported go versions
         os: [ubuntu-latest]
     runs-on: ${{ matrix.os }}
     steps:

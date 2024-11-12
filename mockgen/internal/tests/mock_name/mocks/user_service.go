@@ -20,6 +20,7 @@ import (
 type UserServiceMock struct {
 	ctrl     *gomock.Controller
 	recorder *UserServiceMockMockRecorder
+	isgomock struct{}
 }
 
 // UserServiceMockMockRecorder is the mock recorder for UserServiceMock.
@@ -40,18 +41,18 @@ func (m *UserServiceMock) EXPECT() *UserServiceMockMockRecorder {
 }
 
 // Create mocks base method.
-func (m *UserServiceMock) Create(arg0 string) (*user.User, error) {
+func (m *UserServiceMock) Create(name string) (*user.User, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Create", arg0)
+	ret := m.ctrl.Call(m, "Create", name)
 	ret0, _ := ret[0].(*user.User)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // Create indicates an expected call of Create.
-func (mr *UserServiceMockMockRecorder) Create(arg0 any) *UserServiceMockCreateCall {
+func (mr *UserServiceMockMockRecorder) Create(name any) *UserServiceMockCreateCall {
 	mr.mock.ctrl.T.Helper()
-	call := mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Create", reflect.TypeOf((*UserServiceMock)(nil).Create), arg0)
+	call := mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Create", reflect.TypeOf((*UserServiceMock)(nil).Create), name)
 	return &UserServiceMockCreateCall{Call: call}
 }
 

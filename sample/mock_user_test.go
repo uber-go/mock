@@ -30,6 +30,7 @@ import (
 type MockIndex struct {
 	ctrl     *gomock.Controller
 	recorder *MockIndexMockRecorder
+	isgomock struct{}
 }
 
 // MockIndexMockRecorder is the mock recorder for MockIndex.
@@ -62,15 +63,15 @@ func (mr *MockIndexMockRecorder) Anon(arg0 any) *gomock.Call {
 }
 
 // Chan mocks base method.
-func (m *MockIndex) Chan(arg0 chan int, arg1 chan<- hash.Hash) {
+func (m *MockIndex) Chan(a chan int, b chan<- hash.Hash) {
 	m.ctrl.T.Helper()
-	m.ctrl.Call(m, "Chan", arg0, arg1)
+	m.ctrl.Call(m, "Chan", a, b)
 }
 
 // Chan indicates an expected call of Chan.
-func (mr *MockIndexMockRecorder) Chan(arg0, arg1 any) *gomock.Call {
+func (mr *MockIndexMockRecorder) Chan(a, b any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Chan", reflect.TypeOf((*MockIndex)(nil).Chan), arg0, arg1)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Chan", reflect.TypeOf((*MockIndex)(nil).Chan), a, b)
 }
 
 // ConcreteRet mocks base method.
@@ -88,19 +89,19 @@ func (mr *MockIndexMockRecorder) ConcreteRet() *gomock.Call {
 }
 
 // Ellip mocks base method.
-func (m *MockIndex) Ellip(arg0 string, arg1 ...any) {
+func (m *MockIndex) Ellip(fmt string, args ...any) {
 	m.ctrl.T.Helper()
-	varargs := []any{arg0}
-	for _, a := range arg1 {
+	varargs := []any{fmt}
+	for _, a := range args {
 		varargs = append(varargs, a)
 	}
 	m.ctrl.Call(m, "Ellip", varargs...)
 }
 
 // Ellip indicates an expected call of Ellip.
-func (mr *MockIndexMockRecorder) Ellip(arg0 any, arg1 ...any) *gomock.Call {
+func (mr *MockIndexMockRecorder) Ellip(fmt any, args ...any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	varargs := append([]any{arg0}, arg1...)
+	varargs := append([]any{fmt}, args...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Ellip", reflect.TypeOf((*MockIndex)(nil).Ellip), varargs...)
 }
 
@@ -169,56 +170,56 @@ func (mr *MockIndexMockRecorder) ForeignTwo(arg0 any) *gomock.Call {
 }
 
 // Func mocks base method.
-func (m *MockIndex) Func(arg0 func(http.Request) (int, bool)) {
+func (m *MockIndex) Func(f func(http.Request) (int, bool)) {
 	m.ctrl.T.Helper()
-	m.ctrl.Call(m, "Func", arg0)
+	m.ctrl.Call(m, "Func", f)
 }
 
 // Func indicates an expected call of Func.
-func (mr *MockIndexMockRecorder) Func(arg0 any) *gomock.Call {
+func (mr *MockIndexMockRecorder) Func(f any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Func", reflect.TypeOf((*MockIndex)(nil).Func), arg0)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Func", reflect.TypeOf((*MockIndex)(nil).Func), f)
 }
 
 // Get mocks base method.
-func (m *MockIndex) Get(arg0 string) any {
+func (m *MockIndex) Get(key string) any {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Get", arg0)
+	ret := m.ctrl.Call(m, "Get", key)
 	ret0, _ := ret[0].(any)
 	return ret0
 }
 
 // Get indicates an expected call of Get.
-func (mr *MockIndexMockRecorder) Get(arg0 any) *gomock.Call {
+func (mr *MockIndexMockRecorder) Get(key any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Get", reflect.TypeOf((*MockIndex)(nil).Get), arg0)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Get", reflect.TypeOf((*MockIndex)(nil).Get), key)
 }
 
 // GetTwo mocks base method.
-func (m *MockIndex) GetTwo(arg0, arg1 string) (any, any) {
+func (m *MockIndex) GetTwo(key1, key2 string) (any, any) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetTwo", arg0, arg1)
+	ret := m.ctrl.Call(m, "GetTwo", key1, key2)
 	ret0, _ := ret[0].(any)
 	ret1, _ := ret[1].(any)
 	return ret0, ret1
 }
 
 // GetTwo indicates an expected call of GetTwo.
-func (mr *MockIndexMockRecorder) GetTwo(arg0, arg1 any) *gomock.Call {
+func (mr *MockIndexMockRecorder) GetTwo(key1, key2 any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetTwo", reflect.TypeOf((*MockIndex)(nil).GetTwo), arg0, arg1)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetTwo", reflect.TypeOf((*MockIndex)(nil).GetTwo), key1, key2)
 }
 
 // Map mocks base method.
-func (m *MockIndex) Map(arg0 map[int]hash.Hash) {
+func (m *MockIndex) Map(a map[int]hash.Hash) {
 	m.ctrl.T.Helper()
-	m.ctrl.Call(m, "Map", arg0)
+	m.ctrl.Call(m, "Map", a)
 }
 
 // Map indicates an expected call of Map.
-func (mr *MockIndexMockRecorder) Map(arg0 any) *gomock.Call {
+func (mr *MockIndexMockRecorder) Map(a any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Map", reflect.TypeOf((*MockIndex)(nil).Map), arg0)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Map", reflect.TypeOf((*MockIndex)(nil).Map), a)
 }
 
 // NillableRet mocks base method.
@@ -250,95 +251,96 @@ func (mr *MockIndexMockRecorder) Other() *gomock.Call {
 }
 
 // Ptr mocks base method.
-func (m *MockIndex) Ptr(arg0 *int) {
+func (m *MockIndex) Ptr(arg *int) {
 	m.ctrl.T.Helper()
-	m.ctrl.Call(m, "Ptr", arg0)
+	m.ctrl.Call(m, "Ptr", arg)
 }
 
 // Ptr indicates an expected call of Ptr.
-func (mr *MockIndexMockRecorder) Ptr(arg0 any) *gomock.Call {
+func (mr *MockIndexMockRecorder) Ptr(arg any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Ptr", reflect.TypeOf((*MockIndex)(nil).Ptr), arg0)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Ptr", reflect.TypeOf((*MockIndex)(nil).Ptr), arg)
 }
 
 // Put mocks base method.
-func (m *MockIndex) Put(arg0 string, arg1 any) {
+func (m *MockIndex) Put(key string, value any) {
 	m.ctrl.T.Helper()
-	m.ctrl.Call(m, "Put", arg0, arg1)
+	m.ctrl.Call(m, "Put", key, value)
 }
 
 // Put indicates an expected call of Put.
-func (mr *MockIndexMockRecorder) Put(arg0, arg1 any) *gomock.Call {
+func (mr *MockIndexMockRecorder) Put(key, value any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Put", reflect.TypeOf((*MockIndex)(nil).Put), arg0, arg1)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Put", reflect.TypeOf((*MockIndex)(nil).Put), key, value)
 }
 
 // Slice mocks base method.
-func (m *MockIndex) Slice(arg0 []int, arg1 []byte) [3]int {
+func (m *MockIndex) Slice(a []int, b []byte) [3]int {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Slice", arg0, arg1)
+	ret := m.ctrl.Call(m, "Slice", a, b)
 	ret0, _ := ret[0].([3]int)
 	return ret0
 }
 
 // Slice indicates an expected call of Slice.
-func (mr *MockIndexMockRecorder) Slice(arg0, arg1 any) *gomock.Call {
+func (mr *MockIndexMockRecorder) Slice(a, b any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Slice", reflect.TypeOf((*MockIndex)(nil).Slice), arg0, arg1)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Slice", reflect.TypeOf((*MockIndex)(nil).Slice), a, b)
 }
 
 // Struct mocks base method.
-func (m *MockIndex) Struct(arg0 struct{}) {
+func (m *MockIndex) Struct(a struct{}) {
 	m.ctrl.T.Helper()
-	m.ctrl.Call(m, "Struct", arg0)
+	m.ctrl.Call(m, "Struct", a)
 }
 
 // Struct indicates an expected call of Struct.
-func (mr *MockIndexMockRecorder) Struct(arg0 any) *gomock.Call {
+func (mr *MockIndexMockRecorder) Struct(a any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Struct", reflect.TypeOf((*MockIndex)(nil).Struct), arg0)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Struct", reflect.TypeOf((*MockIndex)(nil).Struct), a)
 }
 
 // StructChan mocks base method.
-func (m *MockIndex) StructChan(arg0 chan struct{}) {
+func (m *MockIndex) StructChan(a chan struct{}) {
 	m.ctrl.T.Helper()
-	m.ctrl.Call(m, "StructChan", arg0)
+	m.ctrl.Call(m, "StructChan", a)
 }
 
 // StructChan indicates an expected call of StructChan.
-func (mr *MockIndexMockRecorder) StructChan(arg0 any) *gomock.Call {
+func (mr *MockIndexMockRecorder) StructChan(a any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "StructChan", reflect.TypeOf((*MockIndex)(nil).StructChan), arg0)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "StructChan", reflect.TypeOf((*MockIndex)(nil).StructChan), a)
 }
 
 // Summary mocks base method.
-func (m *MockIndex) Summary(arg0 *bytes.Buffer, arg1 io.Writer) {
+func (m *MockIndex) Summary(buf *bytes.Buffer, w io.Writer) {
 	m.ctrl.T.Helper()
-	m.ctrl.Call(m, "Summary", arg0, arg1)
+	m.ctrl.Call(m, "Summary", buf, w)
 }
 
 // Summary indicates an expected call of Summary.
-func (mr *MockIndexMockRecorder) Summary(arg0, arg1 any) *gomock.Call {
+func (mr *MockIndexMockRecorder) Summary(buf, w any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Summary", reflect.TypeOf((*MockIndex)(nil).Summary), arg0, arg1)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Summary", reflect.TypeOf((*MockIndex)(nil).Summary), buf, w)
 }
 
 // Templates mocks base method.
-func (m *MockIndex) Templates(arg0 template.CSS, arg1 template0.FuncMap) {
+func (m *MockIndex) Templates(a template.CSS, b template0.FuncMap) {
 	m.ctrl.T.Helper()
-	m.ctrl.Call(m, "Templates", arg0, arg1)
+	m.ctrl.Call(m, "Templates", a, b)
 }
 
 // Templates indicates an expected call of Templates.
-func (mr *MockIndexMockRecorder) Templates(arg0, arg1 any) *gomock.Call {
+func (mr *MockIndexMockRecorder) Templates(a, b any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Templates", reflect.TypeOf((*MockIndex)(nil).Templates), arg0, arg1)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Templates", reflect.TypeOf((*MockIndex)(nil).Templates), a, b)
 }
 
 // MockEmbed is a mock of Embed interface.
 type MockEmbed struct {
 	ctrl     *gomock.Controller
 	recorder *MockEmbedMockRecorder
+	isgomock struct{}
 }
 
 // MockEmbedMockRecorder is the mock recorder for MockEmbed.
@@ -385,15 +387,15 @@ func (mr *MockEmbedMockRecorder) ForeignEmbeddedMethod() *gomock.Call {
 }
 
 // ImplicitPackage mocks base method.
-func (m *MockEmbed) ImplicitPackage(arg0 string, arg1 imp1.ImpT, arg2 []imp1.ImpT, arg3 *imp1.ImpT, arg4 chan imp1.ImpT) {
+func (m *MockEmbed) ImplicitPackage(s string, t imp1.ImpT, st []imp1.ImpT, pt *imp1.ImpT, ct chan imp1.ImpT) {
 	m.ctrl.T.Helper()
-	m.ctrl.Call(m, "ImplicitPackage", arg0, arg1, arg2, arg3, arg4)
+	m.ctrl.Call(m, "ImplicitPackage", s, t, st, pt, ct)
 }
 
 // ImplicitPackage indicates an expected call of ImplicitPackage.
-func (mr *MockEmbedMockRecorder) ImplicitPackage(arg0, arg1, arg2, arg3, arg4 any) *gomock.Call {
+func (mr *MockEmbedMockRecorder) ImplicitPackage(s, t, st, pt, ct any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ImplicitPackage", reflect.TypeOf((*MockEmbed)(nil).ImplicitPackage), arg0, arg1, arg2, arg3, arg4)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ImplicitPackage", reflect.TypeOf((*MockEmbed)(nil).ImplicitPackage), s, t, st, pt, ct)
 }
 
 // RegularMethod mocks base method.
@@ -412,6 +414,7 @@ func (mr *MockEmbedMockRecorder) RegularMethod() *gomock.Call {
 type MockEmbedded struct {
 	ctrl     *gomock.Controller
 	recorder *MockEmbeddedMockRecorder
+	isgomock struct{}
 }
 
 // MockEmbeddedMockRecorder is the mock recorder for MockEmbedded.

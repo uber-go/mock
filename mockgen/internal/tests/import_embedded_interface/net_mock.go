@@ -20,6 +20,7 @@ import (
 type MockNet struct {
 	ctrl     *gomock.Controller
 	recorder *MockNetMockRecorder
+	isgomock struct{}
 }
 
 // MockNetMockRecorder is the mock recorder for MockNet.

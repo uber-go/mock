@@ -17,6 +17,7 @@ import (
 type MockEmpty struct {
 	ctrl     *gomock.Controller
 	recorder *MockEmptyMockRecorder
+	isgomock struct{}
 }
 
 // MockEmptyMockRecorder is the mock recorder for MockEmpty.

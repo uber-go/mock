@@ -19,6 +19,7 @@ import (
 type MockMatcher struct {
 	ctrl     *gomock.Controller
 	recorder *MockMatcherMockRecorder
+	isgomock struct{}
 }
 
 // MockMatcherMockRecorder is the mock recorder for MockMatcher.
@@ -39,17 +40,17 @@ func (m *MockMatcher) EXPECT() *MockMatcherMockRecorder {
 }
 
 // Matches mocks base method.
-func (m *MockMatcher) Matches(arg0 any) bool {
+func (m *MockMatcher) Matches(x any) bool {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Matches", arg0)
+	ret := m.ctrl.Call(m, "Matches", x)
 	ret0, _ := ret[0].(bool)
 	return ret0
 }
 
 // Matches indicates an expected call of Matches.
-func (mr *MockMatcherMockRecorder) Matches(arg0 any) *gomock.Call {
+func (mr *MockMatcherMockRecorder) Matches(x any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Matches", reflect.TypeOf((*MockMatcher)(nil).Matches), arg0)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Matches", reflect.TypeOf((*MockMatcher)(nil).Matches), x)
 }
 
 // String mocks base method.

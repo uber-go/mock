@@ -21,6 +21,7 @@ import (
 type PostServiceMock struct {
 	ctrl     *gomock.Controller
 	recorder *PostServiceMockMockRecorder
+	isgomock struct{}
 }
 
 // PostServiceMockMockRecorder is the mock recorder for PostServiceMock.
@@ -41,18 +42,18 @@ func (m *PostServiceMock) EXPECT() *PostServiceMockMockRecorder {
 }
 
 // Create mocks base method.
-func (m *PostServiceMock) Create(arg0, arg1 string, arg2 *user.User) (*post.Post, error) {
+func (m *PostServiceMock) Create(title, body string, author *user.User) (*post.Post, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Create", arg0, arg1, arg2)
+	ret := m.ctrl.Call(m, "Create", title, body, author)
 	ret0, _ := ret[0].(*post.Post)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // Create indicates an expected call of Create.
-func (mr *PostServiceMockMockRecorder) Create(arg0, arg1, arg2 any) *PostServiceMockCreateCall {
+func (mr *PostServiceMockMockRecorder) Create(title, body, author any) *PostServiceMockCreateCall {
 	mr.mock.ctrl.T.Helper()
-	call := mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Create", reflect.TypeOf((*PostServiceMock)(nil).Create), arg0, arg1, arg2)
+	call := mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Create", reflect.TypeOf((*PostServiceMock)(nil).Create), title, body, author)
 	return &PostServiceMockCreateCall{Call: call}
 }
 

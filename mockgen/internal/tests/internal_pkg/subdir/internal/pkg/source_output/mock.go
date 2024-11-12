@@ -20,6 +20,7 @@ import (
 type MockArg struct {
 	ctrl     *gomock.Controller
 	recorder *MockArgMockRecorder
+	isgomock struct{}
 }
 
 // MockArgMockRecorder is the mock recorder for MockArg.
@@ -57,6 +58,7 @@ func (mr *MockArgMockRecorder) Foo() *gomock.Call {
 type MockIntf struct {
 	ctrl     *gomock.Controller
 	recorder *MockIntfMockRecorder
+	isgomock struct{}
 }
 
 // MockIntfMockRecorder is the mock recorder for MockIntf.

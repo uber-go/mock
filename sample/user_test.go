@@ -193,12 +193,8 @@ func TestExpectCondForeignFour(t *testing.T) {
 	defer ctrl.Finish()
 
 	mockIndex := NewMockIndex(ctrl)
-	mockIndex.EXPECT().ForeignFour(gomock.Cond(func(x any) bool {
-		four, ok := x.(imp_four.Imp4)
-		if !ok {
-			return false
-		}
-		return four.Field == "Cool"
+	mockIndex.EXPECT().ForeignFour(gomock.Cond(func(x imp_four.Imp4) bool {
+		return x.Field == "Cool"
 	}))
 
 	mockIndex.ForeignFour(imp_four.Imp4{Field: "Cool"})

@@ -1,10 +1,10 @@
 module go.uber.org/mock/mockgen/internal/tests/generics
 
-go 1.19
-
-require (
-	go.uber.org/mock v1.6.0
-	golang.org/x/exp v0.0.0-20220428152302-39d4317da171
-)
+go 1.22
 
 replace go.uber.org/mock => ../../../..
+
+require (
+	go.uber.org/mock v0.0.0-00010101000000-000000000000
+	golang.org/x/exp v0.0.0-20240613232115-7f521ea00fb8
+)
