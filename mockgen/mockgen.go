@@ -393,8 +393,8 @@ func (g *generator) Generate(pkg *model.Package, outputPkgName string, outputPac
 		// try base0, base1, ...
 		pkgName := base
 
-		if _, ok := definedImports[base]; ok {
-			pkgName = definedImports[base]
+		if _, ok := definedImports[pth]; ok {
+			pkgName = definedImports[pth]
 		}
 
 		i := 0
