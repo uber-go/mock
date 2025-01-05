@@ -53,7 +53,7 @@ jobs:
       matrix:
         os:
           - macos
-          - debian
+          - ubuntu
     runs-on: ${{ matrix.os }}-latest
     steps:
       - name: Checkout code
