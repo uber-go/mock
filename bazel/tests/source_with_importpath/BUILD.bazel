@@ -1,0 +1,36 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
+load("//rules:gomock.bzl", "gomock")
+
+# For this test, the mock is included as part of the library
+go_library(
+    name = "client",
+    srcs = [
+        "client.go",
+        "client_mock.go",
+    ],
+    importpath = "go.uber.org/mock/bazel/tests/source_with_importpath",
+    visibility = ["//visibility:public"],
+    deps = [
+        "@org_uber_go_mock//gomock",
+    ],
+)
+
+# Pass importpath instead of library to the generation step
+# Passing library instead of importpath here will cause a circular dependency
+gomock(
+    name = "mocks",
+    out = "client_mock.go",
+    package = "client",
+    source = "client.go",
+    source_importpath = "go.uber.org/mock/bazel/tests/source_with_importpath",
+    visibility = ["//visibility:public"],
+)
+
+# Don't include client_mock.go as a source file, instead use it from the library
+go_test(
+    name = "client_test",
+    srcs = [
+        "client_test.go",
+    ],
+    embed = [":client"],
+)

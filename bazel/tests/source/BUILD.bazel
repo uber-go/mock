@@ -1,0 +1,46 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
+load("//rules:gomock.bzl", "gomock")
+
+
+go_library(
+    name = "client",
+    srcs = [
+        "client.go",
+        "client_wrapper.go",
+    ],
+    importpath = "go.uber.org/mock/bazel/tests/source",
+    visibility = ["//visibility:public"],
+)
+
+gomock(
+    name = "client_mocks",
+    out = "client_mock.go",
+    library = ":client",
+    package = "client",
+    source = "client.go",
+    visibility = ["//visibility:public"],
+)
+
+gomock(
+    name = "wrapper_mocks",
+    out = "wrapper_mock.go",
+    aux_files = {
+        "client.go": "go.uber.org/mock/bazel/tests/source",
+    },
+    library = ":client",
+    package = "client",
+    self_package = "go.uber.org/mock/bazel/tests/source",
+    source = "client_wrapper.go",
+    visibility = ["//visibility:public"],
+)
+
+go_test(
+    name = "client_test",
+    srcs = [
+        "client_mock.go",
+        "client_test.go",
+        "wrapper_mock.go",
+    ],
+    embed = [":client"],
+    deps = ["@org_uber_go_mock//gomock"],
+)
