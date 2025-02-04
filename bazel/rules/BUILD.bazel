@@ -1,0 +1,9 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "rules",
+    srcs = ["tools.go"],
+    importpath = "go.uber.org/mock/bazel/rules",
+    visibility = ["//visibility:public"],
+    deps = ["@org_uber_go_mock//mockgen/model:go_default_library"],
+)
