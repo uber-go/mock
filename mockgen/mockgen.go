@@ -380,6 +380,16 @@ func (g *generator) Generate(pkg *model.Package, outputPkgName string, outputPac
 
 	g.packageMap = make(map[string]string, len(im))
 	localNames := make(map[string]bool, len(im))
+	paramNamesInterfaces := make(map[string]struct{}, 0)
+	for _, intf := range pkg.Interfaces {
+		for _, m := range intf.Methods {
+			for _, i := range m.In {
+				if i.Name != "" {
+					paramNamesInterfaces[i.Name] = struct{}{}
+				}
+			}
+		}
+	}
 	for _, pth := range sortedPaths {
 		base, ok := packagesName[pth]
 		if !ok {
@@ -401,6 +411,10 @@ func (g *generator) Generate(pkg *model.Package, outputPkgName string, outputPac
 		for localNames[pkgName] || token.Lookup(pkgName).IsKeyword() || pkgName == "any" {
 			pkgName = base + strconv.Itoa(i)
 			i++
+		}
+
+		if _, isImportShadowing := paramNamesInterfaces[pkgName]; isImportShadowing {
+			pkgName = base + "Pkg"
 		}
 
 		// Avoid importing package if source pkg == output pkg
