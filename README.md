@@ -215,6 +215,39 @@ Got: [0 1 1 2 3]
 Want: is equal to 1
 ```
 
+### Custom diff formatter for unequal args
+
+You can provide a custom diff formatter function to the Controller, which will
+be invoked instead of the default formatting when the `Eq` matcher fails.
+
+(`Eq` is the default matcher for expectations with arbitrary values).
+
+Other matchers are unaffected. (This includes `GotFormatter` implementations
+and matchers wrapped in `WantFormatter` documented below).
+
+```go
+myDiffer := func(expected, actual any) {
+  return fmt.Sprintf("My custom diff:\n- %v\n+ %v", expected, actual)
+  // or pass to another lib, like go-cmp cmp.Diff
+}
+
+ctrl := gomock.NewController(t, gomock.WithDiffFormatter(myDiffer))
+
+// ...
+
+mymock.EXPECT().Foo("my expected string")
+mymock.Foo("my actual string")
+```
+
+```
+Unexpected call to *mymocks.MyMock.Foo([my actual string]) at ... because: 
+expected call at ... doesn't match the argument at index 0.
+My custom diff:
+- my expected string
++ my actual string
+```
+
+
 ### Modifying `Want`
 
 The `Want` value comes from the matcher's `String()` method. If the matcher's
