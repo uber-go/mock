@@ -25,4 +25,4 @@ happen.
 
 **Triage Notes for the Maintainers**
 
-<!-- 🎉🎉🎉 Thank you for an opening an issue !!! 🎉🎉🎉 We are doing our best to get to this. -->
+<!-- 🎉🎉🎉 Thank you for opening an issue !!! 🎉🎉🎉 We are doing our best to get to this. -->
