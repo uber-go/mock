@@ -4,7 +4,7 @@ type Quxer interface {
 	Qux()
 }
 
-type quuxerUnexported interface{
+type quuxerUnexported interface {
 	Quux(Quxer) Quxer
 }
 

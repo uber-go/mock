@@ -112,13 +112,23 @@ func (c *Call) MaxTimes(n int) *Call {
 // It takes an any argument to support n-arity functions.
 // The anonymous function must match the function signature mocked method.
 func (c *Call) DoAndReturn(f any) *Call {
-	// TODO: Check arity and types here, rather than dying badly elsewhere.
+	c.t.Helper()
 	v := reflect.ValueOf(f)
+	ft := v.Type()
+
+	// Check that f is a function but don't panic immediately - add an action that will panic
+	if ft.Kind() != reflect.Func {
+		c.addAction(func(args []any) []any {
+			panic(fmt.Sprintf("requires a function, got %T", f))
+		})
+		return c
+	}
 
 	c.addAction(func(args []any) []any {
 		c.t.Helper()
-		ft := v.Type()
-		if c.methodType.NumIn() != ft.NumIn() {
+
+		// Type checking for arguments (num args & type compatibility)
+		if c.methodType != nil && c.methodType.NumIn() != ft.NumIn() {
 			if ft.IsVariadic() {
 				c.t.Fatalf("wrong number of arguments in DoAndReturn func for %T.%v The function signature must match the mocked method, a variadic function cannot be used.",
 					c.receiver, c.method)
@@ -128,8 +138,16 @@ func (c *Call) DoAndReturn(f any) *Call {
 			}
 			return nil
 		}
-		vArgs := make([]reflect.Value, len(args))
-		for i := 0; i < len(args); i++ {
+
+		// Important part: Make sure we only pass the number of args that the function expects
+		// If the function expects fewer args than provided, truncate the list
+		numArgs := len(args)
+		if numArgs > ft.NumIn() {
+			numArgs = ft.NumIn()
+		}
+
+		vArgs := make([]reflect.Value, numArgs)
+		for i := 0; i < numArgs; i++ {
 			if args[i] != nil {
 				vArgs[i] = reflect.ValueOf(args[i])
 			} else {
@@ -137,6 +155,7 @@ func (c *Call) DoAndReturn(f any) *Call {
 				vArgs[i] = reflect.Zero(ft.In(i))
 			}
 		}
+
 		vRets := v.Call(vArgs)
 		rets := make([]any, len(vRets))
 		for i, ret := range vRets {

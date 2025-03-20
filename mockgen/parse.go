@@ -170,10 +170,27 @@ type fileParser struct {
 	excludeNamesSet    map[string]struct{}
 }
 
+// errorf returns a formatted error that includes file position information.
+// The error message will be prefixed with "filename:line:column: ".
 func (p *fileParser) errorf(pos token.Pos, format string, args ...any) error {
+	if p.fileSet == nil {
+		return fmt.Errorf("fileSet is nil: "+format, args...)
+	}
+
 	ps := p.fileSet.Position(pos)
-	format = "%s:%d:%d: " + format
-	args = append([]any{ps.Filename, ps.Line, ps.Column}, args...)
+	if !ps.IsValid() {
+		return fmt.Errorf("invalid position: "+format, args...)
+	}
+
+	// Build the location prefix with proper escaping for special characters
+	location := fmt.Sprintf("%s:%d:%d",
+		strings.ReplaceAll(ps.Filename, "%", "%%"),
+		ps.Line,
+		ps.Column,
+	)
+
+	// Combine the location prefix with the original format
+	format = location + ": " + format
 	return fmt.Errorf(format, args...)
 }
 
@@ -455,8 +472,24 @@ func (p *fileParser) parseMethod(field *ast.Field, it *namedInterface, iface *mo
 					return nil, err
 				}
 			}
-			// TODO: apply shadowing rules.
-			return embeddedIface.Methods, nil
+			// Apply method shadowing rules
+			methods := make([]*model.Method, 0, len(embeddedIface.Methods))
+			for _, m := range embeddedIface.Methods {
+				// Check if this method is shadowed by any method in the embedding interface
+				shadowed := false
+				for _, existing := range iface.Methods {
+					if existing.Name == m.Name {
+						shadowed = true
+						break
+					}
+				}
+				// Only include non-shadowed methods
+				if !shadowed {
+					methods = append(methods, m)
+				}
+			}
+			return methods, nil
+
 		default:
 			return p.parseGenericMethod(field, it, iface, pkg, tps)
 		}

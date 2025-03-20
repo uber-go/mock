@@ -496,9 +496,16 @@ func typeFromType(t reflect.Type) (Type, error) {
 		if t.NumField() == 0 {
 			return PredeclaredType("struct{}"), nil
 		}
+		// Handle non-empty structs by creating a NamedType
+		if t.Name() != "" {
+			return &NamedType{
+				Package: impPath(t.PkgPath()),
+				Type:    t.Name(),
+			}, nil
+		}
+	case reflect.UnsafePointer:
+		return PredeclaredType("unsafe.Pointer"), nil
 	}
-
-	// TODO: Struct, UnsafePointer
 	return nil, fmt.Errorf("can't yet turn %v (%v) into a model.Type", t, t.Kind())
 }
 
