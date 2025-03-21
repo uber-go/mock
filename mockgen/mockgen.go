@@ -782,7 +782,7 @@ func (g *generator) getArgNames(m *model.Method, in bool) []string {
 		name := p.Name
 
 		if name == "" || name == "_" || g.nameExistsAsPackage(name) {
-			name = fmt.Sprintf("arg%d", i)
+			name = "_" + name
 		}
 		argNames[i] = name
 	}
@@ -790,7 +790,7 @@ func (g *generator) getArgNames(m *model.Method, in bool) []string {
 		name := m.Variadic.Name
 
 		if name == "" || g.nameExistsAsPackage(name) {
-			name = fmt.Sprintf("arg%d", len(params))
+			name = name = "_" + name
 		}
 		argNames = append(argNames, name)
 	}
