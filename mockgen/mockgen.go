@@ -245,7 +245,7 @@ Example:
 
 Package mode works by specifying the package and interface names.
 It is enabled by passing two non-flag arguments: an import path, and a
-comma-separated list of symbols. 
+comma-separated list of symbols.
 You can use "." to refer to the current path's package.
 Example:
 	mockgen database/sql/driver Conn,Driver
@@ -790,7 +790,7 @@ func (g *generator) getArgNames(m *model.Method, in bool) []string {
 		name := m.Variadic.Name
 
 		if name == "" || g.nameExistsAsPackage(name) {
-			name = name = "_" + name
+			name = "_" + name
 		}
 		argNames = append(argNames, name)
 	}
