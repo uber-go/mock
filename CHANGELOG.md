@@ -3,8 +3,21 @@ All notable changes to this project will be documented in this file.
 
 This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
-## Unreleased
-- No changes yet.
+## 0.5.1 (7 Apr 2025)
+### Fixed
+
+- [#220][]: Package mode will now generate code that uses aliases of types
+  when they are used in the source.
+- [#219][]: Fixed a collision between function argument names and package names
+  in generated code.
+- [#165][]: Fixed an issue where aliases specified by `-imports` were not being
+  respected in generated code.
+
+[#220]: https://github.com/uber-go/mock/pull/220
+[#219]: https://github.com/uber-go/mock/pull/219
+[#165]: https://github.com/uber-go/mock/pull/165
+
+Thanks to @mtoader and @bstncartwright for their contributions to this release.
 
 ## 0.5.0 (15 Oct 2024)
 ### Added
