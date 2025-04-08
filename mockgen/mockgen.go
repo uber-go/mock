@@ -86,47 +86,21 @@ func main() {
 		return
 	}
 
-	var pkg *model.Package
-	var err error
-	var packageName string
-	if *modelGob != "" {
-		pkg, err = gobMode(*modelGob)
-	} else if *source != "" {
-		pkg, err = sourceMode(*source)
-	} else {
-		if flag.NArg() != 2 {
-			usage()
-			log.Fatal("Expected exactly two arguments")
-		}
-		packageName = flag.Arg(0)
-		interfaces := strings.Split(flag.Arg(1), ",")
-		if packageName == "." {
-			dir, err := os.Getwd()
-			if err != nil {
-				log.Fatalf("Get current directory failed: %v", err)
-			}
-			packageName, err = packageNameOfDir(dir)
-			if err != nil {
-				log.Fatalf("Parse package name failed: %v", err)
-			}
-		}
-		parser := packageModeParser{}
-		pkg, err = parser.parsePackage(packageName, interfaces)
-	}
+	target, err := prepareTarget()
 	if err != nil {
 		log.Fatalf("Loading input failed: %v", err)
 	}
 
 	if *debugParser {
-		pkg.Print(os.Stdout)
+		target.pkg.Print(os.Stdout)
 		return
 	}
 
-	outputPackageName := *packageOut
+	outputPackageName := target.packageOut
 	if outputPackageName == "" {
 		// pkg.Name in package mode is the base name of the import path,
 		// which might have characters that are illegal to have in package names.
-		outputPackageName = "mock_" + sanitize(pkg.Name)
+		outputPackageName = "mock_" + sanitize(target.pkg.Name)
 	}
 
 	// outputPackagePath represents the fully qualified name of the package of
@@ -135,9 +109,9 @@ func main() {
 	// package (i.e. if there is a type called X then we want to print "X" not
 	// "package.X" since "package" is this package). This can happen if the mock
 	// is output into an already existing package.
-	outputPackagePath := *selfPackage
-	if outputPackagePath == "" && *destination != "" {
-		dstPath, err := filepath.Abs(filepath.Dir(*destination))
+	outputPackagePath := target.selfPackage
+	if outputPackagePath == "" && target.destination != "" {
+		dstPath, err := filepath.Abs(filepath.Dir(target.destination))
 		if err == nil {
 			pkgPath, err := parsePackageImport(dstPath)
 			if err == nil {
@@ -151,44 +125,43 @@ func main() {
 	}
 
 	g := &generator{
-		buildConstraint: *buildConstraint,
+		buildConstraint: target.buildConstraint,
 	}
-	if *source != "" {
-		g.filename = *source
+	if target.source != "" {
+		g.filename = target.source
 	} else {
-		g.srcPackage = packageName
-		g.srcInterfaces = flag.Arg(1)
+		g.srcPackage = target.packageName
+		g.srcInterfaces = target.interfaces
 	}
-	g.destination = *destination
+	g.destination = target.destination
 
-	if *mockNames != "" {
-		g.mockNames = parseMockNames(*mockNames)
+	if target.mockNames != "" {
+		g.mockNames = parseMockNames(target.mockNames)
 	}
-	if *copyrightFile != "" {
-		header, err := os.ReadFile(*copyrightFile)
+	if target.copyrightFile != "" {
+		header, err := os.ReadFile(target.copyrightFile)
 		if err != nil {
 			log.Fatalf("Failed reading copyright file: %v", err)
 		}
-
 		g.copyrightHeader = string(header)
 	}
-	if err := g.Generate(pkg, outputPackageName, outputPackagePath); err != nil {
+	if err := g.Generate(target, outputPackageName, outputPackagePath); err != nil {
 		log.Fatalf("Failed generating mock: %v", err)
 	}
 	output := g.Output()
 	dst := os.Stdout
-	if len(*destination) > 0 {
-		if err := os.MkdirAll(filepath.Dir(*destination), os.ModePerm); err != nil {
+	if len(target.destination) > 0 {
+		if err := os.MkdirAll(filepath.Dir(target.destination), os.ModePerm); err != nil {
 			log.Fatalf("Unable to create directory: %v", err)
 		}
-		existing, err := os.ReadFile(*destination)
+		existing, err := os.ReadFile(target.destination)
 		if err != nil && !errors.Is(err, os.ErrNotExist) {
 			log.Fatalf("Failed reading pre-exiting destination file: %v", err)
 		}
 		if len(existing) == len(output) && bytes.Equal(existing, output) {
 			return
 		}
-		f, err := os.Create(*destination)
+		f, err := os.Create(target.destination)
 		if err != nil {
 			log.Fatalf("Failed opening destination file: %v", err)
 		}
@@ -197,6 +170,65 @@ func main() {
 	}
 	if _, err := dst.Write(output); err != nil {
 		log.Fatalf("Failed writing to destination: %v", err)
+	}
+}
+
+func prepareTarget() (*genTarget, error) {
+	target := genTarget{
+		destination:            *destination,
+		mockNames:              *mockNames,
+		packageOut:             *packageOut,
+		selfPackage:            *selfPackage,
+		writeCmdComment:        *writeCmdComment,
+		writePkgComment:        *writePkgComment,
+		writeSourceComment:     *writeSourceComment,
+		writeGenerateDirective: *writeGenerateDirective,
+		copyrightFile:          *copyrightFile,
+		buildConstraint:        *buildConstraint,
+		typed:                  *typed,
+	}
+	if *modelGob != "" {
+		pkg, err := gobMode(*modelGob)
+		if err != nil {
+			return nil, err
+		}
+		target.pkg = pkg
+		return &target, nil
+	} else if *source != "" {
+		pkg, err := sourceMode(*source)
+		if err != nil {
+			return nil, err
+		}
+		target.pkg = pkg
+		target.source = *source
+		target.imports = *imports
+		return &target, nil
+	} else {
+		if flag.NArg() != 2 {
+			usage()
+			log.Fatal("Expected exactly two arguments")
+		}
+		packageName := flag.Arg(0)
+		interfaces := strings.Split(flag.Arg(1), ",")
+		if packageName == "." {
+			dir, err := os.Getwd()
+			if err != nil {
+				log.Fatalf("Get current directory failed: %v", err)
+			}
+			packageName, err = packageNameOfDir(dir)
+			if err != nil {
+				log.Fatalf("Parse package name failed: %v", err)
+			}
+		}
+		parser := packageModeParser{}
+		pkg, err := parser.parsePackage(packageName, interfaces)
+		if err != nil {
+			return nil, err
+		}
+		target.pkg = pkg
+		target.packageName = packageName
+		target.interfaces = flag.Arg(1)
+		return &target, nil
 	}
 }
 
@@ -253,6 +285,30 @@ Example:
 
 `
 
+type genTarget struct {
+	pkg *model.Package
+
+	// source mode only
+	source  string
+	imports string
+
+	packageName string
+	interfaces  string
+
+	// flags
+	destination            string
+	mockNames              string
+	packageOut             string
+	selfPackage            string
+	writeCmdComment        bool
+	writePkgComment        bool
+	writeSourceComment     bool
+	writeGenerateDirective bool
+	copyrightFile          string
+	buildConstraint        string
+	typed                  bool
+}
+
 type generator struct {
 	buf                       bytes.Buffer
 	indent                    string
@@ -303,8 +359,8 @@ func sanitize(s string) string {
 	return t
 }
 
-func (g *generator) Generate(pkg *model.Package, outputPkgName string, outputPackagePath string) error {
-	if outputPkgName != pkg.Name && *selfPackage == "" {
+func (g *generator) Generate(target *genTarget, outputPkgName string, outputPackagePath string) error {
+	if outputPkgName != target.pkg.Name && target.selfPackage == "" {
 		// reset outputPackagePath if it's not passed in through -self_package
 		outputPackagePath = ""
 	}
@@ -324,14 +380,14 @@ func (g *generator) Generate(pkg *model.Package, outputPkgName string, outputPac
 	}
 
 	g.p("// Code generated by MockGen. DO NOT EDIT.")
-	if *writeSourceComment {
+	if target.writeSourceComment {
 		if g.filename != "" {
 			g.p("// Source: %v", g.filename)
 		} else {
 			g.p("// Source: %v (interfaces: %v)", g.srcPackage, g.srcInterfaces)
 		}
 	}
-	if *writeCmdComment {
+	if target.writeCmdComment {
 		g.p("//")
 		g.p("// Generated by this command:")
 		g.p("//")
@@ -345,12 +401,12 @@ func (g *generator) Generate(pkg *model.Package, outputPkgName string, outputPac
 	}
 
 	// Get all required imports, and generate unique names for them all.
-	im := pkg.Imports()
+	im := target.pkg.Imports()
 	im[gomockImportPath] = true
 
 	// Only import reflect if it's used. We only use reflect in mocked methods
 	// so only import if any of the mocked interfaces have methods.
-	for _, intf := range pkg.Interfaces {
+	for _, intf := range target.pkg.Interfaces {
 		if len(intf.Methods) > 0 {
 			im["reflect"] = true
 			break
@@ -369,8 +425,8 @@ func (g *generator) Generate(pkg *model.Package, outputPkgName string, outputPac
 	packagesName := createPackageMap(sortedPaths)
 
 	definedImports := make(map[string]string, len(im))
-	if *imports != "" {
-		for _, kv := range strings.Split(*imports, ",") {
+	if target.imports != "" {
+		for _, kv := range strings.Split(target.imports, ",") {
 			eq := strings.Index(kv, "=")
 			if k, v := kv[:eq], kv[eq+1:]; k != "." {
 				definedImports[v] = k
@@ -404,7 +460,7 @@ func (g *generator) Generate(pkg *model.Package, outputPkgName string, outputPac
 		}
 
 		// Avoid importing package if source pkg == output pkg
-		if pth == pkg.PkgPath && outputPackagePath == pkg.PkgPath {
+		if pth == target.pkg.PkgPath && outputPackagePath == target.pkg.PkgPath {
 			continue
 		}
 
@@ -418,7 +474,7 @@ func (g *generator) Generate(pkg *model.Package, outputPkgName string, outputPac
 	// That is, “generated by” should not be a package comment.
 	g.p("")
 
-	if *writePkgComment {
+	if target.writePkgComment {
 		g.p("// Package %v is a generated GoMock package.", outputPkgName)
 	}
 	g.p("package %v", outputPkgName)
@@ -431,18 +487,18 @@ func (g *generator) Generate(pkg *model.Package, outputPkgName string, outputPac
 		}
 		g.p("%v %q", pkgName, pkgPath)
 	}
-	for _, pkgPath := range pkg.DotImports {
+	for _, pkgPath := range target.pkg.DotImports {
 		g.p(". %q", pkgPath)
 	}
 	g.out()
 	g.p(")")
 
-	if *writeGenerateDirective {
+	if target.writeGenerateDirective {
 		g.p("//go:generate %v", strings.Join(os.Args, " "))
 	}
 
-	for _, intf := range pkg.Interfaces {
-		if err := g.GenerateMockInterface(intf, outputPackagePath); err != nil {
+	for _, intf := range target.pkg.Interfaces {
+		if err := g.GenerateMockInterface(intf, outputPackagePath, target.typed); err != nil {
 			return err
 		}
 	}
@@ -484,7 +540,7 @@ func (g *generator) formattedTypeParams(it *model.Interface, pkgOverride string)
 	return long.String(), short.String()
 }
 
-func (g *generator) GenerateMockInterface(intf *model.Interface, outputPackagePath string) error {
+func (g *generator) GenerateMockInterface(intf *model.Interface, outputPackagePath string, typed bool) error {
 	mockType := g.mockName(intf.Name)
 	longTp, shortTp := g.formattedTypeParams(intf, outputPackagePath)
 
@@ -525,7 +581,7 @@ func (g *generator) GenerateMockInterface(intf *model.Interface, outputPackagePa
 	g.out()
 	g.p("}")
 
-	g.GenerateMockMethods(mockType, intf, outputPackagePath, longTp, shortTp, *typed)
+	g.GenerateMockMethods(mockType, intf, outputPackagePath, longTp, shortTp, typed)
 
 	return nil
 }
