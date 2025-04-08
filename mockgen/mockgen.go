@@ -39,6 +39,7 @@ import (
 
 	"golang.org/x/mod/modfile"
 	toolsimports "golang.org/x/tools/imports"
+	"gopkg.in/yaml.v3"
 
 	"go.uber.org/mock/mockgen/model"
 )
@@ -53,23 +54,32 @@ var (
 	date    = "unknown"
 )
 
+const (
+	defaultWriteCmdComment        = true
+	defaultWritePkgComment        = true
+	defaultWriteSourceComment     = true
+	defaultWriteGenerateDirective = false
+	defaultTyped                  = false
+)
+
 var (
 	source                 = flag.String("source", "", "(source mode) Input Go source file; enables source mode.")
 	destination            = flag.String("destination", "", "Output file; defaults to stdout.")
 	mockNames              = flag.String("mock_names", "", "Comma-separated interfaceName=mockName pairs of explicit mock names to use. Mock names default to 'Mock'+ interfaceName suffix.")
 	packageOut             = flag.String("package", "", "Package of the generated code; defaults to the package of the input with a 'mock_' prefix.")
 	selfPackage            = flag.String("self_package", "", "The full package import path for the generated code. The purpose of this flag is to prevent import cycles in the generated code by trying to include its own package. This can happen if the mock's package is set to one of its inputs (usually the main one) and the output is stdio so mockgen cannot detect the final output package. Setting this flag will then tell mockgen which import to exclude.")
-	writeCmdComment        = flag.Bool("write_command_comment", true, "Writes the command used as a comment if true.")
-	writePkgComment        = flag.Bool("write_package_comment", true, "Writes package documentation comment (godoc) if true.")
-	writeSourceComment     = flag.Bool("write_source_comment", true, "Writes original file (source mode) or interface names (package mode) comment if true.")
-	writeGenerateDirective = flag.Bool("write_generate_directive", false, "Add //go:generate directive to regenerate the mock")
+	writeCmdComment        = flag.Bool("write_command_comment", defaultWriteCmdComment, "Writes the command used as a comment if true.")
+	writePkgComment        = flag.Bool("write_package_comment", defaultWritePkgComment, "Writes package documentation comment (godoc) if true.")
+	writeSourceComment     = flag.Bool("write_source_comment", defaultWriteSourceComment, "Writes original file (source mode) or interface names (package mode) comment if true.")
+	writeGenerateDirective = flag.Bool("write_generate_directive", defaultWriteGenerateDirective, "Add //go:generate directive to regenerate the mock")
 	copyrightFile          = flag.String("copyright_file", "", "Copyright file used to add copyright header")
 	buildConstraint        = flag.String("build_constraint", "", "If non-empty, added as //go:build <constraint>")
-	typed                  = flag.Bool("typed", false, "Generate Type-safe 'Return', 'Do', 'DoAndReturn' function")
+	typed                  = flag.Bool("typed", defaultTyped, "Generate Type-safe 'Return', 'Do', 'DoAndReturn' function")
 	imports                = flag.String("imports", "", "(source mode) Comma-separated name=path pairs of explicit imports to use.")
 	auxFiles               = flag.String("aux_files", "", "(source mode) Comma-separated pkg=path pairs of auxiliary Go source files.")
 	excludeInterfaces      = flag.String("exclude_interfaces", "", "(source mode) Comma-separated names of interfaces to be excluded")
 	modelGob               = flag.String("model_gob", "", "Skip package/source loading entirely and use the gob encoded model.Package at the given path")
+	batch                  = flag.String("batch", "", "YAML file with mockgen configuration for multiple packages. If used, all other flags are ignored.")
 
 	debugParser = flag.Bool("debug_parser", false, "Print out parser results only.")
 	showVersion = flag.Bool("version", false, "Print version.")
@@ -133,6 +143,56 @@ func prepareTargets() ([]genTarget, error) {
 		target.source = *source
 		target.imports = *imports
 		return []genTarget{target}, nil
+	} else if *batch != "" {
+		f, err := os.ReadFile(*batch)
+		if err != nil {
+			log.Fatalf("Failed reading batch file: %v", err)
+		}
+		var b Batch
+		if err := yaml.Unmarshal(f, &b); err != nil {
+			log.Fatalf("Failed parsing batch file: %v", err)
+		}
+
+		parseTargets := make([]parseTarget, len(b.Targets))
+		for i := range b.Targets {
+			target := b.Targets[i].Target
+			packageName, ifaces, found := strings.Cut(target, " ")
+			if !found {
+				log.Fatalf("Invalid target, must be a package name followed by comma-separated interface names: %s", target)
+			}
+
+			parseTargets[i] = parseTarget{
+				name:   packageName,
+				ifaces: strings.Split(ifaces, ","),
+			}
+		}
+
+		parser := packageModeParser{}
+		pkgs, err := parser.parsePackages(parseTargets)
+		if err != nil {
+			return nil, err
+		}
+
+		targets := make([]genTarget, len(b.Targets))
+		for i := range b.Targets {
+			targets[i] = genTarget{
+				pkg:                    pkgs[i],
+				packageName:            parseTargets[i].name,
+				interfaces:             parseTargets[i].ifaces,
+				destination:            b.Targets[i].Destination,
+				mockNames:              b.Targets[i].MockNames,
+				packageOut:             b.Targets[i].PackageOut,
+				selfPackage:            b.Targets[i].SelfPackage,
+				writeCmdComment:        overrideBool(defaultWriteCmdComment, b.Generator.WriteCmdComment, b.Targets[i].WriteCmdComment),
+				writePkgComment:        overrideBool(defaultWritePkgComment, b.Generator.WritePkgComment, b.Targets[i].WritePkgComment),
+				writeSourceComment:     overrideBool(defaultWriteSourceComment, b.Generator.WriteSourceComment, b.Targets[i].WriteSourceComment),
+				writeGenerateDirective: overrideBool(defaultWriteGenerateDirective, b.Generator.WriteGenerateDirective, b.Targets[i].WriteGenerateDirective),
+				copyrightFile:          overrideString("", b.Generator.CopyrightFile, b.Targets[i].CopyrightFile),
+				buildConstraint:        overrideString("", b.Generator.BuildConstraint, b.Targets[i].BuildConstraint),
+				typed:                  overrideBool(defaultTyped, b.Generator.Typed, b.Targets[i].Typed),
+			}
+		}
+		return targets, nil
 	} else {
 		if flag.NArg() != 2 {
 			usage()
@@ -157,9 +217,29 @@ func prepareTargets() ([]genTarget, error) {
 		}
 		target.pkg = pkg
 		target.packageName = packageName
-		target.interfaces = flag.Arg(1)
+		target.interfaces = interfaces
 		return []genTarget{target}, nil
 	}
+}
+
+func overrideBool(deflt bool, global, pkg *bool) bool {
+	if pkg != nil {
+		return *pkg
+	}
+	if global != nil {
+		return *global
+	}
+	return deflt
+}
+
+func overrideString(deflt, global, pkg string) string {
+	if pkg != "" {
+		return pkg
+	}
+	if global != "" {
+		return global
+	}
+	return deflt
 }
 
 func generateTarget(target *genTarget) {
@@ -198,7 +278,7 @@ func generateTarget(target *genTarget) {
 		g.filename = target.source
 	} else {
 		g.srcPackage = target.packageName
-		g.srcInterfaces = target.interfaces
+		g.srcInterfaces = strings.Join(target.interfaces, ",")
 	}
 	g.destination = target.destination
 
@@ -293,6 +373,30 @@ Example:
 
 `
 
+type Batch struct {
+	Generator Flags    `yaml:"generator"`
+	Targets   []Target `yaml:"targets"`
+}
+
+type Target struct {
+	Target      string `yaml:"target"`
+	Destination string `yaml:"destination"`
+	MockNames   string `yaml:"mock_names"`
+	PackageOut  string `yaml:"package"`
+	SelfPackage string `yaml:"self_package"`
+	Flags
+}
+
+type Flags struct {
+	WriteCmdComment        *bool  `yaml:"write_command_comment"`
+	WritePkgComment        *bool  `yaml:"write_package_comment"`
+	WriteSourceComment     *bool  `yaml:"write_source_comment"`
+	WriteGenerateDirective *bool  `yaml:"write_generate_directive"`
+	CopyrightFile          string `yaml:"copyright_file"`
+	BuildConstraint        string `yaml:"build_constraint"`
+	Typed                  *bool  `yaml:"typed"`
+}
+
 type genTarget struct {
 	pkg *model.Package
 
@@ -301,7 +405,7 @@ type genTarget struct {
 	imports string
 
 	packageName string
-	interfaces  string
+	interfaces  []string
 
 	// flags
 	destination            string
