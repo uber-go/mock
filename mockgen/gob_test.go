@@ -15,8 +15,8 @@ func TestGobMode(t *testing.T) {
 	// Encode a package to a temporary gob.
 	parser := packageModeParser{}
 	want, err := parser.parsePackage(
-		"go.uber.org/mock/mockgen/internal/tests/package_mode" /* package name */,
-		[]string{ "Human", "Earth" } /* ifaces */,
+		"go.uber.org/mock/mockgen/internal/tests/package_mode", /* package name */
+		[]string{"Human", "Earth"},                             /* ifaces */
 	)
 	path := filepath.Join(t.TempDir(), "model.gob")
 	outfile, err := os.Create(path)

@@ -162,14 +162,10 @@ func TestDoAndReturnSignature(t *testing.T) {
 		mockIndex := NewMockIndex(ctrl)
 
 		mockIndex.EXPECT().Slice(gomock.Any(), gomock.Any()).DoAndReturn(
-			func(_ []int, _ []byte) {},
+			func(_ []int, _ []byte) [3]int {
+				return [3]int{}
+			},
 		)
-
-		defer func() {
-			if r := recover(); r == nil {
-				t.Error("expected panic")
-			}
-		}()
 
 		mockIndex.Slice([]int{0}, []byte("meow"))
 	})
@@ -180,8 +176,8 @@ func TestDoAndReturnSignature(t *testing.T) {
 		mockIndex := NewMockIndex(ctrl)
 
 		mockIndex.EXPECT().Slice(gomock.Any(), gomock.Any()).DoAndReturn(
-			func(_ []int, _ []byte) bool {
-				return true
+			func(_ []int, _ []byte) [3]int {
+				return [3]int{1, 2, 3}
 			})
 
 		mockIndex.Slice([]int{0}, []byte("meow"))
