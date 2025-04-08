@@ -86,16 +86,83 @@ func main() {
 		return
 	}
 
-	target, err := prepareTarget()
+	targets, err := prepareTargets()
 	if err != nil {
 		log.Fatalf("Loading input failed: %v", err)
 	}
 
 	if *debugParser {
-		target.pkg.Print(os.Stdout)
+		for i := range targets {
+			targets[i].pkg.Print(os.Stdout)
+		}
 		return
 	}
 
+	for i := range targets {
+		generateTarget(&targets[i])
+	}
+}
+
+func prepareTargets() ([]genTarget, error) {
+	target := genTarget{
+		destination:            *destination,
+		mockNames:              *mockNames,
+		packageOut:             *packageOut,
+		selfPackage:            *selfPackage,
+		writeCmdComment:        *writeCmdComment,
+		writePkgComment:        *writePkgComment,
+		writeSourceComment:     *writeSourceComment,
+		writeGenerateDirective: *writeGenerateDirective,
+		copyrightFile:          *copyrightFile,
+		buildConstraint:        *buildConstraint,
+		typed:                  *typed,
+	}
+	if *modelGob != "" {
+		pkg, err := gobMode(*modelGob)
+		if err != nil {
+			return nil, err
+		}
+		target.pkg = pkg
+		return []genTarget{target}, nil
+	} else if *source != "" {
+		pkg, err := sourceMode(*source)
+		if err != nil {
+			return nil, err
+		}
+		target.pkg = pkg
+		target.source = *source
+		target.imports = *imports
+		return []genTarget{target}, nil
+	} else {
+		if flag.NArg() != 2 {
+			usage()
+			log.Fatal("Expected exactly two arguments")
+		}
+		packageName := flag.Arg(0)
+		interfaces := strings.Split(flag.Arg(1), ",")
+		if packageName == "." {
+			dir, err := os.Getwd()
+			if err != nil {
+				log.Fatalf("Get current directory failed: %v", err)
+			}
+			packageName, err = packageNameOfDir(dir)
+			if err != nil {
+				log.Fatalf("Parse package name failed: %v", err)
+			}
+		}
+		parser := packageModeParser{}
+		pkg, err := parser.parsePackage(packageName, interfaces)
+		if err != nil {
+			return nil, err
+		}
+		target.pkg = pkg
+		target.packageName = packageName
+		target.interfaces = flag.Arg(1)
+		return []genTarget{target}, nil
+	}
+}
+
+func generateTarget(target *genTarget) {
 	outputPackageName := target.packageOut
 	if outputPackageName == "" {
 		// pkg.Name in package mode is the base name of the import path,
@@ -170,65 +237,6 @@ func main() {
 	}
 	if _, err := dst.Write(output); err != nil {
 		log.Fatalf("Failed writing to destination: %v", err)
-	}
-}
-
-func prepareTarget() (*genTarget, error) {
-	target := genTarget{
-		destination:            *destination,
-		mockNames:              *mockNames,
-		packageOut:             *packageOut,
-		selfPackage:            *selfPackage,
-		writeCmdComment:        *writeCmdComment,
-		writePkgComment:        *writePkgComment,
-		writeSourceComment:     *writeSourceComment,
-		writeGenerateDirective: *writeGenerateDirective,
-		copyrightFile:          *copyrightFile,
-		buildConstraint:        *buildConstraint,
-		typed:                  *typed,
-	}
-	if *modelGob != "" {
-		pkg, err := gobMode(*modelGob)
-		if err != nil {
-			return nil, err
-		}
-		target.pkg = pkg
-		return &target, nil
-	} else if *source != "" {
-		pkg, err := sourceMode(*source)
-		if err != nil {
-			return nil, err
-		}
-		target.pkg = pkg
-		target.source = *source
-		target.imports = *imports
-		return &target, nil
-	} else {
-		if flag.NArg() != 2 {
-			usage()
-			log.Fatal("Expected exactly two arguments")
-		}
-		packageName := flag.Arg(0)
-		interfaces := strings.Split(flag.Arg(1), ",")
-		if packageName == "." {
-			dir, err := os.Getwd()
-			if err != nil {
-				log.Fatalf("Get current directory failed: %v", err)
-			}
-			packageName, err = packageNameOfDir(dir)
-			if err != nil {
-				log.Fatalf("Parse package name failed: %v", err)
-			}
-		}
-		parser := packageModeParser{}
-		pkg, err := parser.parsePackage(packageName, interfaces)
-		if err != nil {
-			return nil, err
-		}
-		target.pkg = pkg
-		target.packageName = packageName
-		target.interfaces = flag.Arg(1)
-		return &target, nil
 	}
 }
 
