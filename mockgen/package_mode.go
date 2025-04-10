@@ -17,8 +17,6 @@ var (
 )
 
 type packageModeParser struct {
-	pkgName string
-
 	// Mapping from underlying types to aliases used within the package source.
 	//
 	// We prefer to use aliases used in the source rather than underlying type names
@@ -35,25 +33,54 @@ type aliasReplacement struct {
 }
 
 func (p *packageModeParser) parsePackage(packageName string, ifaces []string) (*model.Package, error) {
-	p.pkgName = packageName
+	parsed, err := p.parsePackages([]parseTarget{{name: packageName, ifaces: ifaces}})
+	if err != nil {
+		return nil, err
+	}
+	return parsed[0], nil
+}
 
-	pkg, err := p.loadPackage(packageName)
+type parseTarget struct {
+	name   string
+	ifaces []string
+}
+
+func (p *packageModeParser) parsePackages(targets []parseTarget) ([]*model.Package, error) {
+	packageNames := make([]string, len(targets))
+	for i := range targets {
+		packageNames[i] = targets[i].name
+	}
+
+	pkgs, err := loadPackages(packageNames)
 	if err != nil {
 		return nil, fmt.Errorf("load package: %w", err)
 	}
 
-	p.buildAliasReplacements(pkg)
+	p.buildAliasReplacements(pkgs)
 
-	interfaces, err := p.extractInterfacesFromPackage(pkg, ifaces)
-	if err != nil {
-		return nil, fmt.Errorf("extract interfaces from package: %w", err)
+	pkgByPath := make(map[string]*packages.Package, len(pkgs))
+	for _, pkg := range pkgs {
+		pkgByPath[pkg.PkgPath] = pkg
 	}
 
-	return &model.Package{
-		Name:       pkg.Types.Name(),
-		PkgPath:    packageName,
-		Interfaces: interfaces,
-	}, nil
+	parsed := make([]*model.Package, len(targets))
+	for i := range targets {
+		pkg, ok := pkgByPath[targets[i].name]
+		if !ok {
+			return nil, fmt.Errorf("package not found: %s", targets[i].name)
+		}
+		interfaces, err := p.extractInterfacesFromPackage(pkg, targets[i].ifaces)
+		if err != nil {
+			return nil, fmt.Errorf("extract interfaces from package: %w", err)
+		}
+
+		parsed[i] = &model.Package{
+			Name:       pkg.Types.Name(),
+			PkgPath:    pkg.PkgPath,
+			Interfaces: interfaces,
+		}
+	}
+	return parsed, nil
 }
 
 // buildAliasReplacements finds and records any references to aliases
@@ -65,7 +92,7 @@ func (p *packageModeParser) parsePackage(packageName string, ifaces []string) (*
 // the latest one to be inspected will be the one used for mapping.
 // This is fine, since all aliases and their underlying types are interchangeable
 // from a type-checking standpoint.
-func (p *packageModeParser) buildAliasReplacements(pkg *packages.Package) {
+func (p *packageModeParser) buildAliasReplacements(pkgs []*packages.Package) {
 	p.aliasReplacements = make(map[types.Type]aliasReplacement)
 
 	// checkIdent checks if the given identifier exists
@@ -96,51 +123,51 @@ func (p *packageModeParser) buildAliasReplacements(pkg *packages.Package) {
 			pkg:  pkg.Path(),
 		}
 		return false
-
 	}
 
-	for _, f := range pkg.Syntax {
-		fileScope, ok := pkg.TypesInfo.Scopes[f]
-		if !ok {
-			continue
+	for _, pkg := range pkgs {
+		for _, f := range pkg.Syntax {
+			fileScope, ok := pkg.TypesInfo.Scopes[f]
+			if !ok {
+				continue
+			}
+			ast.Inspect(f, func(node ast.Node) bool {
+				// Simple identifiers: check if it is an alias
+				// from the source package.
+				if ident, ok := node.(*ast.Ident); ok {
+					return checkIdent(pkg.Types, ident.String())
+				}
+
+				// Selector expressions: check if it is an alias
+				// from the package represented by the qualifier.
+				selExpr, ok := node.(*ast.SelectorExpr)
+				if !ok {
+					return true
+				}
+
+				x, sel := selExpr.X, selExpr.Sel
+				xident, ok := x.(*ast.Ident)
+				if !ok {
+					return true
+				}
+
+				xObj := fileScope.Lookup(xident.String())
+				pkgName, ok := xObj.(*types.PkgName)
+				if !ok {
+					return true
+				}
+
+				xPkg := pkgName.Imported()
+				if xPkg == nil {
+					return true
+				}
+				return checkIdent(xPkg, sel.String())
+			})
 		}
-		ast.Inspect(f, func(node ast.Node) bool {
-
-			// Simple identifiers: check if it is an alias
-			// from the source package.
-			if ident, ok := node.(*ast.Ident); ok {
-				return checkIdent(pkg.Types, ident.String())
-			}
-
-			// Selector expressions: check if it is an alias
-			// from the package represented by the qualifier.
-			selExpr, ok := node.(*ast.SelectorExpr)
-			if !ok {
-				return true
-			}
-
-			x, sel := selExpr.X, selExpr.Sel
-			xident, ok := x.(*ast.Ident)
-			if !ok {
-				return true
-			}
-
-			xObj := fileScope.Lookup(xident.String())
-			pkgName, ok := xObj.(*types.PkgName)
-			if !ok {
-				return true
-			}
-
-			xPkg := pkgName.Imported()
-			if xPkg == nil {
-				return true
-			}
-			return checkIdent(xPkg, sel.String())
-		})
 	}
 }
 
-func (p *packageModeParser) loadPackage(packageName string) (*packages.Package, error) {
+func loadPackages(packageNames []string) ([]*packages.Package, error) {
 	var buildFlagsSet []string
 	if *buildFlags != "" {
 		buildFlagsSet = strings.Split(*buildFlags, " ")
@@ -150,25 +177,18 @@ func (p *packageModeParser) loadPackage(packageName string) (*packages.Package, 
 		Mode:       packages.NeedDeps | packages.NeedImports | packages.NeedTypes | packages.NeedTypesInfo | packages.NeedEmbedFiles | packages.LoadSyntax,
 		BuildFlags: buildFlagsSet,
 	}
-	pkgs, err := packages.Load(cfg, packageName)
+	pkgs, err := packages.Load(cfg, packageNames...)
 	if err != nil {
 		return nil, fmt.Errorf("load packages: %w", err)
 	}
 
-	if len(pkgs) != 1 {
-		return nil, fmt.Errorf("packages length must be 1: %d", len(pkgs))
-	}
-
-	if len(pkgs[0].Errors) > 0 {
-		errs := make([]error, len(pkgs[0].Errors))
-		for i, err := range pkgs[0].Errors {
-			errs[i] = err
+	var errs []error
+	for _, pkg := range pkgs {
+		for _, err := range pkg.Errors {
+			errs = append(errs, err)
 		}
-
-		return nil, errors.Join(errs...)
 	}
-
-	return pkgs[0], nil
+	return pkgs, errors.Join(errs...)
 }
 
 func (p *packageModeParser) extractInterfacesFromPackage(pkg *packages.Package, ifaces []string) ([]*model.Interface, error) {
@@ -244,7 +264,7 @@ func (p *packageModeParser) parseInterface(obj types.Object) (*model.Interface, 
 	return &model.Interface{Name: obj.Name(), Methods: methods, TypeParams: typeParams}, nil
 }
 
-func (o *packageModeParser) isConstraint(t *types.Interface) bool {
+func (p *packageModeParser) isConstraint(t *types.Interface) bool {
 	for i := range t.NumEmbeddeds() {
 		embed := t.EmbeddedType(i)
 		if _, ok := embed.Underlying().(*types.Interface); !ok {

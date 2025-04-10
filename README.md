@@ -71,6 +71,32 @@ mockgen database/sql/driver Conn,Driver
 mockgen . Conn,Driver
 ```
 
+### Batch mode
+
+Batch mode works similarly to package mode, but allows generating mocks for multiple packages at once.
+This is especially useful in large codebases that call mockgen repeatedly,
+as it allows mockgen to parse the code only once, making the generation process shorter.
+
+To use batch mode you need to prepare a YAML file.
+The file provides a list of package and interface names pairs, called generation "targets".
+It also allows specifying flags for all packages (in the `generator` section), or for individual packages.
+Field names are identical with commandline flags used in package mode.
+
+The file structure is as follows:
+
+```yaml
+generator:
+  # package mode flags to use for all packages:
+  typed: true
+  copyright_file: copyright.txt
+targets:
+  - target: database/sql/driver Conn,Driver
+  - target: github.com/example/example/mypackage Client,Server
+    # package-specific flags:
+    destination: example/example/mypackage/mocks/generated.go
+    write_generate_directive: true
+```
+
 ### Flags
 
 The `mockgen` command is used to generate source code for a mock
