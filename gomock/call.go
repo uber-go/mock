@@ -42,11 +42,13 @@ type Call struct {
 	// can set the return values by returning a non-nil slice. Actions run in the
 	// order they are created.
 	actions []func([]any) []any
+
+	fmtDiff DiffFormatter
 }
 
 // newCall creates a *Call. It requires the method type in order to support
 // unexported methods.
-func newCall(t TestHelper, receiver any, method string, methodType reflect.Type, args ...any) *Call {
+func newCall(t TestHelper, fmtDiff DiffFormatter, receiver any, method string, methodType reflect.Type, args ...any) *Call {
 	t.Helper()
 
 	// TODO: check arity, types.
@@ -78,6 +80,7 @@ func newCall(t TestHelper, receiver any, method string, methodType reflect.Type,
 	return &Call{
 		t: t, receiver: receiver, method: method, methodType: methodType,
 		args: mArgs, origin: origin, minCalls: 1, maxCalls: 1, actions: actions,
+		fmtDiff: fmtDiff,
 	}
 }
 
@@ -331,8 +334,8 @@ func (c *Call) matches(args []any) error {
 		for i, m := range c.args {
 			if !m.Matches(args[i]) {
 				return fmt.Errorf(
-					"expected call at %s doesn't match the argument at index %d.\nGot: %v\nWant: %v",
-					c.origin, i, formatGottenArg(m, args[i]), m,
+					"expected call at %s doesn't match the argument at index %d.\n%s",
+					c.origin, i, c.formatArgMismatch(m, args[i]),
 				)
 			}
 		}
@@ -354,8 +357,9 @@ func (c *Call) matches(args []any) error {
 			if i < c.methodType.NumIn()-1 {
 				// Non-variadic args
 				if !m.Matches(args[i]) {
-					return fmt.Errorf("expected call at %s doesn't match the argument at index %s.\nGot: %v\nWant: %v",
-						c.origin, strconv.Itoa(i), formatGottenArg(m, args[i]), m)
+					return fmt.Errorf("expected call at %s doesn't match the argument at index %s.\n%s",
+						c.origin, strconv.Itoa(i), c.formatArgMismatch(m, args[i]),
+					)
 				}
 				continue
 			}
@@ -398,8 +402,9 @@ func (c *Call) matches(args []any) error {
 			// Got Foo(a, b, c, d, e) want Foo(matcherA, matcherB, matcherC, matcherD)
 			// Got Foo(a, b, c) want Foo(matcherA, matcherB)
 
-			return fmt.Errorf("expected call at %s doesn't match the argument at index %s.\nGot: %v\nWant: %v",
-				c.origin, strconv.Itoa(i), formatGottenArg(m, args[i:]), c.args[i])
+			return fmt.Errorf("expected call at %s doesn't match the argument at index %s.\n%s",
+				c.origin, strconv.Itoa(i), c.formatArgMismatch(m, args[i:]),
+			)
 		}
 	}
 
@@ -497,10 +502,14 @@ func (c *Call) addAction(action func([]any) []any) {
 	c.actions = append(c.actions, action)
 }
 
-func formatGottenArg(m Matcher, arg any) string {
-	got := fmt.Sprintf("%v (%T)", arg, arg)
-	if gs, ok := m.(GotFormatter); ok {
-		got = gs.Got(arg)
+func (c *Call) formatArgMismatch(m Matcher, actual any) string {
+	if eqm, ok := m.(eqMatcher); ok && c.fmtDiff != nil {
+		return c.fmtDiff(eqm.x, actual)
 	}
-	return got
+
+	got := fmt.Sprintf("%v (%T)", actual, actual)
+	if gs, ok := m.(GotFormatter); ok {
+		got = gs.Got(actual)
+	}
+	return fmt.Sprintf("Got: %v\nWant: %v", got, m.String())
 }
