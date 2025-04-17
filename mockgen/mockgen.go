@@ -137,7 +137,11 @@ func main() {
 	// is output into an already existing package.
 	outputPackagePath := *selfPackage
 	if outputPackagePath == "" && *destination != "" {
-		dstPath, err := filepath.Abs(filepath.Dir(*destination))
+		currentDir,err:=os.Getwd()
+		if err != nil {
+			log.Fatalf("%v",err)
+		}
+		dstPath, err := filepath.Abs(filepath.Dir(strings.Join([]string{currentDir,*destination},string(os.PathSeparator))))
 		if err == nil {
 			pkgPath, err := parsePackageImport(dstPath)
 			if err == nil {
