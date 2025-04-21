@@ -4,7 +4,6 @@ import (
 	"errors"
 	"flag"
 	"fmt"
-	"go/ast"
 	"go/types"
 	"strings"
 
@@ -18,20 +17,6 @@ var (
 
 type packageModeParser struct {
 	pkgName string
-
-	// Mapping from underlying types to aliases used within the package source.
-	//
-	// We prefer to use aliases used in the source rather than underlying type names
-	// as those may be unexported or internal.
-	// TODO(joaks): Once mock is Go1.23+ only, we can remove this
-	// as the casing for types.Alias will automatically handle this
-	// in all cases.
-	aliasReplacements map[types.Type]aliasReplacement
-}
-
-type aliasReplacement struct {
-	name string
-	pkg  string
 }
 
 func (p *packageModeParser) parsePackage(packageName string, ifaces []string) (*model.Package, error) {
@@ -41,8 +26,6 @@ func (p *packageModeParser) parsePackage(packageName string, ifaces []string) (*
 	if err != nil {
 		return nil, fmt.Errorf("load package: %w", err)
 	}
-
-	p.buildAliasReplacements(pkg)
 
 	interfaces, err := p.extractInterfacesFromPackage(pkg, ifaces)
 	if err != nil {
@@ -54,90 +37,6 @@ func (p *packageModeParser) parsePackage(packageName string, ifaces []string) (*
 		PkgPath:    packageName,
 		Interfaces: interfaces,
 	}, nil
-}
-
-// buildAliasReplacements finds and records any references to aliases
-// within the given package's source.
-// These aliases will be preferred when parsing types
-// over the underlying name counterparts, as those may be unexported / internal.
-//
-// If a type has more than one alias within the source package,
-// the latest one to be inspected will be the one used for mapping.
-// This is fine, since all aliases and their underlying types are interchangeable
-// from a type-checking standpoint.
-func (p *packageModeParser) buildAliasReplacements(pkg *packages.Package) {
-	p.aliasReplacements = make(map[types.Type]aliasReplacement)
-
-	// checkIdent checks if the given identifier exists
-	// in the given package as an alias, and adds it to
-	// the alias replacements map if so.
-	checkIdent := func(pkg *types.Package, ident string) bool {
-		scope := pkg.Scope()
-		if scope == nil {
-			return true
-		}
-		obj := scope.Lookup(ident)
-		if obj == nil {
-			return true
-		}
-		objTypeName, ok := obj.(*types.TypeName)
-		if !ok {
-			return true
-		}
-		if !objTypeName.IsAlias() {
-			return true
-		}
-		typ := objTypeName.Type()
-		if typ == nil {
-			return true
-		}
-		p.aliasReplacements[typ] = aliasReplacement{
-			name: objTypeName.Name(),
-			pkg:  pkg.Path(),
-		}
-		return false
-
-	}
-
-	for _, f := range pkg.Syntax {
-		fileScope, ok := pkg.TypesInfo.Scopes[f]
-		if !ok {
-			continue
-		}
-		ast.Inspect(f, func(node ast.Node) bool {
-
-			// Simple identifiers: check if it is an alias
-			// from the source package.
-			if ident, ok := node.(*ast.Ident); ok {
-				return checkIdent(pkg.Types, ident.String())
-			}
-
-			// Selector expressions: check if it is an alias
-			// from the package represented by the qualifier.
-			selExpr, ok := node.(*ast.SelectorExpr)
-			if !ok {
-				return true
-			}
-
-			x, sel := selExpr.X, selExpr.Sel
-			xident, ok := x.(*ast.Ident)
-			if !ok {
-				return true
-			}
-
-			xObj := fileScope.Lookup(xident.String())
-			pkgName, ok := xObj.(*types.PkgName)
-			if !ok {
-				return true
-			}
-
-			xPkg := pkgName.Imported()
-			if xPkg == nil {
-				return true
-			}
-			return checkIdent(xPkg, sel.String())
-		})
-	}
 }
 
 func (p *packageModeParser) loadPackage(packageName string) (*packages.Package, error) {
@@ -298,14 +197,6 @@ func (p *packageModeParser) parseType(t types.Type) (model.Type, error) {
 		var pkg string
 		if object.Obj().Pkg() != nil {
 			pkg = object.Obj().Pkg().Path()
-		}
-
-		// If there was an alias to this type used somewhere in the source,
-		// use that alias instead of the underlying type,
-		// since the underlying type might be unexported.
-		if alias, ok := p.aliasReplacements[t]; ok {
-			name = alias.name
-			pkg = alias.pkg
 		}
 
 		// TypeArgs method not available for aliases in go1.22
