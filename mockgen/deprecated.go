@@ -7,8 +7,8 @@ import (
 )
 
 const (
-	deprecatedFlagProgOnly = "prog_only"
-	deprecatedFlagExecOnly = "exec_only"
+	_deprecatedFlagProgOnly = "prog_only"
+	_deprecatedFlagExecOnly = "exec_only"
 )
 
 var (
@@ -23,9 +23,9 @@ func notifyAboutDeprecatedFlags() {
 
 	flag.Visit(func(f *flag.Flag) {
 		switch f.Name {
-		case deprecatedFlagProgOnly:
+		case _deprecatedFlagProgOnly:
 			logger.Println("The -prog_only flag is deprecated and has no effect.", resetColorPostfix)
-		case deprecatedFlagExecOnly:
+		case _deprecatedFlagExecOnly:
 			logger.Println("The -exec_only flag is deprecated and has no effect.", resetColorPostfix)
 		}
 	})
