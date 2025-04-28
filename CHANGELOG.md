@@ -3,8 +3,12 @@ All notable changes to this project will be documented in this file.
 
 This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
-## Unreleased
-- No changes yet.
+## 0.5.2 (28 Apr 2025)
+
+### Fixed
+- [#248][]: Fixed an issue with type aliases not being included in generated code correctly.
+
+[#248]: https://github.com/uber-go/mock/pull/248
 
 ## 0.5.1 (7 Apr 2025)
 ### Fixed
