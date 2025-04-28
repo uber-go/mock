@@ -314,7 +314,10 @@ func Test_packageModeParser_parsePackage(t *testing.T) {
 								Name: "AddHumans",
 								In: []*model.Parameter{
 									{
-										Type: model.PredeclaredType("int"),
+										Type: &model.NamedType{
+											Package: "go.uber.org/mock/mockgen/internal/tests/package_mode",
+											Type: "HumansCount",
+										},
 									},
 								},
 								Out: []*model.Parameter{
@@ -333,7 +336,10 @@ func Test_packageModeParser_parsePackage(t *testing.T) {
 								Name: "HumanPopulation",
 								Out: []*model.Parameter{
 									{
-										Type: model.PredeclaredType("int"),
+										Type: &model.NamedType{
+											Package: "go.uber.org/mock/mockgen/internal/tests/package_mode",
+											Type: "HumansCount",
+										},
 									},
 								},
 							},
@@ -444,13 +450,13 @@ func TestAliases(t *testing.T) {
 					In: []*model.Parameter{{
 						Type: &model.NamedType{
 							Package: "go.uber.org/mock/mockgen/internal/tests/alias",
-							Type:    "FooerAlias",
+							Type:    "Fooer",
 						},
 					}},
 					Out: []*model.Parameter{{
 						Type: &model.NamedType{
 							Package: "go.uber.org/mock/mockgen/internal/tests/alias",
-							Type:    "FooerAlias",
+							Type:    "Fooer",
 						},
 					}},
 				}},

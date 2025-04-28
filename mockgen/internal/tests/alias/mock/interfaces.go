@@ -286,10 +286,10 @@ func (m *MockBazer) EXPECT() *MockBazerMockRecorder {
 }
 
 // Baz mocks base method.
-func (m *MockBazer) Baz(arg0 alias.FooerAlias) alias.FooerAlias {
+func (m *MockBazer) Baz(arg0 alias.Fooer) alias.Fooer {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Baz", arg0)
-	ret0, _ := ret[0].(alias.FooerAlias)
+	ret0, _ := ret[0].(alias.Fooer)
 	return ret0
 }
 
@@ -306,19 +306,19 @@ type MockBazerBazCall struct {
 }
 
 // Return rewrite *gomock.Call.Return
-func (c *MockBazerBazCall) Return(arg0 alias.FooerAlias) *MockBazerBazCall {
+func (c *MockBazerBazCall) Return(arg0 alias.Fooer) *MockBazerBazCall {
 	c.Call = c.Call.Return(arg0)
 	return c
 }
 
 // Do rewrite *gomock.Call.Do
-func (c *MockBazerBazCall) Do(f func(alias.FooerAlias) alias.FooerAlias) *MockBazerBazCall {
+func (c *MockBazerBazCall) Do(f func(alias.Fooer) alias.Fooer) *MockBazerBazCall {
 	c.Call = c.Call.Do(f)
 	return c
 }
 
 // DoAndReturn rewrite *gomock.Call.DoAndReturn
-func (c *MockBazerBazCall) DoAndReturn(f func(alias.FooerAlias) alias.FooerAlias) *MockBazerBazCall {
+func (c *MockBazerBazCall) DoAndReturn(f func(alias.Fooer) alias.Fooer) *MockBazerBazCall {
 	c.Call = c.Call.DoAndReturn(f)
 	return c
 }
