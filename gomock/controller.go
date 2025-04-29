@@ -36,6 +36,9 @@ type TestHelper interface {
 	Helper()
 }
 
+// DiffFormatter is a function to print custom diffs. See WithDiffFormatter.
+type DiffFormatter func(expected, actual any) string
+
 // cleanuper is used to check if TestHelper also has the `Cleanup` method. A
 // common pattern is to pass in a `*testing.T` to
 // `NewController(t TestReporter)`. In Go 1.14+, `*testing.T` has a cleanup
@@ -75,6 +78,7 @@ type Controller struct {
 	mu            sync.Mutex
 	expectedCalls *callSet
 	finished      bool
+	fmtDiff       DiffFormatter
 }
 
 // NewController returns a new Controller. It is the preferred way to create a Controller.
@@ -118,6 +122,21 @@ func WithOverridableExpectations() overridableExpectationsOption {
 
 func (o overridableExpectationsOption) apply(ctrl *Controller) {
 	ctrl.expectedCalls = newOverridableCallSet()
+}
+
+type fmtDiffOption struct {
+	fmtDiff DiffFormatter
+}
+
+// WithDiffFormatter allows customizing output format when args to a call don't
+// match expectations. Note that this only applies when the default equality
+// matcher is being used.
+func WithDiffFormatter(fmtDiff DiffFormatter) fmtDiffOption {
+	return fmtDiffOption{fmtDiff: fmtDiff}
+}
+
+func (o fmtDiffOption) apply(ctrl *Controller) {
+	ctrl.fmtDiff = o.fmtDiff
 }
 
 type cancelReporter struct {
@@ -182,7 +201,7 @@ func (ctrl *Controller) RecordCall(receiver any, method string, args ...any) *Ca
 func (ctrl *Controller) RecordCallWithMethodType(receiver any, method string, methodType reflect.Type, args ...any) *Call {
 	ctrl.T.Helper()
 
-	call := newCall(ctrl.T, receiver, method, methodType, args...)
+	call := newCall(ctrl.T, ctrl.fmtDiff, receiver, method, methodType, args...)
 
 	ctrl.mu.Lock()
 	defer ctrl.mu.Unlock()
