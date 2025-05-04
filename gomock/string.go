@@ -12,6 +12,10 @@ func getString(x any) string {
 	if isGeneratedMock(x) {
 		return fmt.Sprintf("%T", x)
 	}
+	typ := reflect.TypeOf(x)
+	if typ.Kind() == reflect.Ptr && typ.IsNil() {
+		return "nil"
+	}
 	if s, ok := x.(fmt.Stringer); ok {
 		return s.String()
 	}
