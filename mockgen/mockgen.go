@@ -442,7 +442,7 @@ func (g *generator) Generate(pkg *model.Package, outputPkgName string, outputPac
 	}
 
 	for _, intf := range pkg.Interfaces {
-		if err := g.GenerateMockInterface(intf, outputPackagePath); err != nil {
+		if err := g.GenerateMockInterface(pkg.Name, intf, outputPackagePath); err != nil {
 			return err
 		}
 	}
@@ -484,7 +484,7 @@ func (g *generator) formattedTypeParams(it *model.Interface, pkgOverride string)
 	return long.String(), short.String()
 }
 
-func (g *generator) GenerateMockInterface(intf *model.Interface, outputPackagePath string) error {
+func (g *generator) GenerateMockInterface(pkgName string, intf *model.Interface, outputPackagePath string) error {
 	mockType := g.mockName(intf.Name)
 	longTp, shortTp := g.formattedTypeParams(intf, outputPackagePath)
 
@@ -498,6 +498,9 @@ func (g *generator) GenerateMockInterface(intf *model.Interface, outputPackagePa
 	g.out()
 	g.p("}")
 	g.p("")
+
+	// This adds validation in build time that mock type is still in sync with interface
+	g.p("var _ %v.%v = (*%v)(nil)", pkgName, intf.Name, mockType)
 
 	g.p("// %vMockRecorder is the mock recorder for %v.", mockType, mockType)
 	g.p("type %vMockRecorder%v struct {", mockType, longTp)
