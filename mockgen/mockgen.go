@@ -102,7 +102,7 @@ func main() {
 		interfaces := strings.Split(flag.Arg(1), ",")
 		pkg, err = archiveMode(packageName, interfaces, *archive)
 
-	default: // reflect mode
+	default: // package mode
 		checkArgs()
 		packageName = flag.Arg(0)
 		interfaces := strings.Split(flag.Arg(1), ",")
@@ -117,9 +117,9 @@ func main() {
 				log.Fatalf("Parse package name failed: %v", err)
 			}
 
-			parser := packageModeParser{}
-			pkg, err = parser.parsePackage(packageName, interfaces)
 		}
+		parser := packageModeParser{}
+		pkg, err = parser.parsePackage(packageName, interfaces)
 	}
 
 	if err != nil {
@@ -253,7 +253,7 @@ func usage() {
 	flag.PrintDefaults()
 }
 
-const usageText = `mockgen has three modes of operation: archive, source and reflect.
+const usageText = `mockgen has three modes of operation: archive, source and package.
 
 Source mode generates mock interfaces from a source file.
 It is enabled by using the -source flag. Other flags that

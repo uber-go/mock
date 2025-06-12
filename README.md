@@ -40,7 +40,7 @@ export PATH=$PATH:$(go env GOPATH)/bin
 
 ## Running mockgen
 
-`mockgen` has three modes of operation: archive, source and reflect.
+`mockgen` has three modes of operation: archive, source and package.
 
 ### Archive mode
 
