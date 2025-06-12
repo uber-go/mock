@@ -25,7 +25,7 @@
 load("@bazel_skylib//lib:paths.bzl", "paths")
 load("@io_bazel_rules_go//go/private:common.bzl", "GO_TOOLCHAIN", "GO_TOOLCHAIN_LABEL")
 load("@io_bazel_rules_go//go/private:context.bzl", "go_context")
-load("@io_bazel_rules_go//go/private:providers.bzl", "GoInfo")
+load("@io_bazel_rules_go//go/private:providers.bzl", "GoArchive", "GoInfo")
 load("@io_bazel_rules_go//go/private/rules:wrappers.bzl", go_binary = "go_binary_macro")
 
 _MOCKGEN_TOOL = Label("@org_uber_go_mock//mockgen")
@@ -214,7 +214,7 @@ def gomock(name, out, library = None, source_importpath = "", source = None, int
             **kwargs
         )
     else:
-        _gomock_reflect(
+        _gomock_archive(
             name = name,
             out = out,
             library = library,
@@ -222,185 +222,74 @@ def gomock(name, out, library = None, source_importpath = "", source = None, int
             package = package,
             self_package = self_package,
             mockgen_tool = mockgen_tool,
-            mockgen_args = mockgen_args,
-            imports = imports,
             copyright_file = copyright_file,
-            mock_names = mock_names,
             **kwargs
         )
 
-def _gomock_reflect(name, library, out, mockgen_tool, **kwargs):
-    interfaces = kwargs.pop("interfaces", None)
-    mockgen_model_lib = kwargs.pop("mockgen_model_library", _MOCKGEN_MODEL_LIB)
+def _gomock_archive_impl(ctx):
+    args = ctx.actions.args()
+    args.add("-package", ctx.attr.library[GoInfo].importpath)
+    args.add("-archive", ctx.attr.library[GoArchive].data.export_file.path)
+    args.add("-destination", ctx.outputs.out)
+    args.add("-package", ctx.attr.package)
+    args.add("-self_package", ctx.attr.self_package)
+    args.add(ctx.attr.library[GoInfo].importpath)
+    args.add_joined(ctx.attr.interfaces, join_with = ",")
 
-    prog_src = name + "_gomock_prog"
-    prog_src_out = prog_src + ".go"
-    _gomock_prog_gen(
-        name = prog_src,
-        interfaces = interfaces,
-        library = library,
-        out = prog_src_out,
-        mockgen_tool = mockgen_tool,
-    )
-    prog_bin = name + "_gomock_prog_bin"
-    go_binary(
-        name = prog_bin,
-        srcs = [prog_src_out],
-        deps = [library, mockgen_model_lib],
-    )
-    _gomock_prog_exec(
-        name = name,
-        interfaces = interfaces,
-        library = library,
-        out = out,
-        prog_bin = prog_bin,
-        mockgen_tool = mockgen_tool,
-        **kwargs
-    )
-
-def _gomock_prog_gen_impl(ctx):
-    args = ["-prog_only"]
-    args.append(ctx.attr.library[GoInfo].importpath)
-    args.append(",".join(ctx.attr.interfaces))
-
-    cmd = ctx.file.mockgen_tool
-    out = ctx.outputs.out
-    ctx.actions.run_shell(
-        outputs = [out],
-        tools = [cmd],
-        command = """
-           {cmd} {args} > {out}
-        """.format(
-            cmd = "$(pwd)/" + cmd.path,
-            args = " ".join(args),
-            out = out.path,
-        ),
-        mnemonic = "GoMockReflectProgOnlyGen",
-    )
-
-_gomock_prog_gen = rule(
-    _gomock_prog_gen_impl,
-    attrs = {
-        "library": attr.label(
-            doc = "The target the Go library is at to look for the interfaces in. When this is set and source is not set, mockgen will use its reflect code to generate the mocks. If source is set, its dependencies will be included in the GOPATH that mockgen will be run in.",
-            providers = [GoInfo],
-            mandatory = True,
-        ),
-        "out": attr.output(
-            doc = "The new Go source file put the mock generator code",
-            mandatory = True,
-        ),
-        "interfaces": attr.string_list(
-            allow_empty = False,
-            doc = "The names of the Go interfaces to generate mocks for. If not set, all of the interfaces in the library or source file will have mocks generated for them.",
-            mandatory = True,
-        ),
-        "mockgen_tool": attr.label(
-            doc = "The mockgen tool to run",
-            default = _MOCKGEN_TOOL,
-            allow_single_file = True,
-            executable = True,
-            cfg = "exec",
-            mandatory = False,
-        ),
-        "_go_context_data": attr.label(
-            default = "@io_bazel_rules_go//:go_context_data",
-        ),
-    },
-    toolchains = [GO_TOOLCHAIN],
-)
-
-def _gomock_prog_exec_impl(ctx):
-    go = go_context(ctx, include_deprecated_properties = False)
-
-    args = ["-exec_only", ctx.file.prog_bin.path]
-    args, needed_files = _handle_shared_args(ctx, args)
-
-    # annoyingly, the interfaces join has to go after the importpath so we can't
-    # share those.
-    args.append(ctx.attr.library[GoInfo].importpath)
-    args.append(",".join(ctx.attr.interfaces))
-
-    ctx.actions.run_shell(
+    # Porting in fix for x/tools >= 0.27.0 from https://github.com/bazel-contrib/rules_go/pull/4173
+    go_ctx = go_context(ctx)
+    go_ctx.actions.run_shell(
         outputs = [ctx.outputs.out],
-        inputs = needed_files + [ctx.file.prog_bin, go.sdk.go],
-        tools = [
-            ctx.file.mockgen_tool,
-            go.sdk.go,
-        ],
+        inputs = [ctx.attr.library[GoArchive].data.export_file],
+        arguments = [args],
+        tools = [ctx.executable.mockgen_tool, go_ctx.sdk.go],
         command = """
+            export PATH=$(pwd)/$(dirname {go}):$PATH &&
             export GOROOT=$(pwd)/{goroot} &&
-            export PATH=$GOROOT/bin:$PATH &&
-            {cmd} {args} > {out}""".format(
-            goroot = go.sdk.root_file.dirname,
-            cmd = "$(pwd)/" + ctx.file.mockgen_tool.path,
-            args = " ".join(args),
-            out = ctx.outputs.out.path,
+            {cmd} "$@"
+        """.format(
+            go = go_ctx.go.path,
+            goroot = go_ctx.sdk.root_file.dirname,
+            cmd = ctx.executable.mockgen_tool.path,
         ),
-        env = {
-            # GOCACHE is required starting in Go 1.12
-            "GOCACHE": "./.gocache",
-        },
-        mnemonic = "GoMockReflectExecOnlyGen",
+        mnemonic = "GoMockArchiveGen",
     )
 
-_gomock_prog_exec = rule(
-    _gomock_prog_exec_impl,
+_gomock_archive = rule(
+    _gomock_archive_impl,
     attrs = {
         "library": attr.label(
-            doc = "The target the Go library is at to look for the interfaces in. When this is set and source is not set, mockgen will use its reflect code to generate the mocks. If source is set, its dependencies will be included in the GOPATH that mockgen will be run in.",
-            providers = [GoInfo],
+            providers = [GoInfo, GoArchive],
             mandatory = True,
-        ),
-        "out": attr.output(
-            doc = "The new Go source file to put the generated mock code",
-            mandatory = True,
-        ),
-        "interfaces": attr.string_list(
-            allow_empty = False,
-            doc = "The names of the Go interfaces to generate mocks for. If not set, all of the interfaces in the library or source file will have mocks generated for them.",
-            mandatory = True,
-        ),
-        "package": attr.string(
-            doc = "The name of the package the generated mocks should be in. If not specified, uses mockgen's default.",
-        ),
-        "self_package": attr.string(
-            doc = "The full package import path for the generated code. The purpose of this flag is to prevent import cycles in the generated code by trying to include its own package. This can happen if the mock's package is set to one of its inputs (usually the main one) and the output is stdio so mockgen cannot detect the final output package. Setting this flag will then tell mockgen which import to exclude.",
-        ),
-        "imports": attr.string_dict(
-            doc = "Dictionary of name-path pairs of explicit imports to use.",
-        ),
-        "mock_names": attr.string_dict(
-            doc = "Dictionary of interfaceName-mockName pairs of explicit mock names to use. Mock names default to 'Mock'+ interfaceName suffix.",
-            default = {},
+            doc = "The library that contains the interfaces to mock.",
         ),
         "copyright_file": attr.label(
             doc = "Optional file containing copyright to prepend to the generated contents.",
             allow_single_file = True,
             mandatory = False,
         ),
-        "prog_bin": attr.label(
-            doc = "The program binary generated by mockgen's -prog_only and compiled by bazel.",
-            allow_single_file = True,
-            executable = True,
-            cfg = "exec",
+        "out": attr.output(
             mandatory = True,
+            doc = "The new Go source file to put the generated mock code.",
+        ),
+        "interfaces": attr.string_list(
+            allow_empty = True,
+            doc = "Interfaces to mock.",
+        ),
+        "package": attr.string(
+            doc = "The name of the package the generated mocks should be in. If not specified, uses mockgen's default.",
+        ),
+        "self_package": attr.string(
+            doc = "The full package import path for the generated code.",
         ),
         "mockgen_tool": attr.label(
-            doc = "The mockgen tool to run",
-            default = _MOCKGEN_TOOL,
-            allow_single_file = True,
+            default = Label("@com_github_golang_mock//mockgen"),
             executable = True,
             cfg = "exec",
-            mandatory = False,
         ),
-        "mockgen_args": attr.string_list(
-            doc = "Additional arguments to pass to the mockgen tool",
-            mandatory = False,
-            default = [],
-        ),
-        "_go_context_data": attr.label(
-            default = "@io_bazel_rules_go//:go_context_data",
+        "use_underlying_names": attr.bool(
+            doc = "Use alias underlying type names in generated mocks instead of the alias names directly",
+            default = False,
         ),
     },
     toolchains = [GO_TOOLCHAIN],
