@@ -18,6 +18,7 @@ package main
 
 import (
 	"errors"
+	"flag"
 	"fmt"
 	"go/ast"
 	"go/build"
@@ -92,6 +93,20 @@ func sourceMode(source string) (*model.Package, error) {
 	for pkgPath := range dotImports {
 		pkg.DotImports = append(pkg.DotImports, pkgPath)
 	}
+
+	// Get positional arguments after the flags
+	ifaces := flag.Args()
+
+	// If there are interfaces provided as positional arguments, filter them
+	if len(ifaces) > 0 {
+		if pkg.Interfaces, err = filterInterfaces(pkg.Interfaces, ifaces); err != nil {
+			log.Fatalf("Filtering interfaces failed: %v", err)
+		}
+	} else {
+		// No interfaces provided, process all interfaces for backward compatibility
+		log.Printf("No interfaces specified, processing all interfaces")
+	}
+
 	return pkg, nil
 }
 
@@ -800,6 +815,38 @@ func packageNameOfDir(srcDir string) (string, error) {
 		return "", err
 	}
 	return packageImport, nil
+}
+
+func filterInterfaces(all []*model.Interface, requested []string) ([]*model.Interface, error) {
+    // If no interfaces are requested, return all interfaces
+    if len(requested) == 0 {
+        return all, nil
+    }
+
+    requestedIfaces := make(map[string]struct{})
+    for _, iface := range requested {
+        requestedIfaces[iface] = struct{}{}
+    }
+
+    result := make([]*model.Interface, 0, len(requestedIfaces))
+    for _, iface := range all {
+        // Only add interfaces that are requested
+        if _, ok := requestedIfaces[iface.Name]; ok {
+            result = append(result, iface)
+            delete(requestedIfaces, iface.Name) // Remove matched iface from requested
+        }
+    }
+
+    // If any requested interfaces were not found, return an error
+    if len(requestedIfaces) > 0 {
+        var missing []string
+        for iface := range requestedIfaces {
+            missing = append(missing, iface)
+        }
+        return nil, fmt.Errorf("missing interfaces: %s", strings.Join(missing, ", "))
+    }
+
+    return result, nil
 }
 
 var errOutsideGoPath = errors.New("source directory is outside GOPATH")
