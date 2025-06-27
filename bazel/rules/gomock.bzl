@@ -223,11 +223,17 @@ def gomock(name, out, library = None, source_importpath = "", source = None, int
             self_package = self_package,
             mockgen_tool = mockgen_tool,
             copyright_file = copyright_file,
+            mock_names = mock_names,
             **kwargs
         )
 
 def _gomock_archive_impl(ctx):
     args = ctx.actions.args()
+
+    if len(ctx.attr.mock_names.items()):
+        mock_names = ",".join(["{0}={1}".format(name, pkg) for name, pkg in ctx.attr.mock_names.items()])
+        args.add("-mock_names", mock_names)
+
     args.add("-package", ctx.attr.library[GoInfo].importpath)
     args.add("-archive", ctx.attr.library[GoArchive].data.export_file.path)
     args.add("-destination", ctx.outputs.out)
@@ -281,6 +287,10 @@ _gomock_archive = rule(
         ),
         "self_package": attr.string(
             doc = "The full package import path for the generated code.",
+        ),
+        "mock_names": attr.string_dict(
+            doc = "Dictionary of interface name to mock name pairs to change the output names of the mock objects. Mock names default to 'Mock' prepended to the name of the interface.",
+            default = {},
         ),
         "mockgen_tool": attr.label(
             default = Label("@com_github_golang_mock//mockgen"),
