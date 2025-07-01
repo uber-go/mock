@@ -129,9 +129,27 @@ func (p *packageModeParser) parseInterface(obj types.Object) (*model.Interface, 
 		return &model.Interface{Name: obj.Name(), Methods: methods}, nil
 	}
 
-	typeParams := make([]*model.Parameter, named.TypeParams().Len())
-	for i := range named.TypeParams().Len() {
-		param := named.TypeParams().At(i)
+	var requiredTypeParams *types.TypeParamList
+	// If the named type is an instance of a generic, it must be from an alias.
+	if rootAlias, ok := obj.Type().(*types.Alias); ok && named.TypeArgs() != nil {
+		if rootAlias.TypeParams() == nil {
+			// If the root alias is not generic, then we can treat this like any
+			// other interface. The named interface is a complete type.
+			return &model.Interface{Name: obj.Name(), Methods: methods}, nil
+		}
+		// If the root alias is generic, then the type parameters that are needed
+		// are that of the generic alias. The right-hand-side of an alias must
+		// be a complete type. For the generic type Y[Z any], this is not a valid
+		// type alias `type X = Y`.
+		requiredTypeParams = rootAlias.TypeParams()
+	}
+	if requiredTypeParams == nil {
+		requiredTypeParams = named.TypeParams()
+	}
+
+	typeParams := make([]*model.Parameter, requiredTypeParams.Len())
+	for i := range requiredTypeParams.Len() {
+		param := requiredTypeParams.At(i)
 		typeParam, err := p.parseConstraint(param)
 		if err != nil {
 			return nil, newParseTypeError("parse type parameter", param.String(), err)
