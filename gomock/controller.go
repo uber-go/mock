@@ -120,6 +120,18 @@ func (o overridableExpectationsOption) apply(ctrl *Controller) {
 	ctrl.expectedCalls = newOverridableCallSet()
 }
 
+type overridableExpectationsArgsAwareOption struct{}
+
+// WithOverridableExpectationsArgsAware allows for overridable call expectations
+// i.e., subsequent call expectations override existing call expectations when matching arguments
+func WithOverridableExpectationsArgsAware() overridableExpectationsArgsAwareOption {
+	return overridableExpectationsArgsAwareOption{}
+}
+
+func (o overridableExpectationsArgsAwareOption) apply(ctrl *Controller) {
+	ctrl.expectedCalls = newOverridableArgsAwareCallSet()
+}
+
 type cancelReporter struct {
 	t      TestHelper
 	cancel func()
