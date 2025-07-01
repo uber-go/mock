@@ -3,9 +3,9 @@ gomock
 
 Tests that ensure the gomock rules can be called correctly under different input permutations.
 
-reflective
+archive
 ------------------------
-Checks that gomock can be run in "reflective" mode when passed a `GoLibrary` and `interfaces`.
+Checks that gomock can be run in "archive" mode when passed a `GoLibrary` and `interfaces`.
 
 source
 ------------------------
