@@ -1,7 +1,6 @@
 load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
 load("//rules:gomock.bzl", "gomock")
 
-
 go_library(
     name = "client",
     srcs = [
@@ -16,6 +15,18 @@ gomock(
     name = "client_mocks",
     out = "client_mock.go",
     library = ":client",
+    package = "client",
+    source = "client.go",
+    visibility = ["//visibility:public"],
+)
+
+gomock(
+    name = "renamed_mocks",
+    out = "renamed_client_mock.go",
+    library = ":client",
+    mock_names = {
+        "Client": "MockRenamedClient",
+    },
     package = "client",
     source = "client.go",
     visibility = ["//visibility:public"],
@@ -39,6 +50,7 @@ go_test(
     srcs = [
         "client_mock.go",
         "client_test.go",
+        "renamed_client_mock.go",
         "wrapper_mock.go",
     ],
     embed = [":client"],
