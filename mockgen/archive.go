@@ -11,7 +11,7 @@ import (
 	"golang.org/x/tools/go/gcexportdata"
 )
 
-func archiveMode(importPath string, symbols []string, archive string) (*model.Package, error) {
+func parseExportFile(importPath string, symbols []string, archive string) (*model.Package, error) {
 	f, err := os.Open(archive)
 	if err != nil {
 		return nil, err

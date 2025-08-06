@@ -15,28 +15,20 @@ var (
 	buildFlags = flag.String("build_flags", "", "(package mode) Additional flags for go build.")
 )
 
-type packageModeParser struct {
-	pkgName string
-}
+type packageModeParser struct{}
 
 func (p *packageModeParser) parsePackage(packageName string, ifaces []string) (*model.Package, error) {
-	p.pkgName = packageName
-
 	pkg, err := p.loadPackage(packageName)
 	if err != nil {
 		return nil, fmt.Errorf("load package: %w", err)
 	}
 
-	interfaces, err := extractInterfacesFromPackageTypes(pkg.Types, ifaces)
+	modelPackage, err := parseExportFile(packageName, ifaces, pkg.ExportFile)
 	if err != nil {
 		return nil, fmt.Errorf("extract interfaces from package: %w", err)
 	}
 
-	return &model.Package{
-		Name:       pkg.Types.Name(),
-		PkgPath:    packageName,
-		Interfaces: interfaces,
-	}, nil
+	return modelPackage, nil
 }
 
 func (p *packageModeParser) loadPackage(packageName string) (*packages.Package, error) {
@@ -46,7 +38,7 @@ func (p *packageModeParser) loadPackage(packageName string) (*packages.Package, 
 	}
 
 	cfg := &packages.Config{
-		Mode:       packages.NeedDeps | packages.NeedImports | packages.NeedTypes | packages.NeedTypesInfo | packages.NeedEmbedFiles | packages.LoadSyntax,
+		Mode:       packages.NeedExportFile,
 		BuildFlags: buildFlagsSet,
 	}
 	pkgs, err := packages.Load(cfg, packageName)
