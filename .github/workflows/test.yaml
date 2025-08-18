@@ -12,7 +12,7 @@ jobs:
   go:
     strategy:
       matrix:
-        go-version: [1.23.x, 1.24.x] # oldest version that can build go mock and official supported go versions
+        go-version: [1.24.x, 1.25.x] # oldest version that can build go mock and official supported go versions
         os: [ubuntu-latest]
     runs-on: ${{ matrix.os }}
     steps:
