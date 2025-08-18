@@ -3,11 +3,19 @@ All notable changes to this project will be documented in this file.
 
 This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
-## Unreleased
-- No changes yet.
+## 0.6.0 (18 Aug 2025)
+### Added
+- [#258][]: Archive mode: a new mockgen mode that generates mocks out of archive files.
+- [#262][]: Support for specifying mock names when using the `_gomock_archive` bazel rule.
+
+### Fixed
+- [#276][]: Fixed mockgen errors with go1.25 due to outdated golang.org/x/tools dependency.
+
+[#258]: https://github.com/uber-go/mock/pull/258
+[#262]: https://github.com/uber-go/mock/pull/262
+[#276]: https://github.com/uber-go/mock/pull/276
 
 ## 0.5.2 (28 Apr 2025)
-
 ### Fixed
 - [#248][]: Fixed an issue with type aliases not being included in generated code correctly.
 
