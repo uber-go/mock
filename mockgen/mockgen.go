@@ -814,7 +814,7 @@ func (g *generator) getArgNames(m *model.Method, in bool) []string {
 	if m.Variadic != nil && in {
 		name := m.Variadic.Name
 
-		if name == "" || g.nameExistsAsPackage(name) {
+		if name == "" || name == "_" || g.nameExistsAsPackage(name) {
 			name = fmt.Sprintf("arg%d", len(params))
 		}
 		argNames = append(argNames, name)
