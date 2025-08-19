@@ -46,7 +46,7 @@ func (p *packageModeParser) loadPackage(packageName string) (*packages.Package, 
 	}
 
 	cfg := &packages.Config{
-		Mode:       packages.NeedDeps | packages.NeedImports | packages.NeedTypes | packages.NeedTypesInfo | packages.NeedEmbedFiles | packages.LoadSyntax,
+		Mode:       packages.LoadSyntax,
 		BuildFlags: buildFlagsSet,
 	}
 	pkgs, err := packages.Load(cfg, packageName)
