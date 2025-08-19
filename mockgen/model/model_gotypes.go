@@ -74,19 +74,6 @@ func parameterFromGoTypesType(v *types.Var, variadic bool) (*Parameter, error) {
 }
 
 func typeFromGoTypesType(t types.Type) (Type, error) {
-	if t, ok := t.(*types.Named); ok {
-		tn := t.Obj()
-		if tn.Pkg() == nil {
-			return PredeclaredType(tn.Name()), nil
-		}
-		return &NamedType{
-			Package: tn.Pkg().Path(),
-			Type:    tn.Name(),
-		}, nil
-	}
-
-	// only unnamed or predeclared types after here
-
 	// Lots of types have element types. Let's do the parsing and error checking for all of them.
 	var elemType Type
 	if t, ok := t.(interface{ Elem() types.Type }); ok {
@@ -153,6 +140,39 @@ func typeFromGoTypesType(t types.Type) (Type, error) {
 		if t.NumFields() == 0 {
 			return PredeclaredType("struct{}"), nil
 		}
+	case *types.Named, *types.Alias:
+		object := t.(interface{ Obj() *types.TypeName })
+		name := object.Obj().Name()
+		var pkg string
+		if object.Obj().Pkg() != nil {
+			pkg = object.Obj().Pkg().Path()
+		}
+
+		// TypeArgs method not available for aliases in go1.22
+		genericType, ok := t.(interface{ TypeArgs() *types.TypeList })
+		if !ok || genericType.TypeArgs() == nil {
+			return &NamedType{
+				Package: pkg,
+				Type:    name,
+			}, nil
+		}
+
+		typeParams := &TypeParametersType{TypeParameters: make([]Type, genericType.TypeArgs().Len())}
+		for i := range genericType.TypeArgs().Len() {
+			typeParam := genericType.TypeArgs().At(i)
+			typedParam, err := typeFromGoTypesType(typeParam)
+			if err != nil {
+				return nil, fmt.Errorf("parse type parameter %v: %w", typeParam.String(), err)
+			}
+
+			typeParams.TypeParameters[i] = typedParam
+		}
+
+		return &NamedType{
+			Package:    pkg,
+			Type:       name,
+			TypeParams: typeParams,
+		}, nil
 		// TODO: UnsafePointer
 	}
 
