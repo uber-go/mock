@@ -20,3 +20,9 @@ mockgen/mockgen
 
 # vendor directory used for IDEs
 /vendor
+
+# tools
+/bin
+# coverage files
+/cover.out
+/cover.html
