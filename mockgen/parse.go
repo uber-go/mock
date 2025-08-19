@@ -37,7 +37,11 @@ import (
 
 // sourceMode generates mocks via source file.
 func sourceMode(source string) (*model.Package, error) {
-	srcDir, err := filepath.Abs(filepath.Dir(source))
+	currentDir,err:=os.Getwd()
+	if err != nil {
+		return nil, fmt.Errorf("%v",err)
+	}
+	srcDir, err := filepath.Abs(filepath.Dir(strings.Join([]string{currentDir,source},string(os.PathSeparator))))
 	if err != nil {
 		return nil, fmt.Errorf("failed getting source directory: %v", err)
 	}
