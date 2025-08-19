@@ -15,7 +15,7 @@ func getString(x any) string {
 	if s, ok := x.(fmt.Stringer); ok {
 		return s.String()
 	}
-	return fmt.Sprintf("%v", x)
+	return fmt.Sprintf("%+v", x)
 }
 
 // isGeneratedMock checks if the given type has a "isgomock" field,
