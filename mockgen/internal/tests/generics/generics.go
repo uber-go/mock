@@ -6,7 +6,7 @@ import (
 )
 
 //go:generate mockgen --source=generics.go --destination=source/mock_generics_mock.go --package source
-//go:generate mockgen --destination=package_mode/mock_test.go --package=package_mode . Bar,Universe,MilkyWay,SolarSystem,Earth,Water
+//go:generate mockgen --destination=package_mode/mock_test.go --package=package_mode . Bar,BarAliasIntString,Universe,MilkyWay,SolarSystem,Earth,Water
 
 type Bar[T any, R any] interface {
 	One(string) string
@@ -30,9 +30,14 @@ type Bar[T any, R any] interface {
 	Nineteen() AliasType
 }
 
+// BarAliasIntString is an alias of a generic type.
+type BarAliasIntString = Bar[int, string]
+
 type Foo[T any, R any] struct{}
 
-type Baz[T any] struct{}
+type Baz[T any] struct {
+	V T
+}
 
 type Iface[T any] any
 
