@@ -18,6 +18,7 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
+	"slices"
 	"sync"
 )
 
@@ -31,6 +32,9 @@ type callSet struct {
 	exhausted map[callSetKey][]*Call
 	// when set to true, existing call expectations are overridden when new call expectations are made
 	allowOverride bool
+	// when set to true, existing call expectations that match the call arguments are overridden when new call
+	// expectations are made
+	allowOverrideArgsAware bool
 }
 
 // callSetKey is the key in the maps in callSet
@@ -56,6 +60,16 @@ func newOverridableCallSet() *callSet {
 	}
 }
 
+func newOverridableArgsAwareCallSet() *callSet {
+	return &callSet{
+		expected:               make(map[callSetKey][]*Call),
+		expectedMu:             &sync.Mutex{},
+		exhausted:              make(map[callSetKey][]*Call),
+		allowOverride:          false,
+		allowOverrideArgsAware: true,
+	}
+}
+
 // Add adds a new expected call.
 func (cs callSet) Add(call *Call) {
 	key := callSetKey{call.receiver, call.method}
@@ -69,6 +83,13 @@ func (cs callSet) Add(call *Call) {
 	}
 	if cs.allowOverride {
 		m[key] = make([]*Call, 0)
+	} else if cs.allowOverrideArgsAware {
+		calls := cs.expected[key]
+		for i, c := range calls {
+			if slices.Equal(c.args, call.args) {
+				cs.expected[key] = append(calls[:i], calls[i+1:]...)
+			}
+		}
 	}
 
 	m[key] = append(m[key], call)

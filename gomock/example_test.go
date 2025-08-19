@@ -67,3 +67,28 @@ func ExampleCall_DoAndReturn_withOverridableExpectations() {
 	fmt.Printf("%s %s", r, s)
 	// Output: I'm sleepy foo
 }
+
+func ExampleCall_DoAndReturn_withOverridableExpectationsArgsAware() {
+	t := &testing.T{} // provided by test
+	ctrl := gomock.NewController(t, gomock.WithOverridableExpectationsArgsAware())
+	mockIndex := NewMockFoo(ctrl)
+	var s string
+
+	mockIndex.EXPECT().Bar("foo").DoAndReturn(
+		func(arg string) any {
+			s = arg
+			return "I'm sleepy"
+		},
+	)
+
+	mockIndex.EXPECT().Bar("foo").DoAndReturn(
+		func(arg string) any {
+			s = arg
+			return "I'm NOT sleepy"
+		},
+	)
+
+	r := mockIndex.Bar("foo")
+	fmt.Printf("%s %s", r, s)
+	// Output: I'm NOT sleepy foo
+}
