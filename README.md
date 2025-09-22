@@ -60,7 +60,7 @@ mockgen -archive=pkg.a database/sql/driver Conn,Driver
 
 ### Source mode
 
-Source mode generates mock interfaces from a source file.
+Source mode generates mock interfaces and signatures from a source file.
 It is enabled by using the -source flag. Other flags that
 may be useful in this mode are -imports and -aux_files.
 
@@ -72,7 +72,7 @@ mockgen -source=foo.go [other options]
 
 ### Package mode
 
-Package mode works by specifying the package and interface names.
+Package mode works by specifying the package and interface or signature names.
 It is enabled by passing two non-flag arguments: an import path, and a
 comma-separated list of symbols.
 
@@ -85,6 +85,9 @@ mockgen database/sql/driver Conn,Driver
 
 # Convenient for `go:generate`.
 mockgen . Conn,Driver
+
+# Function signatures can also be mocked
+mockgen iter Seq,Seq2
 ```
 
 ### Flags
@@ -151,6 +154,8 @@ cases, you will need only the `-source` flag.
 
 ## Building Mocks
 
+## Interfaces
+
 ```go
 type Foo interface {
   Bar(x int) int
@@ -176,6 +181,38 @@ func TestFoo(t *testing.T) {
     Return(101)
 
   SUT(m)
+}
+```
+
+### Signatures
+
+```go
+import "iter"
+
+type ToString[T any] func(T) string
+
+func ToStringArray[T any](array []T, toString ToString[T]) []string {
+ // ...
+}
+
+```
+
+```go
+func TestToStringArray(t *testing.T) {
+  ctrl := gomock.NewController(t)
+
+  m := NewMockToString[int](ctrl)
+
+  // The Execute method is used as an implementation of the ToString signature.
+  m.
+    EXPECT().
+    Execute(gomock.AnyOf(1, 2)).
+    DoAndReturn(strconv.Itoa).
+	Times(2)
+  
+  strArray := ToStringArray([]int{1, 2}, m.Execute)
+  
+  fmt.Println(strArray) // ["1", "2"]
 }
 ```
 
