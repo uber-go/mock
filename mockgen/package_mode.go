@@ -87,34 +87,49 @@ func parseInterface(obj types.Object) (*model.Interface, error) {
 		return nil, fmt.Errorf("%s is not an interface. it is a %T", obj.Name(), obj.Type().Underlying())
 	}
 
-	iface, ok := named.Underlying().(*types.Interface)
-	if !ok {
-		return nil, fmt.Errorf("%s is not an interface. it is a %T", obj.Name(), obj.Type().Underlying())
-	}
-
-	if isConstraint(iface) {
-		return nil, fmt.Errorf("interface %s is a constraint", obj.Name())
-	}
-
-	methods := make([]*model.Method, iface.NumMethods())
-	for i := range iface.NumMethods() {
-		method := iface.Method(i)
-		typedMethod, ok := method.Type().(*types.Signature)
-		if !ok {
-			return nil, fmt.Errorf("method %s is not a signature", method.Name())
+	var methods []*model.Method
+	switch t := obj.Type().Underlying().(type) {
+	case *types.Interface:
+		if isConstraint(t) {
+			return nil, fmt.Errorf("interface %s is a constraint", obj.Name())
 		}
 
-		modelFunc, err := parseFunc(typedMethod)
+		methods = make([]*model.Method, t.NumMethods())
+		for i := range t.NumMethods() {
+			method := t.Method(i)
+			typedMethod, ok := method.Type().(*types.Signature)
+			if !ok {
+				return nil, fmt.Errorf("method %s is not a signature", method.Name())
+			}
+
+			modelFunc, err := parseFunc(typedMethod)
+			if err != nil {
+				return nil, newParseTypeError("parse method", typedMethod.String(), err)
+			}
+
+			methods[i] = &model.Method{
+				Name:     method.Name(),
+				In:       modelFunc.In,
+				Out:      modelFunc.Out,
+				Variadic: modelFunc.Variadic,
+			}
+		}
+	case *types.Signature:
+		method, err := parseFunc(t)
 		if err != nil {
-			return nil, newParseTypeError("parse method", typedMethod.String(), err)
+			return nil, fmt.Errorf("parse signature %s: %w", obj.Name(), err)
 		}
 
-		methods[i] = &model.Method{
-			Name:     method.Name(),
-			In:       modelFunc.In,
-			Out:      modelFunc.Out,
-			Variadic: modelFunc.Variadic,
-		}
+		methods = append(methods,
+			&model.Method{
+				Name:     "Execute",
+				In:       method.In,
+				Out:      method.Out,
+				Variadic: method.Variadic,
+			},
+		)
+	default:
+		return nil, fmt.Errorf("%s is not an interface or a signature. it is a %T", obj.Name(), obj.Type().Underlying())
 	}
 
 	if named.TypeParams() == nil {
