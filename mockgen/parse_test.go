@@ -109,7 +109,7 @@ func checkGreeterImports(t *testing.T, imports map[string]importedPackage) {
 func Benchmark_parseFile(b *testing.B) {
 	source := "internal/tests/performance/big_interface/big_interface.go"
 	for n := 0; n < b.N; n++ {
-		sourceMode(source)
+		sourceMode(source, nil)
 	}
 }
 
@@ -141,5 +141,21 @@ func TestParseArrayWithConstLength(t *testing.T) {
 		if got != e {
 			t.Fatalf("got %v; expected %v", got, e)
 		}
+	}
+}
+
+func TestSourceMode_interfaceSubset(t *testing.T) {
+	pkg, err := sourceMode("internal/tests/exclude/interfaces.go", []string{"IgnoreMe"})
+	if err != nil {
+		t.Fatalf("Unexpected error: %v", err)
+	}
+
+	if want, got := 1, len(pkg.Interfaces); want != got {
+		t.Fatalf("Expected %d interfaces but got %d", want, got)
+	}
+
+	iface := pkg.Interfaces[0]
+	if want, got := "IgnoreMe", iface.Name; want != got {
+		t.Fatalf("Expected interface name to be %s but got %s", want, got)
 	}
 }

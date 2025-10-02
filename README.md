@@ -61,13 +61,18 @@ mockgen -archive=pkg.a database/sql/driver Conn,Driver
 ### Source mode
 
 Source mode generates mock interfaces from a source file.
-It is enabled by using the -source flag. Other flags that
-may be useful in this mode are -imports and -aux_files.
+It is enabled by using the -source flag.
+By default, it generates mocks for all interfaces in the file.
+You can specify a comma-separated list of interfaces to generate
+using a single non-flag argument.
+Other flags that may be useful in this mode are -imports,
+-aux_files and -exclude_interfaces.
 
 Example:
 
 ```bash
 mockgen -source=foo.go [other options]
+mockgen -source=foo.go [other options] SomeInterface,OtherInterface
 ```
 
 ### Package mode

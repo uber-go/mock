@@ -95,7 +95,16 @@ func main() {
 	case *modelGob != "": // gob mode
 		pkg, err = gobMode(*modelGob)
 	case *source != "": // source mode
-		pkg, err = sourceMode(*source)
+		if flag.NArg() > 1 {
+			usage()
+			log.Fatal("Expected at most one argument with -source")
+		}
+		var ifaces []string
+		if flag.NArg() == 1 {
+			ifaces = strings.Split(flag.Arg(0), ",")
+		}
+
+		pkg, err = sourceMode(*source, ifaces)
 	case *archive != "": // archive mode
 		checkArgs()
 		packageName = flag.Arg(0)
@@ -256,10 +265,15 @@ func usage() {
 const usageText = `mockgen has three modes of operation: archive, source and package.
 
 Source mode generates mock interfaces from a source file.
-It is enabled by using the -source flag. Other flags that
-may be useful in this mode are -imports, -aux_files and -exclude_interfaces.
+It is enabled by using the -source flag.
+By default, it generates mocks for all interfaces in the file.
+You can specify a comma-separated list of interfaces to generate
+using a single non-flag argument.
+Other flags that may be useful in this mode are -imports, -aux_files and
+-exclude_interfaces.
 Example:
 	mockgen -source=foo.go [other options]
+	mockgen -source=foo.go [other options] SomeInterface,OtherInterface
 
 Package mode works by specifying the package and interface names.
 It is enabled by passing two non-flag arguments: an import path, and a

@@ -36,7 +36,35 @@ import (
 )
 
 // sourceMode generates mocks via source file.
-func sourceMode(source string) (*model.Package, error) {
+//
+// ifaces is a list of interface names to generate mocks for.
+// If nil or empty, all interfaces in the source file are used.
+func sourceMode(source string, ifaces []string) (*model.Package, error) {
+	var wantIface func(name string) bool
+	if len(ifaces) == 0 {
+		wantIface = func(name string) bool { return true }
+	} else {
+		wantIfaces := make(map[string]struct{})
+		for _, n := range ifaces {
+			wantIfaces[n] = struct{}{}
+		}
+		wantIface = func(name string) bool {
+			_, ok := wantIfaces[name]
+			return ok
+		}
+	}
+
+	if *excludeInterfaces != "" {
+		oldWantIface := wantIface
+		excludeNamesSet := parseExcludeInterfaces(*excludeInterfaces)
+		wantIface = func(name string) bool {
+			if _, ok := excludeNamesSet[name]; ok {
+				return false
+			}
+			return oldWantIface(name)
+		}
+	}
+
 	srcDir, err := filepath.Abs(filepath.Dir(source))
 	if err != nil {
 		return nil, fmt.Errorf("failed getting source directory: %v", err)
@@ -59,6 +87,7 @@ func sourceMode(source string) (*model.Package, error) {
 		importedInterfaces: newInterfaceCache(),
 		auxInterfaces:      newInterfaceCache(),
 		srcDir:             srcDir,
+		wantIface:          wantIface,
 	}
 
 	// Handle -imports.
@@ -73,10 +102,6 @@ func sourceMode(source string) (*model.Package, error) {
 				p.imports[k] = importedPkg{path: v}
 			}
 		}
-	}
-
-	if *excludeInterfaces != "" {
-		p.excludeNamesSet = parseExcludeInterfaces(*excludeInterfaces)
 	}
 
 	// Handle -aux_files.
@@ -167,7 +192,7 @@ type fileParser struct {
 	auxFiles           []*ast.File
 	auxInterfaces      *interfaceCache
 	srcDir             string
-	excludeNamesSet    map[string]struct{}
+	wantIface          func(name string) bool
 }
 
 func (p *fileParser) errorf(pos token.Pos, format string, args ...any) error {
@@ -228,7 +253,7 @@ func (p *fileParser) parseFile(importPath string, file *ast.File) (*model.Packag
 
 	var is []*model.Interface
 	for ni := range iterInterfaces(file) {
-		if _, ok := p.excludeNamesSet[ni.name.String()]; ok {
+		if p.wantIface != nil && !p.wantIface(ni.name.String()) {
 			continue
 		}
 		i, err := p.parseInterface(ni.name.String(), importPath, ni)
