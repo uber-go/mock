@@ -175,7 +175,7 @@ _gomock_source = rule(
 )
 
 def gomock(name, out, library = None, source_importpath = "", source = None, interfaces = [], package = "", self_package = "", aux_files = {}, mockgen_tool = _MOCKGEN_TOOL, mockgen_args = [], imports = {}, copyright_file = None, mock_names = {}, **kwargs):
-    """Calls [mockgen](https://github.com/golang/mock) to generates a Go file containing mocks from the given library.
+    """Calls [mockgen](https://github.com/uber-go/mock) to generates a Go file containing mocks from the given library.
 
     If `source` is given, the mocks are generated in source mode; otherwise in archive mode.
 
@@ -186,14 +186,14 @@ def gomock(name, out, library = None, source_importpath = "", source = None, int
         source_importpath: the importpath for the source file. Alternative to passing library, which can lead to circular dependencies between mock and library targets. Only valid for source mode.
         source: a Go file in the given `library`. If this is given, `gomock` will call mockgen in source mode to mock all interfaces in the file.
         interfaces: a list of interfaces in the given `library` to be mocked in archive mode.
-        package: the name of the package the generated mocks should be in. If not specified, uses mockgen's default. See [mockgen's -package](https://github.com/golang/mock#flags) for more information.
-        self_package: the full package import path for the generated code. The purpose of this flag is to prevent import cycles in the generated code by trying to include its own package. See [mockgen's -self_package](https://github.com/golang/mock#flags) for more information.
-        aux_files: a map from source files to their package path. This only needed when `source` is provided. See [mockgen's -aux_files](https://github.com/golang/mock#flags) for more information.
+        package: the name of the package the generated mocks should be in. If not specified, uses mockgen's default. See [mockgen's -package](https://github.com/uber-go/mock#flags) for more information.
+        self_package: the full package import path for the generated code. The purpose of this flag is to prevent import cycles in the generated code by trying to include its own package. See [mockgen's -self_package](https://github.com/uber-go/mock#flags) for more information.
+        aux_files: a map from source files to their package path. This only needed when `source` is provided. See [mockgen's -aux_files](https://github.com/uber-go/mock#flags) for more information.
         mockgen_tool: the mockgen tool to run.
         mockgen_args: additional arguments to pass to the mockgen tool.
-        imports: dictionary of name-path pairs of explicit imports to use. See [mockgen's -imports](https://github.com/golang/mock#flags) for more information.
-        copyright_file: optional file containing copyright to prepend to the generated contents. See [mockgen's -copyright_file](https://github.com/golang/mock#flags) for more information.
-        mock_names: dictionary of interface name to mock name pairs to change the output names of the mock objects. Mock names default to 'Mock' prepended to the name of the interface. See [mockgen's -mock_names](https://github.com/golang/mock#flags) for more information.
+        imports: dictionary of name-path pairs of explicit imports to use. See [mockgen's -imports](https://github.com/uber-go/mock#flags) for more information.
+        copyright_file: optional file containing copyright to prepend to the generated contents. See [mockgen's -copyright_file](https://github.com/uber-go/mock#flags) for more information.
+        mock_names: dictionary of interface name to mock name pairs to change the output names of the mock objects. Mock names default to 'Mock' prepended to the name of the interface. See [mockgen's -mock_names](https://github.com/uber-go/mock#flags) for more information.
         kwargs: common attributes](https://bazel.build/reference/be/common-definitions#common-attributes) to all Bazel rules.
     """
     if source:
