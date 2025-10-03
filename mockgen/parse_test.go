@@ -170,23 +170,27 @@ func TestParseFile_IncludeOnlyRequested(t *testing.T) {
 	}
 }
 
-func TestParseFile_IncludeMissing_ReturnsError(t *testing.T) {
-	fs := token.NewFileSet()
-	file, err := parser.ParseFile(fs, "internal/tests/custom_package_name/greeter/greeter.go", nil, 0)
-	if err != nil {
+// When requested interface is missing, parser should ignore it (no error, no interfaces).
+func TestParseFile_IncludeMissing_Ignored(t *testing.T) {
+    fs := token.NewFileSet()
+    file, err := parser.ParseFile(fs, "internal/tests/custom_package_name/greeter/greeter.go", nil, 0)
+    if err != nil {
+        t.Fatalf("Unexpected error: %v", err)
+    }
+
+    p := fileParser{
+        fileSet:            fs,
+        imports:            make(map[string]importedPackage),
+        importedInterfaces: newInterfaceCache(),
+        includeNamesSet:    map[string]struct{}{"DoesNotExist": {}},
+    }
+
+    pkg, err := p.parseFile("", file)
+    if err != nil {
 		t.Fatalf("Unexpected error: %v", err)
 	}
-
-	p := fileParser{
-		fileSet:            fs,
-		imports:            make(map[string]importedPackage),
-		importedInterfaces: newInterfaceCache(),
-		includeNamesSet:    map[string]struct{}{"DoesNotExist": {}},
-	}
-
-	_, err = p.parseFile("", file)
-	if err == nil || !strings.Contains(err.Error(), "requested interfaces not found") {
-		t.Fatalf("Expected missing interface error, got %v", err)
+	if len(pkg.Interfaces) != 0 {
+		t.Fatalf("Expected no interfaces, got %v", pkg.Interfaces)
 	}
 }
 

@@ -30,7 +30,6 @@ import (
 	"os"
 	"path"
 	"path/filepath"
-	"sort"
 	"strconv"
 	"strings"
 
@@ -268,10 +267,7 @@ func (p *fileParser) parseFile(importPath string, file *ast.File) (*model.Packag
 
 		delete(p.includeNamesSet, name)
 	}
-	if len(p.includeNamesSet) > 0 {
-		missing := slices.Sorted(maps.Keys))
-		return nil, fmt.Errorf("requested interfaces not found: %s", strings.Join(missing, ", "))
-	}
+
 	return &model.Package{
 		Name:       file.Name.String(),
 		PkgPath:    importPath,
