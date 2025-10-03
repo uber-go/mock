@@ -13,9 +13,22 @@ func getString(x any) string {
 		return fmt.Sprintf("%T", x)
 	}
 	if s, ok := x.(fmt.Stringer); ok {
-		return s.String()
+		// Use defer/recover to handle panics from calling String() on nil receivers
+		// This matches the behavior of fmt.Sprintf("%v", x) which handles nil Stringers safely
+		return safeString(s)
 	}
 	return fmt.Sprintf("%v", x)
+}
+
+// safeString calls String() with panic recovery to handle nil receivers
+func safeString(s fmt.Stringer) (result string) {
+	defer func() {
+		if r := recover(); r != nil {
+			// If String() panicked (e.g., nil receiver), use fmt.Sprintf instead
+			result = fmt.Sprintf("%v", s)
+		}
+	}()
+	return s.String()
 }
 
 // isGeneratedMock checks if the given type has a "isgomock" field,
