@@ -3,10 +3,8 @@ package main
 import (
 	"go/parser"
 	"go/token"
-	"reflect"
+	"strings"
 	"testing"
-
-	"go.uber.org/mock/mockgen/model"
 )
 
 func TestFileParser_ParseFile(t *testing.T) {
@@ -147,126 +145,83 @@ func TestParseArrayWithConstLength(t *testing.T) {
 	}
 }
 
-func Test_filterInterfaces(t *testing.T) {
-	type args struct {
-		all       []*model.Interface
-		requested []string
+func TestParseFile_IncludeOnlyRequested(t *testing.T) {
+	fs := token.NewFileSet()
+	file, err := parser.ParseFile(fs, "internal/tests/custom_package_name/greeter/greeter.go", nil, 0)
+	if err != nil {
+		t.Fatalf("Unexpected error: %v", err)
 	}
-	tests := []struct {
-		name    string
-		args    args
-		want    []*model.Interface
-		wantErr bool
-	}{
-		{
-			name: "no filter (returns all interfaces)",
-			args: args{
-				all: []*model.Interface{
-					{
-						Name: "Foo",
-					},
-					{
-						Name: "Bar",
-					},
-				},
-				requested: []string{},
-			},
-			want: []*model.Interface{
-				{
-					Name: "Foo",
-				},
-				{
-					Name: "Bar",
-				},
-			},
-			wantErr: false,
-		},
-		{
-			name: "filter by Foo",
-			args: args{
-				all: []*model.Interface{
-					{
-						Name: "Foo",
-					},
-					{
-						Name: "Bar",
-					},
-				},
-				requested: []string{"Foo"},
-			},
-			want: []*model.Interface{
-				{
-					Name: "Foo",
-				},
-			},
-			wantErr: false,
-		},
-		{
-			name: "filter by Foo and Bar",
-			args: args{
-				all: []*model.Interface{
-					{
-						Name: "Foo",
-					},
-					{
-						Name: "Bar",
-					},
-				},
-				requested: []string{"Foo", "Bar"},
-			},
-			want: []*model.Interface{
-				{
-					Name: "Foo",
-				},
-				{
-					Name: "Bar",
-				},
-			},
-			wantErr: false,
-		},
-		{
-			name: "incorrect filter by Foo and Baz",
-			args: args{
-				all: []*model.Interface{
-					{
-						Name: "Foo",
-					},
-					{
-						Name: "Bar",
-					},
-				},
-				requested: []string{"Foo", "Baz"},
-			},
-			want:    nil,
-			wantErr: true,
-		},
-		{
-			name: "missing interface (Baz not found)",
-			args: args{
-				all: []*model.Interface{
-					{
-						Name: "Foo",
-					},
-					{
-						Name: "Bar",
-					},
-				},
-				requested: []string{"Baz"},
-			},
-			want:    nil,
-			wantErr: true,
-		},
+
+	p := fileParser{
+		fileSet:            fs,
+		imports:            make(map[string]importedPackage),
+		importedInterfaces: newInterfaceCache(),
+		// include только один интерфейс
+		includeNamesSet: map[string]struct{}{"InputMaker": {}},
 	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			got, err := filterInterfaces(tt.args.all, tt.args.requested)
-			if (err != nil) != tt.wantErr {
-				t.Errorf("filterInterfaces() error = %v, wantErr %v", err, tt.wantErr)
-				return
+
+	pkg, err := p.parseFile("", file)
+	if err != nil {
+		t.Fatalf("Unexpected error: %v", err)
+	}
+
+	if len(pkg.Interfaces) != 1 || pkg.Interfaces[0].Name != "InputMaker" {
+		t.Fatalf("Expected only InputMaker, got %v", pkg.Interfaces)
+	}
+}
+
+func TestParseFile_IncludeMissing_ReturnsError(t *testing.T) {
+	fs := token.NewFileSet()
+	file, err := parser.ParseFile(fs, "internal/tests/custom_package_name/greeter/greeter.go", nil, 0)
+	if err != nil {
+		t.Fatalf("Unexpected error: %v", err)
+	}
+
+	p := fileParser{
+		fileSet:            fs,
+		imports:            make(map[string]importedPackage),
+		importedInterfaces: newInterfaceCache(),
+		includeNamesSet:    map[string]struct{}{"DoesNotExist": {}},
+	}
+
+	_, err = p.parseFile("", file)
+	if err == nil || !strings.Contains(err.Error(), "requested interfaces not found") {
+		t.Fatalf("Expected missing interface error, got %v", err)
+	}
+}
+
+func TestParseFile_IncludeWithDuplicates_Dedupes(t *testing.T) {
+	fs := token.NewFileSet()
+	file, err := parser.ParseFile(fs, "internal/tests/custom_package_name/greeter/greeter.go", nil, 0)
+	if err != nil {
+		t.Fatalf("Unexpected error: %v", err)
+	}
+
+	// Эмулируем «случайно указали дубликаты» как это делает sourceMode (через позиционные аргументы)
+	args := []string{"InputMaker", "InputMaker"} // дубликаты
+	include := make(map[string]struct{})
+	for _, a := range args {
+		for _, name := range strings.Split(a, ",") {
+			name = strings.TrimSpace(name)
+			if name != "" {
+				include[name] = struct{}{}
 			}
-			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("filterInterfaces() got = %v, want %v", got, tt.want)
-			}
-		})
+		}
+	}
+
+	p := fileParser{
+		fileSet:            fs,
+		imports:            make(map[string]importedPackage),
+		importedInterfaces: newInterfaceCache(),
+		includeNamesSet:    include,
+	}
+
+	pkg, err := p.parseFile("", file)
+	if err != nil {
+		t.Fatalf("Unexpected error: %v", err)
+	}
+
+	if len(pkg.Interfaces) != 1 || pkg.Interfaces[0].Name != "InputMaker" {
+		t.Fatalf("Expected only InputMaker once, got %v", pkg.Interfaces)
 	}
 }

@@ -30,6 +30,7 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"sort"
 	"strconv"
 	"strings"
 
@@ -62,6 +63,20 @@ func sourceMode(source string) (*model.Package, error) {
 		srcDir:             srcDir,
 	}
 
+	// positional interface names -> include set
+	ifaces := flag.Args()
+	if len(ifaces) > 0 {
+		p.includeNamesSet = make(map[string]struct{}, len(ifaces))
+		for _, arg := range ifaces {
+			for _, name := range strings.Split(arg, ",") {
+				name = strings.TrimSpace(name)
+				if name != "" {
+					p.includeNamesSet[name] = struct{}{}
+				}
+			}
+		}
+	}
+
 	// Handle -imports.
 	dotImports := make(map[string]bool)
 	if *imports != "" {
@@ -92,19 +107,6 @@ func sourceMode(source string) (*model.Package, error) {
 	}
 	for pkgPath := range dotImports {
 		pkg.DotImports = append(pkg.DotImports, pkgPath)
-	}
-
-	// Get positional arguments after the flags
-	ifaces := flag.Args()
-
-	// If there are interfaces provided as positional arguments, filter them
-	if len(ifaces) > 0 {
-		if pkg.Interfaces, err = filterInterfaces(pkg.Interfaces, ifaces); err != nil {
-			log.Fatalf("Filtering interfaces failed: %v", err)
-		}
-	} else {
-		// No interfaces provided, process all interfaces for backward compatibility
-		log.Printf("No interfaces specified, processing all interfaces")
 	}
 
 	return pkg, nil
@@ -183,6 +185,7 @@ type fileParser struct {
 	auxInterfaces      *interfaceCache
 	srcDir             string
 	excludeNamesSet    map[string]struct{}
+	includeNamesSet    map[string]struct{}
 }
 
 func (p *fileParser) errorf(pos token.Pos, format string, args ...any) error {
@@ -243,10 +246,19 @@ func (p *fileParser) parseFile(importPath string, file *ast.File) (*model.Packag
 
 	var is []*model.Interface
 	for ni := range iterInterfaces(file) {
-		if _, ok := p.excludeNamesSet[ni.name.String()]; ok {
+		name := ni.name.String()
+
+		if _, ok := p.excludeNamesSet[name]; ok {
 			continue
 		}
-		i, err := p.parseInterface(ni.name.String(), importPath, ni)
+
+		if len(p.includeNamesSet) > 0 {
+			if _, ok := p.includeNamesSet[name]; !ok {
+				continue
+			}
+		}
+
+		i, err := p.parseInterface(name, importPath, ni)
 		if errors.Is(err, errConstraintInterface) {
 			continue
 		}
@@ -254,6 +266,16 @@ func (p *fileParser) parseFile(importPath string, file *ast.File) (*model.Packag
 			return nil, err
 		}
 		is = append(is, i)
+
+		delete(p.includeNamesSet, name)
+	}
+	if len(p.includeNamesSet) > 0 {
+		missing := make([]string, 0, len(p.includeNamesSet))
+		for n := range p.includeNamesSet {
+			missing = append(missing, n)
+		}
+		sort.Strings(missing)
+		return nil, fmt.Errorf("requested interfaces not found: %s", strings.Join(missing, ", "))
 	}
 	return &model.Package{
 		Name:       file.Name.String(),
@@ -815,38 +837,6 @@ func packageNameOfDir(srcDir string) (string, error) {
 		return "", err
 	}
 	return packageImport, nil
-}
-
-func filterInterfaces(all []*model.Interface, requested []string) ([]*model.Interface, error) {
-    // If no interfaces are requested, return all interfaces
-    if len(requested) == 0 {
-        return all, nil
-    }
-
-    requestedIfaces := make(map[string]struct{})
-    for _, iface := range requested {
-        requestedIfaces[iface] = struct{}{}
-    }
-
-    result := make([]*model.Interface, 0, len(requestedIfaces))
-    for _, iface := range all {
-        // Only add interfaces that are requested
-        if _, ok := requestedIfaces[iface.Name]; ok {
-            result = append(result, iface)
-            delete(requestedIfaces, iface.Name) // Remove matched iface from requested
-        }
-    }
-
-    // If any requested interfaces were not found, return an error
-    if len(requestedIfaces) > 0 {
-        var missing []string
-        for iface := range requestedIfaces {
-            missing = append(missing, iface)
-        }
-        return nil, fmt.Errorf("missing interfaces: %s", strings.Join(missing, ", "))
-    }
-
-    return result, nil
 }
 
 var errOutsideGoPath = errors.New("source directory is outside GOPATH")
