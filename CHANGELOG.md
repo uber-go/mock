@@ -4,7 +4,9 @@ All notable changes to this project will be documented in this file.
 This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## Unreleased
-- No changes yet.
+### Added
+- Source mode: support for specifying a subset of interfaces to mock
+  via a comma-separated list argument.
 
 ## 0.6.0 (18 Aug 2025)
 ### Added
