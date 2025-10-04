@@ -19,6 +19,7 @@ import (
 type MockFinder struct {
 	ctrl     *gomock.Controller
 	recorder *MockFinderMockRecorder
+	isgomock struct{}
 }
 
 // MockFinderMockRecorder is the mock recorder for MockFinder.
@@ -36,11 +37,6 @@ func NewMockFinder(ctrl *gomock.Controller) *MockFinder {
 // EXPECT returns an object that allows the caller to indicate expected use.
 func (m *MockFinder) EXPECT() *MockFinderMockRecorder {
 	return m.recorder
-}
-
-// ISGOMOCK indicates that this struct is a gomock mock.
-func (m *MockFinder) ISGOMOCK() struct{} {
-	return struct{}{}
 }
 
 // Add mocks base method.

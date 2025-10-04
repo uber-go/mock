@@ -128,6 +128,7 @@ type cancelReporter struct {
 func (r *cancelReporter) Errorf(format string, args ...any) {
 	r.t.Errorf(format, args...)
 }
+
 func (r *cancelReporter) Fatalf(format string, args ...any) {
 	defer r.cancel()
 	r.t.Fatalf(format, args...)
@@ -156,6 +157,7 @@ type nopTestHelper struct {
 func (h *nopTestHelper) Errorf(format string, args ...any) {
 	h.t.Errorf(format, args...)
 }
+
 func (h *nopTestHelper) Fatalf(format string, args ...any) {
 	h.t.Fatalf(format, args...)
 }
