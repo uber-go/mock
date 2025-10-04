@@ -4,7 +4,10 @@ All notable changes to this project will be documented in this file.
 This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## Unreleased
-- No changes yet.
+- [#273][]: Archive mode: supports same capabilities as "package" mode, including:
+  erroring out on type constraints and handling type aliases explicitly
+
+[#273]: https://github.com/uber-go/mock/pull/273
 
 ## 0.6.0 (18 Aug 2025)
 ### Added
