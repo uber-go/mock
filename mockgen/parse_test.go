@@ -3,6 +3,7 @@ package main
 import (
 	"go/parser"
 	"go/token"
+	"strings"
 	"testing"
 )
 
@@ -141,5 +142,90 @@ func TestParseArrayWithConstLength(t *testing.T) {
 		if got != e {
 			t.Fatalf("got %v; expected %v", got, e)
 		}
+	}
+}
+
+func TestParseFile_IncludeOnlyRequested(t *testing.T) {
+	fs := token.NewFileSet()
+	file, err := parser.ParseFile(fs, "internal/tests/custom_package_name/greeter/greeter.go", nil, 0)
+	if err != nil {
+		t.Fatalf("Unexpected error: %v", err)
+	}
+
+	p := fileParser{
+		fileSet:            fs,
+		imports:            make(map[string]importedPackage),
+		importedInterfaces: newInterfaceCache(),
+		// include только один интерфейс
+		includeNamesSet: map[string]struct{}{"InputMaker": {}},
+	}
+
+	pkg, err := p.parseFile("", file)
+	if err != nil {
+		t.Fatalf("Unexpected error: %v", err)
+	}
+
+	if len(pkg.Interfaces) != 1 || pkg.Interfaces[0].Name != "InputMaker" {
+		t.Fatalf("Expected only InputMaker, got %v", pkg.Interfaces)
+	}
+}
+
+// When requested interface is missing, parser should ignore it (no error, no interfaces).
+func TestParseFile_IncludeMissing_Ignored(t *testing.T) {
+    fs := token.NewFileSet()
+    file, err := parser.ParseFile(fs, "internal/tests/custom_package_name/greeter/greeter.go", nil, 0)
+    if err != nil {
+        t.Fatalf("Unexpected error: %v", err)
+    }
+
+    p := fileParser{
+        fileSet:            fs,
+        imports:            make(map[string]importedPackage),
+        importedInterfaces: newInterfaceCache(),
+        includeNamesSet:    map[string]struct{}{"DoesNotExist": {}},
+    }
+
+    pkg, err := p.parseFile("", file)
+    if err != nil {
+		t.Fatalf("Unexpected error: %v", err)
+	}
+	if len(pkg.Interfaces) != 0 {
+		t.Fatalf("Expected no interfaces, got %v", pkg.Interfaces)
+	}
+}
+
+func TestParseFile_IncludeWithDuplicates_Dedupes(t *testing.T) {
+	fs := token.NewFileSet()
+	file, err := parser.ParseFile(fs, "internal/tests/custom_package_name/greeter/greeter.go", nil, 0)
+	if err != nil {
+		t.Fatalf("Unexpected error: %v", err)
+	}
+
+	// Эмулируем «случайно указали дубликаты» как это делает sourceMode (через позиционные аргументы)
+	args := []string{"InputMaker", "InputMaker"} // дубликаты
+	include := make(map[string]struct{})
+	for _, a := range args {
+		for _, name := range strings.Split(a, ",") {
+			name = strings.TrimSpace(name)
+			if name != "" {
+				include[name] = struct{}{}
+			}
+		}
+	}
+
+	p := fileParser{
+		fileSet:            fs,
+		imports:            make(map[string]importedPackage),
+		importedInterfaces: newInterfaceCache(),
+		includeNamesSet:    include,
+	}
+
+	pkg, err := p.parseFile("", file)
+	if err != nil {
+		t.Fatalf("Unexpected error: %v", err)
+	}
+
+	if len(pkg.Interfaces) != 1 || pkg.Interfaces[0].Name != "InputMaker" {
+		t.Fatalf("Expected only InputMaker once, got %v", pkg.Interfaces)
 	}
 }
