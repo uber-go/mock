@@ -18,6 +18,7 @@ package main
 
 import (
 	"errors"
+	"flag"
 	"fmt"
 	"go/ast"
 	"go/build"
@@ -61,6 +62,18 @@ func sourceMode(source string) (*model.Package, error) {
 		srcDir:             srcDir,
 	}
 
+	// positional interface names -> include set
+	if flag.NArg() > 1 {
+		return nil, errors.New("-source mode accepts at most one argument")
+	}
+	if flag.NArg() == 1 {
+		ifaces := strings.Split(flag.Arg(0), ",")
+		p.includeNamesSet = make(map[string]struct{}, len(ifaces))
+		for _, name := range ifaces {
+			p.includeNamesSet[name] = struct{}{}
+		}
+	}
+
 	// Handle -imports.
 	dotImports := make(map[string]bool)
 	if *imports != "" {
@@ -92,6 +105,7 @@ func sourceMode(source string) (*model.Package, error) {
 	for pkgPath := range dotImports {
 		pkg.DotImports = append(pkg.DotImports, pkgPath)
 	}
+
 	return pkg, nil
 }
 
@@ -168,6 +182,7 @@ type fileParser struct {
 	auxInterfaces      *interfaceCache
 	srcDir             string
 	excludeNamesSet    map[string]struct{}
+	includeNamesSet    map[string]struct{} // empty to include all
 }
 
 func (p *fileParser) errorf(pos token.Pos, format string, args ...any) error {
@@ -228,10 +243,20 @@ func (p *fileParser) parseFile(importPath string, file *ast.File) (*model.Packag
 
 	var is []*model.Interface
 	for ni := range iterInterfaces(file) {
-		if _, ok := p.excludeNamesSet[ni.name.String()]; ok {
+		name := ni.name.String()
+
+		if _, ok := p.excludeNamesSet[name]; ok {
 			continue
 		}
-		i, err := p.parseInterface(ni.name.String(), importPath, ni)
+
+		// All interfaces are included if no filter was specified.
+		if len(p.includeNamesSet) > 0 {
+			if _, ok := p.includeNamesSet[name]; !ok {
+				continue
+			}
+		}
+
+		i, err := p.parseInterface(name, importPath, ni)
 		if errors.Is(err, errConstraintInterface) {
 			continue
 		}
@@ -239,7 +264,10 @@ func (p *fileParser) parseFile(importPath string, file *ast.File) (*model.Packag
 			return nil, err
 		}
 		is = append(is, i)
+
+		delete(p.includeNamesSet, name)
 	}
+
 	return &model.Package{
 		Name:       file.Name.String(),
 		PkgPath:    importPath,
