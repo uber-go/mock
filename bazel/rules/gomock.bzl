@@ -29,7 +29,6 @@ load("@io_bazel_rules_go//go/private:providers.bzl", "GoArchive", "GoInfo")
 load("@io_bazel_rules_go//go/private/rules:wrappers.bzl", go_binary = "go_binary_macro")
 
 _MOCKGEN_TOOL = Label("@org_uber_go_mock//mockgen")
-_MOCKGEN_MODEL_LIB = Label("@org_uber_go_mock//mockgen/model")
 
 def _gomock_source_impl(ctx):
     go = go_context(ctx, include_deprecated_properties = False)
