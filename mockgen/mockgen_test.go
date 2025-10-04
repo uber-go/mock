@@ -10,7 +10,7 @@ import (
 	"strings"
 	"testing"
 
-	"go.uber.org/mock/mockgen/model"
+	"go.uber.org/mock/mockgen/internal/model"
 )
 
 func TestMakeArgString(t *testing.T) {

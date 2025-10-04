@@ -7,13 +7,11 @@ import (
 	"go/types"
 	"strings"
 
-	"go.uber.org/mock/mockgen/model"
+	"go.uber.org/mock/mockgen/internal/model"
 	"golang.org/x/tools/go/packages"
 )
 
-var (
-	buildFlags = flag.String("build_flags", "", "(package mode) Additional flags for go build.")
-)
+var buildFlags = flag.String("build_flags", "", "(package mode) Additional flags for go build.")
 
 type packageModeParser struct{}
 

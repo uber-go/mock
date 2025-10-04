@@ -5,7 +5,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"go.uber.org/mock/mockgen/model"
+	"go.uber.org/mock/mockgen/internal/model"
 )
 
 func Test_packageModeParser_parsePackage(t *testing.T) {
@@ -316,7 +316,7 @@ func Test_packageModeParser_parsePackage(t *testing.T) {
 									{
 										Type: &model.NamedType{
 											Package: "go.uber.org/mock/mockgen/internal/tests/package_mode",
-											Type: "HumansCount",
+											Type:    "HumansCount",
 										},
 									},
 								},
@@ -338,7 +338,7 @@ func Test_packageModeParser_parsePackage(t *testing.T) {
 									{
 										Type: &model.NamedType{
 											Package: "go.uber.org/mock/mockgen/internal/tests/package_mode",
-											Type: "HumansCount",
+											Type:    "HumansCount",
 										},
 									},
 								},

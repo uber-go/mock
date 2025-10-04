@@ -4,7 +4,7 @@ import (
 	"encoding/gob"
 	"os"
 
-	"go.uber.org/mock/mockgen/model"
+	"go.uber.org/mock/mockgen/internal/model"
 )
 
 func gobMode(path string) (*model.Package, error) {
