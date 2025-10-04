@@ -100,7 +100,7 @@ func main() {
 		checkArgs()
 		packageName = flag.Arg(0)
 		interfaces := strings.Split(flag.Arg(1), ",")
-		pkg, err = archiveMode(packageName, interfaces, *archive)
+		pkg, err = parseExportFile(packageName, interfaces, *archive)
 
 	default: // package mode
 		checkArgs()

@@ -11,7 +11,7 @@ import (
 	"golang.org/x/tools/go/gcexportdata"
 )
 
-func archiveMode(importPath string, symbols []string, archive string) (*model.Package, error) {
+func parseExportFile(importPath string, symbols []string, archive string) (*model.Package, error) {
 	f, err := os.Open(archive)
 	if err != nil {
 		return nil, err
@@ -29,27 +29,15 @@ func archiveMode(importPath string, symbols []string, archive string) (*model.Pa
 		return nil, err
 	}
 
+	interfaces, err := extractInterfacesFromPackageTypes(tp, symbols)
+	if err != nil {
+		return nil, err
+	}
+
 	pkg := &model.Package{
 		Name:       tp.Name(),
 		PkgPath:    tp.Path(),
-		Interfaces: make([]*model.Interface, 0, len(symbols)),
-	}
-	for _, name := range symbols {
-		m := tp.Scope().Lookup(name)
-		tn, ok := m.(*types.TypeName)
-		if !ok {
-			continue
-		}
-		ti, ok := tn.Type().Underlying().(*types.Interface)
-		if !ok {
-			continue
-		}
-		it, err := model.InterfaceFromGoTypesType(ti)
-		if err != nil {
-			return nil, err
-		}
-		it.Name = m.Name()
-		pkg.Interfaces = append(pkg.Interfaces, it)
+		Interfaces: interfaces,
 	}
 	return pkg, nil
 }
