@@ -225,17 +225,17 @@ func parseMockNames(names string) map[string]string {
 
 func parseExcludeInterfaces(names string) map[string]struct{} {
 	splitNames := strings.Split(names, ",")
-	namesSet := make(map[string]struct{}, len(splitNames))
+	var namesSet map[string]struct{}
+
 	for _, name := range splitNames {
-		if name == "" {
+		trimmed := strings.TrimSpace(name)
+		if trimmed == "" {
 			continue
 		}
-
-		namesSet[name] = struct{}{}
-	}
-
-	if len(namesSet) == 0 {
-		return nil
+		if namesSet == nil {
+			namesSet = make(map[string]struct{}, len(splitNames))
+		}
+		namesSet[trimmed] = struct{}{}
 	}
 
 	return namesSet
