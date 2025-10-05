@@ -937,8 +937,8 @@ func parsePackageImport(srcDir string) (string, error) {
 	goPathList := strings.Split(goPaths, string(os.PathListSeparator))
 	for _, goPath := range goPathList {
 		sourceRoot := filepath.Join(goPath, "src") + string(os.PathSeparator)
-		if strings.HasPrefix(srcDir, sourceRoot) {
-			return filepath.ToSlash(strings.TrimPrefix(srcDir, sourceRoot)), nil
+		if after, ok := strings.CutPrefix(srcDir, sourceRoot); ok {
+			return filepath.ToSlash(after), nil
 		}
 	}
 	return "", errOutsideGoPath

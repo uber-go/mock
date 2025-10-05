@@ -27,6 +27,7 @@ import (
 	"go/token"
 	"go/types"
 	"log"
+	"maps"
 	"os"
 	"path"
 	"path/filepath"
@@ -300,9 +301,7 @@ func (p *fileParser) parsePackage(path string) (*fileParser, error) {
 			newP.importedInterfaces.Set(path, ni.name.Name, ni)
 		}
 		imports, _ := importsOfFile(file)
-		for pkgName, pkgI := range imports {
-			newP.imports[pkgName] = pkgI
-		}
+		maps.Copy(newP.imports, imports)
 	}
 	return newP, nil
 }

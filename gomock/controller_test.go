@@ -393,7 +393,7 @@ func TestAnyTimes(t *testing.T) {
 	subject := new(Subject)
 
 	ctrl.RecordCall(subject, "FooMethod", "argument").AnyTimes()
-	for i := 0; i < 100; i++ {
+	for range 100 {
 		ctrl.Call(subject, "FooMethod", "argument")
 	}
 	reporter.assertPass("After 100 method calls.")
@@ -419,7 +419,7 @@ func TestMinTimes1(t *testing.T) {
 	_, ctrl = createFixtures(t)
 	subject = new(Subject)
 	ctrl.RecordCall(subject, "FooMethod", "argument").MinTimes(1)
-	for i := 0; i < 100; i++ {
+	for range 100 {
 		ctrl.Call(subject, "FooMethod", "argument")
 	}
 	ctrl.Finish()
@@ -492,7 +492,7 @@ func TestMinMaxTimes(t *testing.T) {
 	_, ctrl = createFixtures(t)
 	subject = new(Subject)
 	ctrl.RecordCall(subject, "FooMethod", "argument").MaxTimes(1).MinTimes(2)
-	for i := 0; i < 100; i++ {
+	for range 100 {
 		ctrl.Call(subject, "FooMethod", "argument")
 	}
 	ctrl.Finish()
