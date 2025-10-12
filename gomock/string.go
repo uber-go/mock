@@ -12,6 +12,10 @@ func getString(x any) string {
 	if isGeneratedMock(x) {
 		return fmt.Sprintf("%T", x)
 	}
+	typ := reflect.ValueOf(x)
+	if typ.Kind() == reflect.Ptr && typ.IsNil() {
+		return "nil"
+	}
 	if s, ok := x.(fmt.Stringer); ok {
 		// Use defer/recover to handle panics from calling String() on nil receivers
 		// This matches the behavior of fmt.Sprintf("%v", x) which handles nil Stringers safely
