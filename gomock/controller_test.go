@@ -166,12 +166,12 @@ func assertEqual(t *testing.T, expected any, actual any) {
 	}
 }
 
-func createFixtures(t *testing.T) (reporter *ErrorReporter, ctrl *gomock.Controller) {
+func createFixtures(t *testing.T, opts ...gomock.ControllerOption) (reporter *ErrorReporter, ctrl *gomock.Controller) {
 	// reporter acts as a testing.T-like object that we pass to the
 	// Controller. We use it to test that the mock considered tests
 	// successful or failed.
 	reporter = NewErrorReporter(t)
-	ctrl = gomock.NewController(reporter)
+	ctrl = gomock.NewController(reporter, opts...)
 	return
 }
 
@@ -814,6 +814,116 @@ func TestVariadicArgumentsGotFormatterTooManyArgsFailure(t *testing.T) {
 		ctrl.Call(s, "VariadicMethod", 0, "2", "3")
 	}, "expected call to", "doesn't match the argument at index 1",
 		"Got: test{[2 3]}\nWant: is equal to 1")
+	ctrl.Call(s, "VariadicMethod", 0, "1")
+}
+
+func TestCustomDiff(t *testing.T) {
+
+	diff := func(expected, actual any) string {
+		return fmt.Sprintf("EXPECT{%v} ACTUAL{%v}", expected, actual)
+	}
+	rep, ctrl := createFixtures(t, gomock.WithDiffFormatter(diff))
+	defer rep.recoverUnexpectedFatal()
+
+	s := new(Subject)
+	ctrl.RecordCall(
+		s,
+		"FooMethod",
+		gomock.Eq("aaa"),
+	)
+
+	rep.assertFatal(func() {
+		ctrl.Call(s, "FooMethod", "bbb")
+	}, "expected call to", "doesn't match the argument at index 0",
+		"EXPECT{aaa} ACTUAL{bbb}")
+}
+
+func TestCustomDiff_RawExpectValue(t *testing.T) {
+
+	diff := func(expected, actual any) string {
+		return fmt.Sprintf("EXPECT{%v} ACTUAL{%v}", expected, actual)
+	}
+	rep, ctrl := createFixtures(t, gomock.WithDiffFormatter(diff))
+	defer rep.recoverUnexpectedFatal()
+
+	s := new(Subject)
+	ctrl.RecordCall(
+		s,
+		"FooMethod",
+		"aaa",
+	)
+
+	rep.assertFatal(func() {
+		ctrl.Call(s, "FooMethod", "bbb")
+	}, "expected call to", "doesn't match the argument at index 0",
+		"EXPECT{aaa} ACTUAL{bbb}")
+}
+
+func TestCustomDiff_defersToGotFormatter(t *testing.T) {
+	diff := func(expected, actual any) string {
+		return "this should lose"
+	}
+	rep, ctrl := createFixtures(t, gomock.WithDiffFormatter(diff))
+	defer rep.recoverUnexpectedFatal()
+
+	s := new(Subject)
+	ctrl.RecordCall(
+		s,
+		"FooMethod",
+		gomock.GotFormatterAdapter(
+			gomock.GotFormatterFunc(func(got any) string { return "this should win" }),
+			gomock.Eq("aaa"),
+		),
+	)
+
+	rep.assertFatal(func() {
+		ctrl.Call(s, "FooMethod", "bbb")
+	}, "expected call to", "doesn't match the argument at index 0",
+		"Got: this should win\nWant:")
+}
+
+func TestCustomDiff_defersToWantFormatter(t *testing.T) {
+	diff := func(expected, actual any) string {
+		return "this should lose"
+	}
+	rep, ctrl := createFixtures(t, gomock.WithDiffFormatter(diff))
+	defer rep.recoverUnexpectedFatal()
+
+	s := new(Subject)
+	ctrl.RecordCall(
+		s,
+		"FooMethod",
+		gomock.WantFormatter(
+			gomock.StringerFunc(func() string { return "this should win" }),
+			gomock.Eq("aaa"),
+		),
+	)
+
+	rep.assertFatal(func() {
+		ctrl.Call(s, "FooMethod", "bbb")
+	}, "expected call to", "doesn't match the argument at index 0",
+		"Got: bbb (string)\nWant: this should win")
+}
+
+func TestCustomDiff_WithVariadicArguments(t *testing.T) {
+	diff := func(expected, actual any) string {
+		return "this should lose"
+	}
+	rep, ctrl := createFixtures(t, gomock.WithDiffFormatter(diff))
+	defer rep.recoverUnexpectedFatal()
+
+	s := new(Subject)
+	ctrl.RecordCall(
+		s,
+		"VariadicMethod",
+		0,
+		"1",
+	)
+
+	rep.assertFatal(func() {
+		ctrl.Call(s, "VariadicMethod", 0, "2", "3")
+	}, "expected call to", "doesn't match the argument at index 1",
+		"Got: [2 3] ([]interface {})\nWant: this should appear")
 	ctrl.Call(s, "VariadicMethod", 0, "1")
 }
 
