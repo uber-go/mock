@@ -17,7 +17,7 @@ func getString(x any) string {
 		// This matches the behavior of fmt.Sprintf("%v", x) which handles nil Stringers safely
 		return safeString(s)
 	}
-	return fmt.Sprintf("%v", x)
+	return fmt.Sprintf("%+v", x)
 }
 
 // safeString calls String() with panic recovery to handle nil receivers
