@@ -245,7 +245,7 @@ func TestGenerateMockInterface_Helper(t *testing.T) {
 				intf.AddMethod(m)
 			}
 
-			if err := g.GenerateMockInterface(intf, "somepackage"); err != nil {
+			if err := g.GenerateMockInterface("packagename", intf, "somepackage"); err != nil {
 				t.Fatal(err)
 			}
 
