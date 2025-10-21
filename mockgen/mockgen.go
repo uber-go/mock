@@ -54,25 +54,26 @@ var (
 )
 
 var (
-	archive                = flag.String("archive", "", "(archive mode) Input Go archive file; enables archive mode.")
-	source                 = flag.String("source", "", "(source mode) Input Go source file; enables source mode.")
-	destination            = flag.String("destination", "", "Output file; defaults to stdout.")
-	mockNames              = flag.String("mock_names", "", "Comma-separated interfaceName=mockName pairs of explicit mock names to use. Mock names default to 'Mock'+ interfaceName suffix.")
-	packageOut             = flag.String("package", "", "Package of the generated code; defaults to the package of the input with a 'mock_' prefix.")
-	selfPackage            = flag.String("self_package", "", "The full package import path for the generated code. The purpose of this flag is to prevent import cycles in the generated code by trying to include its own package. This can happen if the mock's package is set to one of its inputs (usually the main one) and the output is stdio so mockgen cannot detect the final output package. Setting this flag will then tell mockgen which import to exclude.")
-	writeCmdComment        = flag.Bool("write_command_comment", true, "Writes the command used as a comment if true.")
-	writePkgComment        = flag.Bool("write_package_comment", true, "Writes package documentation comment (godoc) if true.")
-	writeSourceComment     = flag.Bool("write_source_comment", true, "Writes original file (source mode) or interface names (package mode) comment if true.")
-	writeGenerateDirective = flag.Bool("write_generate_directive", false, "Add //go:generate directive to regenerate the mock")
-	copyrightFile          = flag.String("copyright_file", "", "Copyright file used to add copyright header")
-	buildConstraint        = flag.String("build_constraint", "", "If non-empty, added as //go:build <constraint>")
-	typed                  = flag.Bool("typed", false, "Generate Type-safe 'Return', 'Do', 'DoAndReturn' function")
-	imports                = flag.String("imports", "", "(source mode) Comma-separated name=path pairs of explicit imports to use.")
-	auxFiles               = flag.String("aux_files", "", "(source mode) Comma-separated pkg=path pairs of auxiliary Go source files.")
-	modelGob               = flag.String("model_gob", "", "Skip package/source loading entirely and use the gob encoded model.Package at the given path")
-	excludeInterfaces      = flag.String("exclude_interfaces", "", "Comma-separated names of interfaces to be excluded")
-	debugParser            = flag.Bool("debug_parser", false, "Print out parser results only.")
-	showVersion            = flag.Bool("version", false, "Print version.")
+	archive                    = flag.String("archive", "", "(archive mode) Input Go archive file; enables archive mode.")
+	source                     = flag.String("source", "", "(source mode) Input Go source file; enables source mode.")
+	destination                = flag.String("destination", "", "Output file; defaults to stdout.")
+	mockNames                  = flag.String("mock_names", "", "Comma-separated interfaceName=mockName pairs of explicit mock names to use. Mock names default to 'Mock'+ interfaceName suffix.")
+	packageOut                 = flag.String("package", "", "Package of the generated code; defaults to the package of the input with a 'mock_' prefix.")
+	selfPackage                = flag.String("self_package", "", "The full package import path for the generated code. The purpose of this flag is to prevent import cycles in the generated code by trying to include its own package. This can happen if the mock's package is set to one of its inputs (usually the main one) and the output is stdio so mockgen cannot detect the final output package. Setting this flag will then tell mockgen which import to exclude.")
+	writeCmdComment            = flag.Bool("write_command_comment", true, "Writes the command used as a comment if true.")
+	writePkgComment            = flag.Bool("write_package_comment", true, "Writes package documentation comment (godoc) if true.")
+	writeSourceComment         = flag.Bool("write_source_comment", true, "Writes original file (source mode) or interface names (package mode) comment if true.")
+	writeGenerateDirective     = flag.Bool("write_generate_directive", false, "Add //go:generate directive to regenerate the mock")
+	writeToolGenerateDirective = flag.Bool("write_tool_generate_directive", false, "Add //go:generate directive to regenerate the mock, for indirect \"go tool mockgen\" invocation")
+	copyrightFile              = flag.String("copyright_file", "", "Copyright file used to add copyright header")
+	buildConstraint            = flag.String("build_constraint", "", "If non-empty, added as //go:build <constraint>")
+	typed                      = flag.Bool("typed", false, "Generate Type-safe 'Return', 'Do', 'DoAndReturn' function")
+	imports                    = flag.String("imports", "", "(source mode) Comma-separated name=path pairs of explicit imports to use.")
+	auxFiles                   = flag.String("aux_files", "", "(source mode) Comma-separated pkg=path pairs of auxiliary Go source files.")
+	modelGob                   = flag.String("model_gob", "", "Skip package/source loading entirely and use the gob encoded model.Package at the given path")
+	excludeInterfaces          = flag.String("exclude_interfaces", "", "Comma-separated names of interfaces to be excluded")
+	debugParser                = flag.Bool("debug_parser", false, "Print out parser results only.")
+	showVersion                = flag.Bool("version", false, "Print version.")
 )
 
 func main() {
@@ -462,8 +463,14 @@ func (g *generator) Generate(pkg *model.Package, outputPkgName string, outputPac
 	g.out()
 	g.p(")")
 
-	if *writeGenerateDirective {
+	switch {
+	case *writeGenerateDirective && *writeToolGenerateDirective:
+		return fmt.Errorf("write_generate_directive and write_tool_generate_directive are mutually exclusive")
+	case *writeGenerateDirective:
 		g.p("//go:generate %v", strings.Join(os.Args, " "))
+	case *writeToolGenerateDirective:
+		g.p("//go:generate %v",
+			fmt.Sprintf("go tool %s %s", path.Base(os.Args[0]), strings.Join(os.Args[1:], " ")))
 	}
 
 	for _, intf := range pkg.Interfaces {
