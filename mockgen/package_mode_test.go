@@ -348,8 +348,15 @@ func Test_packageModeParser_parsePackage(t *testing.T) {
 				},
 			},
 		},
+		{
+			name: "error: no interfaces found when discovering all interfaces",
+			args: args{
+				packageName: "go.uber.org/mock/mockgen/internal/tests/no_interfaces",
+				ifaces:      []string{},
+			},
+			expectedErr: "no interfaces found in package go.uber.org/mock/mockgen/internal/tests/no_interfaces",
+		},
 	}
-
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			parser := packageModeParser{}
@@ -360,10 +367,38 @@ func Test_packageModeParser_parsePackage(t *testing.T) {
 			} else {
 				assert.NoError(t, err)
 			}
-
 			assert.Equal(t, tt.expected, actual)
 		})
 	}
+	t.Run("success: discover all interfaces when no interfaces specified", func(t *testing.T) {
+		expected := &model.Package{
+			Name:    "package_mode",
+			PkgPath: "go.uber.org/mock/mockgen/internal/tests/package_mode",
+			Interfaces: []*model.Interface{
+				{Name: "Animal"},
+				{Name: "Car"},
+				{Name: "Driver"},
+				{Name: "Earth"},
+				{Name: "Eater"},
+				{Name: "Farmer"},
+				{Name: "Food"},
+				{Name: "Human"},
+				{Name: "Primate"},
+				{Name: "UrbanResident"},
+			},
+		}
+
+		parser := packageModeParser{}
+		actual, err := parser.parsePackage(expected.PkgPath, []string{})
+		require.NoError(t, err)
+		require.NotNil(t, actual)
+		assert.Equal(t, expected.Name, actual.Name)
+		assert.Equal(t, expected.PkgPath, actual.PkgPath)
+		require.Len(t, actual.Interfaces, len(expected.Interfaces))
+		for i, expectedIface := range expected.Interfaces {
+			assert.Equal(t, expectedIface.Name, actual.Interfaces[i].Name)
+		}
+	})
 }
 
 // This tests the alias replacement behavior of package mode.

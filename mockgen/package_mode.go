@@ -63,9 +63,14 @@ func (p *packageModeParser) loadPackage(packageName string) (*packages.Package, 
 }
 
 func extractInterfacesFromPackageTypes(pkgTypes *types.Package, ifaces []string) ([]*model.Interface, error) {
+	// If no interfaces specified, discover all interfaces in the package
+	if len(ifaces) == 0  {
+		return getAllInterfacesFromPackageTypes(pkgTypes)
+	}
+	scope := pkgTypes.Scope()
 	interfaces := make([]*model.Interface, len(ifaces))
 	for i, iface := range ifaces {
-		obj := pkgTypes.Scope().Lookup(iface)
+		obj := scope.Lookup(iface)
 		if obj == nil {
 			return nil, fmt.Errorf("interface %s does not exist", iface)
 		}
@@ -78,6 +83,45 @@ func extractInterfacesFromPackageTypes(pkgTypes *types.Package, ifaces []string)
 		interfaces[i] = modelIface
 	}
 
+	return interfaces, nil
+}
+
+// getAllInterfacesFromPackageTypes discovers and returns all exported interfaces in the package.
+func getAllInterfacesFromPackageTypes(pkgTypes *types.Package) ([]*model.Interface, error) {
+	scope := pkgTypes.Scope()
+	names := scope.Names()
+	var interfaces []*model.Interface
+	for _, name := range names {
+		obj := scope.Lookup(name)
+		if obj == nil {
+			continue
+		}
+		// Skip unexported types
+		if !obj.Exported() {
+			continue
+		}
+		named, ok := types.Unalias(obj.Type()).(*types.Named)
+		if !ok {
+			continue
+		}
+		// Check if the underlying type is an interface
+		iface, ok := named.Underlying().(*types.Interface)
+		if !ok {
+			continue
+		}
+		// Skip constraint interfaces (those with type constraints)
+		if isConstraint(iface) {
+			continue
+		}
+		modelIface, err := parseInterface(obj)
+		if err != nil {
+			return nil, newParseTypeError("parse interface", obj.Name(), err)
+		}
+		interfaces = append(interfaces, modelIface)
+	}
+	if len(interfaces) == 0 {
+		return nil, fmt.Errorf("no interfaces found in package %s", pkgTypes.Path())
+	}
 	return interfaces, nil
 }
 
