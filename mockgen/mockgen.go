@@ -97,13 +97,17 @@ func main() {
 	case *source != "": // source mode
 		pkg, err = sourceMode(*source)
 	case *archive != "": // archive mode
-		checkArgs()
+		checkArgsArchive()
 		packageName = flag.Arg(0)
-		interfaces := strings.Split(flag.Arg(1), ",")
+		var interfaces []string
+		if flag.NArg() > 1 {
+			interfaces = strings.Split(flag.Arg(1), ",")
+		}
+		// If no interfaces specified, parseExportFile will discover all interfaces
 		pkg, err = parseExportFile(packageName, interfaces, *archive)
 
 	default: // package mode
-		checkArgs()
+		checkArgsPackage()
 		packageName = flag.Arg(0)
 		interfaces := strings.Split(flag.Arg(1), ",")
 
@@ -241,10 +245,17 @@ func parseExcludeInterfaces(names string) map[string]struct{} {
 	return namesSet
 }
 
-func checkArgs() {
+func checkArgsPackage() {
 	if flag.NArg() != 2 {
 		usage()
 		log.Fatal("Expected exactly two arguments")
+	}
+}
+
+func checkArgsArchive() {
+	if flag.NArg() < 1 {
+		usage()
+		log.Fatal("Expected at least one argument")
 	}
 }
 
@@ -270,11 +281,12 @@ Example:
 	mockgen . SomeInterface
 
 Archive mode generates mock interfaces from a package archive
-file (.a). It is enabled by using the -archive flag and two
-non-flag arguments: an import path, and a comma-separated
-list of symbols.
+file (.a). It is enabled by using the -archive flag with an import path
+and an optional comma-separated list of symbols. If no symbols are
+specified, mocks will be generated for all discovered interfaces.
 Example:
 	mockgen -archive=pkg.a database/sql/driver Conn,Driver
+	mockgen -archive=pkg.a database/sql/driver
 
 `
 
