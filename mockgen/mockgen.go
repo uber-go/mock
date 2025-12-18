@@ -818,16 +818,20 @@ func (g *generator) getArgNames(m *model.Method, in bool) []string {
 	for i, p := range params {
 		name := p.Name
 
-		if name == "" || name == "_" || g.nameExistsAsPackage(name) {
+		if name == "" || name == "_" {
 			name = fmt.Sprintf("arg%d", i)
+		} else if g.nameExistsAsPackage(name) {
+			name = "_" + name
 		}
 		argNames[i] = name
 	}
 	if m.Variadic != nil && in {
 		name := m.Variadic.Name
 
-		if name == "" || g.nameExistsAsPackage(name) {
+		if name == "" {
 			name = fmt.Sprintf("arg%d", len(params))
+		} else if g.nameExistsAsPackage(name) {
+			name = "_" + name
 		}
 		argNames = append(argNames, name)
 	}
