@@ -1,3 +1,4 @@
+Test for PR security check.
 # gomock
 
 [![Build Status][ci-badge]][ci-runs] [![Go Reference][reference-badge]][reference]
