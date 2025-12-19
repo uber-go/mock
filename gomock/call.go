@@ -17,6 +17,7 @@ package gomock
 import (
 	"fmt"
 	"reflect"
+	"runtime"
 	"strconv"
 	"strings"
 )
@@ -297,6 +298,22 @@ func (c *Call) After(preReq *Call) *Call {
 	}
 
 	c.preReqs = append(c.preReqs, preReq)
+	return c
+}
+
+// WithStack add call stack to origin
+func (c *Call) WithStack(lvl int) *Call {
+	if lvl < 1 {
+		return c
+	}
+	strb := &strings.Builder{}
+	for i := lvl; i > 0; i-- {
+		if _, file, line, ok := runtime.Caller(i); ok {
+			strb.WriteString(fmt.Sprintf("\n%s:%d", file, line))
+		}
+	}
+	strb.WriteString("\n")
+	c.origin = strb.String()
 	return c
 }
 
