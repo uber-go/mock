@@ -129,7 +129,7 @@ func (c *Call) DoAndReturn(f any) *Call {
 			return nil
 		}
 		vArgs := make([]reflect.Value, len(args))
-		for i := 0; i < len(args); i++ {
+		for i := range args {
 			if args[i] != nil {
 				vArgs[i] = reflect.ValueOf(args[i])
 			} else {
@@ -170,7 +170,7 @@ func (c *Call) Do(f any) *Call {
 			return nil
 		}
 		vArgs := make([]reflect.Value, len(args))
-		for i := 0; i < len(args); i++ {
+		for i := range args {
 			if args[i] != nil {
 				vArgs[i] = reflect.ValueOf(args[i])
 			} else {
@@ -437,7 +437,7 @@ func (c *Call) call() []func([]any) []any {
 // mock with an embedded *Call.
 func InOrder(args ...any) {
 	calls := make([]*Call, 0, len(args))
-	for i := 0; i < len(args); i++ {
+	for i := range args {
 		if call := getCall(args[i]); call != nil {
 			calls = append(calls, call)
 			continue

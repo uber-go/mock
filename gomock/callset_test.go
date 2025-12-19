@@ -29,7 +29,7 @@ func TestCallSetAdd(t *testing.T) {
 	cs := newCallSet()
 
 	numCalls := 10
-	for i := 0; i < numCalls; i++ {
+	for range numCalls {
 		cs.Add(newCall(t, receiver, method, reflect.TypeOf(receiverType{}.Func)))
 	}
 
@@ -68,7 +68,7 @@ func TestCallSetRemove(t *testing.T) {
 	ourCalls := []*Call{}
 
 	numCalls := 10
-	for i := 0; i < numCalls; i++ {
+	for i := range numCalls {
 		// NOTE: abuse the `numCalls` value to convey initial ordering of mocked calls
 		generatedCall := &Call{receiver: receiver, method: method, numCalls: i}
 		cs.Add(generatedCall)
