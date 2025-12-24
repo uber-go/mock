@@ -23,8 +23,8 @@ import (
 	"strings"
 )
 
-// pkgPath is the importable path for package model
-const pkgPath = "go.uber.org/mock/mockgen/model"
+// _pkgPath is the importable path for package model
+const _pkgPath = "go.uber.org/mock/mockgen/model"
 
 // Package is a Go package. It may be a subset.
 type Package struct {
@@ -149,12 +149,12 @@ type Type interface {
 func init() {
 	// Call gob.RegisterName with pkgPath as prefix to avoid conflicting with
 	// github.com/golang/mock/mockgen/model 's registration.
-	gob.RegisterName(pkgPath+".ArrayType", &ArrayType{})
-	gob.RegisterName(pkgPath+".ChanType", &ChanType{})
-	gob.RegisterName(pkgPath+".FuncType", &FuncType{})
-	gob.RegisterName(pkgPath+".MapType", &MapType{})
-	gob.RegisterName(pkgPath+".NamedType", &NamedType{})
-	gob.RegisterName(pkgPath+".PointerType", &PointerType{})
+	gob.RegisterName(_pkgPath+".ArrayType", &ArrayType{})
+	gob.RegisterName(_pkgPath+".ChanType", &ChanType{})
+	gob.RegisterName(_pkgPath+".FuncType", &FuncType{})
+	gob.RegisterName(_pkgPath+".MapType", &MapType{})
+	gob.RegisterName(_pkgPath+".NamedType", &NamedType{})
+	gob.RegisterName(_pkgPath+".PointerType", &PointerType{})
 
 	// Call gob.RegisterName to make sure it has the consistent name registered
 	// for both gob decoder and encoder.
@@ -163,7 +163,7 @@ func init() {
 	// calling rt.PkgPath() for a name to register. If your project has vendor
 	// directory, it is possible that PkgPath will get a path like this:
 	//     ../../../vendor/go.uber.org/mock/mockgen/model
-	gob.RegisterName(pkgPath+".PredeclaredType", PredeclaredType(""))
+	gob.RegisterName(_pkgPath+".PredeclaredType", PredeclaredType(""))
 }
 
 // ArrayType is an array or slice type.
