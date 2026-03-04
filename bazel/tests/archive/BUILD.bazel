@@ -33,10 +33,31 @@ gomock(
     visibility = ["//visibility:public"],
 )
 
+# Build the mocks using mockgen_args to pass additional flags.
+gomock(
+    name = "mocks_no_cmd_comment",
+    out = "client_mock_no_cmd_comment.go",
+    interfaces = ["Client"],
+    library = ":client",
+    mock_names = {
+        "Client": "MockClientNoCmdComment",
+    },
+    mockgen_args = ["-write_command_comment=false"],
+    package = "client",
+    visibility = ["//visibility:public"],
+)
+
+go_test(
+    name = "mockgen_args_test",
+    srcs = ["mockgen_args_content_test.go"],
+    data = [":mocks_no_cmd_comment"],
+)
+
 go_test(
     name = "client_test",
     srcs = [
         "client_mock.go",
+        "client_mock_no_cmd_comment.go",
         "client_mock_renamed.go",
         "client_test.go",
     ],
