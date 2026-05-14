@@ -253,7 +253,7 @@ def _gomock_archive_impl(ctx):
             export GOROOT=$(pwd)/{goroot} &&
             {cmd} "$@"
         """.format(
-            go = go_ctx.go.path,
+            go = go_ctx.sdk.go.path,
             goroot = go_ctx.sdk.root_file.dirname,
             cmd = ctx.executable.mockgen_tool.path,
         ),
