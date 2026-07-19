@@ -337,7 +337,9 @@ func primePackageNameCache(targets []executableGenerateTarget) {
 		for importPath := range target.pkg.Imports() {
 			paths[importPath] = true
 		}
-		paths[gomockImportPath] = true
+		if len(target.pkg.Interfaces) > 0 {
+			paths[gomockImportPath] = true
+		}
 		for _, intf := range target.pkg.Interfaces {
 			if len(intf.Methods) > 0 {
 				paths["reflect"] = true

@@ -389,7 +389,9 @@ func (g *generator) Generate(pkg *model.Package, outputPkgName string, outputPac
 
 	// Get all required imports, and generate unique names for them all.
 	im := pkg.Imports()
-	im[gomockImportPath] = true
+	if len(pkg.Interfaces) > 0 {
+		im[gomockImportPath] = true
+	}
 
 	// Only import reflect if it's used. We only use reflect in mocked methods
 	// so only import if any of the mocked interfaces have methods.
@@ -466,19 +468,20 @@ func (g *generator) Generate(pkg *model.Package, outputPkgName string, outputPac
 	}
 	g.p("package %v", outputPkgName)
 	g.p("")
-	g.p("import (")
-	g.in()
-	for pkgPath, pkgName := range g.packageMap {
-		if pkgPath == outputPackagePath {
-			continue
+	importSpecs := sortedImportSpecs(g.packageMap, pkg.DotImports, outputPackagePath)
+	if len(importSpecs) > 0 {
+		g.p("import (")
+		g.in()
+		for i, spec := range importSpecs {
+			if i > 0 && spec.group != importSpecs[i-1].group {
+				g.p("")
+			}
+			g.p("%v %q", spec.name, spec.path)
 		}
-		g.p("%v %q", pkgName, pkgPath)
+		g.out()
+		g.p(")")
+		g.p("")
 	}
-	for _, pkgPath := range pkg.DotImports {
-		g.p(". %q", pkgPath)
-	}
-	g.out()
-	g.p(")")
 
 	if *writeGenerateDirective {
 		g.p("//go:generate %v", strings.Join(os.Args, " "))
@@ -491,6 +494,40 @@ func (g *generator) Generate(pkg *model.Package, outputPkgName string, outputPac
 	}
 
 	return nil
+}
+
+type importSpec struct {
+	name  string
+	path  string
+	group int
+}
+
+func sortedImportSpecs(packageMap map[string]string, dotImports []string, outputPackagePath string) []importSpec {
+	specs := make([]importSpec, 0, len(packageMap)+len(dotImports))
+	for pkgPath, pkgName := range packageMap {
+		if pkgPath == outputPackagePath {
+			continue
+		}
+		specs = append(specs, importSpec{name: pkgName, path: pkgPath, group: importGroup(pkgPath)})
+	}
+	for _, pkgPath := range dotImports {
+		specs = append(specs, importSpec{name: ".", path: pkgPath, group: importGroup(pkgPath)})
+	}
+	sort.Slice(specs, func(i, j int) bool {
+		if specs[i].group != specs[j].group {
+			return specs[i].group < specs[j].group
+		}
+		return specs[i].path < specs[j].path
+	})
+	return specs
+}
+
+func importGroup(importPath string) int {
+	firstComponent := strings.Split(importPath, "/")[0]
+	if !strings.Contains(firstComponent, ".") {
+		return 0
+	}
+	return 1
 }
 
 // The name of the mock type to use for the given interface identifier.

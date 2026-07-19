@@ -414,6 +414,41 @@ func TestParsePackageImport_FallbackMultiGoPath(t *testing.T) {
 	}
 }
 
+func TestGenerateEmptyPackageDoesNotImportGomock(t *testing.T) {
+	g := generator{}
+	pkg := &model.Package{
+		Name:       "empty",
+		PkgPath:    "example.com/empty",
+		Interfaces: []*model.Interface{},
+	}
+
+	if err := g.Generate(pkg, "empty", "example.com/empty"); err != nil {
+		t.Fatal(err)
+	}
+
+	got := g.buf.String()
+	if strings.Contains(got, "go.uber.org/mock/gomock") {
+		t.Fatalf("generated empty package imports gomock:\n%s", got)
+	}
+}
+
+func TestSortedImportSpecsGroupsStdlibBeforeThirdParty(t *testing.T) {
+	specs := sortedImportSpecs(map[string]string{
+		"go.uber.org/mock/gomock": "gomock",
+		"reflect":                 "reflect",
+		"context":                 "context",
+	}, nil, "")
+
+	want := []importSpec{
+		{name: "context", path: "context", group: 0},
+		{name: "reflect", path: "reflect", group: 0},
+		{name: "gomock", path: "go.uber.org/mock/gomock", group: 1},
+	}
+	if !reflect.DeepEqual(specs, want) {
+		t.Fatalf("sortedImportSpecs() = %#v, want %#v", specs, want)
+	}
+}
+
 func TestParseExcludeInterfaces(t *testing.T) {
 	testCases := []struct {
 		name     string
