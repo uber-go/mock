@@ -7,6 +7,8 @@ import (
 	"errors"
 	"flag"
 	"fmt"
+	"go/parser"
+	"go/token"
 	"io"
 	"os"
 	"os/exec"
@@ -81,13 +83,19 @@ func runGenerateMode(patterns []string) error {
 		return err
 	}
 
-	executable := make([]executableGenerateTarget, 0, len(directives))
+	options := make([]generateTargetOptions, 0, len(directives))
 	for _, directive := range directives {
-		options, err := parseGenerateTargetOptions(directive)
+		option, err := parseGenerateTargetOptions(directive)
 		if err != nil {
 			return err
 		}
-		target, err := loadGenerateTarget(options)
+		options = append(options, option)
+	}
+	primePackageNameCacheForOptions(options)
+
+	executable := make([]executableGenerateTarget, 0, len(options))
+	for _, option := range options {
+		target, err := loadGenerateTarget(option)
 		if err != nil {
 			return err
 		}
@@ -101,6 +109,63 @@ func runGenerateMode(patterns []string) error {
 		}
 	}
 	return nil
+}
+
+func primePackageNameCacheForOptions(options []generateTargetOptions) {
+	paths := make(map[string]bool)
+	for _, option := range options {
+		for _, importPath := range importPathsForOption(option) {
+			paths[importPath] = true
+		}
+	}
+	primePackageNameCacheForPaths(paths)
+}
+
+func importPathsForOption(option generateTargetOptions) []string {
+	if option.source == "" {
+		return nil
+	}
+	var paths []string
+	paths = append(paths, importPathsFromFile(filepath.Join(option.dir, option.source))...)
+	for _, auxFile := range auxFilePaths(option.auxFiles) {
+		paths = append(paths, importPathsFromFile(filepath.Join(option.dir, auxFile))...)
+	}
+	return paths
+}
+
+func importPathsFromFile(filename string) []string {
+	file, err := parser.ParseFile(token.NewFileSet(), filename, nil, parser.ImportsOnly)
+	if err != nil {
+		return nil
+	}
+	paths := make([]string, 0, len(file.Imports))
+	for _, spec := range file.Imports {
+		if spec.Name != nil {
+			continue
+		}
+		importPath, err := strconv.Unquote(spec.Path.Value)
+		if err != nil {
+			continue
+		}
+		paths = append(paths, importPath)
+	}
+	return paths
+}
+
+func auxFilePaths(auxFiles string) []string {
+	auxFiles = strings.TrimSpace(auxFiles)
+	if auxFiles == "" {
+		return nil
+	}
+	var paths []string
+	for _, kv := range strings.Split(auxFiles, ",") {
+		parts := strings.SplitN(kv, "=", 2)
+		if len(parts) != 2 {
+			continue
+		}
+		paths = append(paths, parts[1])
+	}
+	return paths
 }
 
 func discoverGenerateTargets(root string, patterns []string) ([]generateTargetDirective, error) {
@@ -280,12 +345,18 @@ func primePackageNameCache(targets []executableGenerateTarget) {
 			}
 		}
 	}
+	primePackageNameCacheForPaths(paths)
+}
+
+func primePackageNameCacheForPaths(paths map[string]bool) {
+	if packageNameCache == nil {
+		packageNameCache = make(map[string]string, len(paths))
+	}
 	all := make([]string, 0, len(paths))
 	for importPath := range paths {
 		all = append(all, importPath)
 	}
 	sort.Strings(all)
-	packageNameCache = make(map[string]string, len(all))
 	_ = createPackageMap(all)
 }
 

@@ -24,6 +24,7 @@ import (
 	"errors"
 	"flag"
 	"fmt"
+	"go/format"
 	"go/token"
 	"io"
 	"log"
@@ -37,10 +38,8 @@ import (
 	"strings"
 	"unicode"
 
-	"golang.org/x/mod/modfile"
-	toolsimports "golang.org/x/tools/imports"
-
 	"go.uber.org/mock/mockgen/model"
+	"golang.org/x/mod/modfile"
 )
 
 const (
@@ -881,7 +880,7 @@ func (o identifierAllocator) allocateIdentifier(want string) string {
 
 // Output returns the generator's output, formatted in the standard Go style.
 func (g *generator) Output() []byte {
-	src, err := toolsimports.Process(g.destination, g.buf.Bytes(), nil)
+	src, err := format.Source(g.buf.Bytes())
 	if err != nil {
 		log.Fatalf("Failed to format generated source code: %s\n%s", err, g.buf.String())
 	}
@@ -891,10 +890,6 @@ func (g *generator) Output() []byte {
 // createPackageMap returns a map of import path to package name
 // for specified importPaths.
 func createPackageMap(importPaths []string) map[string]string {
-	var pkg struct {
-		Name       string
-		ImportPath string
-	}
 	pkgMap := make(map[string]string)
 	var missing []string
 	for _, importPath := range importPaths {
@@ -909,9 +904,31 @@ func createPackageMap(importPaths []string) map[string]string {
 	if len(missing) == 0 {
 		return pkgMap
 	}
+	const maxGoListImportPaths = 100
+	for start := 0; start < len(missing); start += maxGoListImportPaths {
+		end := start + maxGoListImportPaths
+		if end > len(missing) {
+			end = len(missing)
+		}
+		for importPath, name := range createPackageMapChunk(missing[start:end]) {
+			pkgMap[importPath] = name
+			if packageNameCache != nil {
+				packageNameCache[importPath] = name
+			}
+		}
+	}
+	return pkgMap
+}
+
+func createPackageMapChunk(importPaths []string) map[string]string {
+	var pkg struct {
+		Name       string
+		ImportPath string
+	}
+	pkgMap := make(map[string]string)
 	b := bytes.NewBuffer(nil)
 	args := []string{"list", "-json=ImportPath,Name"}
-	args = append(args, missing...)
+	args = append(args, importPaths...)
 	cmd := exec.Command("go", args...)
 	cmd.Stdout = b
 	cmd.Run()
@@ -923,9 +940,6 @@ func createPackageMap(importPaths []string) map[string]string {
 			continue
 		}
 		pkgMap[pkg.ImportPath] = pkg.Name
-		if packageNameCache != nil {
-			packageNameCache[pkg.ImportPath] = pkg.Name
-		}
 	}
 	return pkgMap
 }
