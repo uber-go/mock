@@ -65,11 +65,14 @@ type executableGenerateTarget struct {
 }
 
 type listedGeneratePackage struct {
-	Dir         string
-	Name        string
-	GoFiles     []string
-	TestGoFiles []string
+	Dir          string
+	Name         string
+	GoFiles      []string
+	TestGoFiles  []string
+	XTestGoFiles []string
 }
+
+type generateCommandAliases map[string][]string
 
 var packageNameCache map[string]string
 
@@ -173,7 +176,7 @@ func discoverGenerateTargets(root string, patterns []string) ([]generateTargetDi
 		patterns = []string{"."}
 	}
 
-	args := append([]string{"list", "-e", "-json=Dir,Name,GoFiles,TestGoFiles"}, patterns...)
+	args := append([]string{"list", "-e", "-tags=generate", "-json=Dir,Name,GoFiles,TestGoFiles,XTestGoFiles"}, patterns...)
 	cmd := exec.Command("go", args...)
 	cmd.Dir = root
 	out, err := cmd.CombinedOutput()
@@ -198,45 +201,70 @@ func discoverGenerateTargets(root string, patterns []string) ([]generateTargetDi
 }
 
 func discoverGenerateTargetsInPackage(pkg listedGeneratePackage) ([]generateTargetDirective, error) {
-	files := append([]string{}, pkg.GoFiles...)
-	files = append(files, pkg.TestGoFiles...)
+	files := make([]generatePackageFile, 0, len(pkg.GoFiles)+len(pkg.TestGoFiles)+len(pkg.XTestGoFiles))
+	files = appendGeneratePackageFiles(files, pkg.GoFiles, pkg.Name)
+	files = appendGeneratePackageFiles(files, pkg.TestGoFiles, pkg.Name)
+	files = appendGeneratePackageFiles(files, pkg.XTestGoFiles, pkg.Name+"_test")
 	var targets []generateTargetDirective
-	for _, name := range files {
-		path := filepath.Join(pkg.Dir, name)
-		f, err := os.Open(path)
+	for _, file := range files {
+		fileTargets, err := discoverGenerateTargetsInFile(pkg.Dir, file)
 		if err != nil {
-			return nil, fmt.Errorf("open %s: %w", path, err)
+			return nil, err
 		}
-		scanner := bufio.NewScanner(f)
-		line := 0
-		for scanner.Scan() {
-			line++
-			text := scanner.Text()
-			if !strings.HasPrefix(text, "//go:generate") {
-				continue
-			}
-			target, ok, err := parseGenerateDirective(text, generateDirectiveEnv{
-				GOFILE:    name,
-				GOLINE:    strconv.Itoa(line),
-				GOPACKAGE: pkg.Name,
-				DOLLAR:    "$",
-			})
-			if err != nil {
-				_ = f.Close()
-				return nil, fmt.Errorf("parse %s:%d: %w", path, line, err)
-			}
-			if ok {
-				target.dir = pkg.Dir
-				targets = append(targets, target)
-			}
+		targets = append(targets, fileTargets...)
+	}
+	return targets, nil
+}
+
+type generatePackageFile struct {
+	name        string
+	packageName string
+}
+
+func appendGeneratePackageFiles(files []generatePackageFile, names []string, packageName string) []generatePackageFile {
+	for _, name := range names {
+		files = append(files, generatePackageFile{name: name, packageName: packageName})
+	}
+	return files
+}
+
+func discoverGenerateTargetsInFile(dir string, file generatePackageFile) ([]generateTargetDirective, error) {
+	path := filepath.Join(dir, file.name)
+	f, err := os.Open(path)
+	if err != nil {
+		return nil, fmt.Errorf("open %s: %w", path, err)
+	}
+	aliases := generateCommandAliases{}
+	var targets []generateTargetDirective
+	scanner := bufio.NewScanner(f)
+	line := 0
+	for scanner.Scan() {
+		line++
+		text := scanner.Text()
+		if !strings.HasPrefix(text, "//go:generate") {
+			continue
 		}
-		if err := scanner.Err(); err != nil {
+		target, ok, err := parseGenerateDirectiveWithAliases(text, generateDirectiveEnv{
+			GOFILE:    file.name,
+			GOLINE:    strconv.Itoa(line),
+			GOPACKAGE: file.packageName,
+			DOLLAR:    "$",
+		}, aliases)
+		if err != nil {
 			_ = f.Close()
-			return nil, fmt.Errorf("scan %s: %w", path, err)
+			return nil, fmt.Errorf("parse %s:%d: %w", path, line, err)
 		}
-		if err := f.Close(); err != nil {
-			return nil, fmt.Errorf("close %s: %w", path, err)
+		if ok {
+			target.dir = dir
+			targets = append(targets, target)
 		}
+	}
+	if err := scanner.Err(); err != nil {
+		_ = f.Close()
+		return nil, fmt.Errorf("scan %s: %w", path, err)
+	}
+	if err := f.Close(); err != nil {
+		return nil, fmt.Errorf("close %s: %w", path, err)
 	}
 	return targets, nil
 }
@@ -457,6 +485,10 @@ func withWorkingDir(dir string, fn func() error) error {
 }
 
 func parseGenerateDirective(line string, env generateDirectiveEnv) (generateTargetDirective, bool, error) {
+	return parseGenerateDirectiveWithAliases(line, env, generateCommandAliases{})
+}
+
+func parseGenerateDirectiveWithAliases(line string, env generateDirectiveEnv, aliases generateCommandAliases) (generateTargetDirective, bool, error) {
 	const prefix = "//go:generate"
 	if !strings.HasPrefix(line, prefix) {
 		return generateTargetDirective{}, false, nil
@@ -472,6 +504,16 @@ func parseGenerateDirective(line string, env generateDirectiveEnv) (generateTarg
 	if len(fields) == 0 {
 		return generateTargetDirective{}, false, nil
 	}
+	if fields[0] == "-command" {
+		if len(fields) < 3 {
+			return generateTargetDirective{}, false, fmt.Errorf("-command expects a name and command")
+		}
+		aliases[fields[1]] = append([]string(nil), fields[2:]...)
+		return generateTargetDirective{}, false, nil
+	}
+	if alias, ok := aliases[fields[0]]; ok {
+		fields = append(append([]string(nil), alias...), fields[1:]...)
+	}
 	if !isMockgenInvocation(fields) {
 		return generateTargetDirective{}, false, nil
 	}
@@ -483,20 +525,37 @@ func parseGenerateDirective(line string, env generateDirectiveEnv) (generateTarg
 }
 
 func isMockgenInvocation(fields []string) bool {
-	if len(fields) == 0 {
-		return false
-	}
-	if commandBase(fields[0]) == "mockgen" {
-		return true
-	}
-	return len(fields) >= 3 && fields[0] == "go" && fields[1] == "run" && strings.Contains(fields[2], "mockgen")
+	_, ok := mockgenInvocationPackageIndex(fields)
+	return ok
 }
 
 func mockgenInvocationArgs(fields []string) []string {
-	if commandBase(fields[0]) == "mockgen" {
+	idx, ok := mockgenInvocationPackageIndex(fields)
+	if !ok {
+		return nil
+	}
+	if idx == 0 {
 		return append([]string(nil), fields[1:]...)
 	}
-	return append([]string(nil), fields[3:]...)
+	return append([]string(nil), fields[idx+1:]...)
+}
+
+func mockgenInvocationPackageIndex(fields []string) (int, bool) {
+	if len(fields) == 0 {
+		return 0, false
+	}
+	if commandBase(fields[0]) == "mockgen" {
+		return 0, true
+	}
+	if len(fields) < 3 || fields[0] != "go" || fields[1] != "run" {
+		return 0, false
+	}
+	for i := 2; i < len(fields); i++ {
+		if strings.Contains(fields[i], "mockgen") {
+			return i, true
+		}
+	}
+	return 0, false
 }
 
 func commandBase(cmd string) string {
