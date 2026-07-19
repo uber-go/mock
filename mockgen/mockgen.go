@@ -71,6 +71,7 @@ var (
 	auxFiles               = flag.String("aux_files", "", "(source mode) Comma-separated pkg=path pairs of auxiliary Go source files.")
 	modelGob               = flag.String("model_gob", "", "Skip package/source loading entirely and use the gob encoded model.Package at the given path")
 	excludeInterfaces      = flag.String("exclude_interfaces", "", "Comma-separated names of interfaces to be excluded")
+	generateMode           = flag.Bool("generate", false, "Discover and run //go:generate mockgen directives for the given package patterns in one mockgen process")
 	debugParser            = flag.Bool("debug_parser", false, "Print out parser results only.")
 	showVersion            = flag.Bool("version", false, "Print version.")
 )
@@ -83,6 +84,12 @@ func main() {
 
 	if *showVersion {
 		printVersion()
+		return
+	}
+	if *generateMode {
+		if err := runGenerateMode(flag.Args()); err != nil {
+			log.Fatalf("Generate mode failed: %v", err)
+		}
 		return
 	}
 
@@ -889,9 +896,22 @@ func createPackageMap(importPaths []string) map[string]string {
 		ImportPath string
 	}
 	pkgMap := make(map[string]string)
+	var missing []string
+	for _, importPath := range importPaths {
+		if packageNameCache != nil {
+			if name, ok := packageNameCache[importPath]; ok {
+				pkgMap[importPath] = name
+				continue
+			}
+		}
+		missing = append(missing, importPath)
+	}
+	if len(missing) == 0 {
+		return pkgMap
+	}
 	b := bytes.NewBuffer(nil)
 	args := []string{"list", "-json=ImportPath,Name"}
-	args = append(args, importPaths...)
+	args = append(args, missing...)
 	cmd := exec.Command("go", args...)
 	cmd.Stdout = b
 	cmd.Run()
@@ -903,6 +923,9 @@ func createPackageMap(importPaths []string) map[string]string {
 			continue
 		}
 		pkgMap[pkg.ImportPath] = pkg.Name
+		if packageNameCache != nil {
+			packageNameCache[pkg.ImportPath] = pkg.Name
+		}
 	}
 	return pkgMap
 }
