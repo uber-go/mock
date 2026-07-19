@@ -108,12 +108,12 @@ func discoverGenerateTargets(root string, patterns []string) ([]generateTargetDi
 		patterns = []string{"."}
 	}
 
-	args := append([]string{"list", "-json=Dir,Name,GoFiles,TestGoFiles"}, patterns...)
+	args := append([]string{"list", "-e", "-json=Dir,Name,GoFiles,TestGoFiles"}, patterns...)
 	cmd := exec.Command("go", args...)
 	cmd.Dir = root
-	out, err := cmd.Output()
+	out, err := cmd.CombinedOutput()
 	if err != nil {
-		return nil, fmt.Errorf("go list generate packages: %w", err)
+		return nil, fmt.Errorf("go list generate packages: %w\n%s", err, out)
 	}
 
 	dec := json.NewDecoder(bytes.NewReader(out))
