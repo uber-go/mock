@@ -498,7 +498,12 @@ func (c *Call) addAction(action func([]any) []any) {
 }
 
 func formatGottenArg(m Matcher, arg any) string {
-	got := fmt.Sprintf("%v (%T)", arg, arg)
+	var got string
+	if v := reflect.ValueOf(arg); v.Kind() == reflect.Slice && v.IsNil() {
+		got = fmt.Sprintf("nil (%T)", arg)
+	} else {
+		got = fmt.Sprintf("%v (%T)", arg, arg)
+	}
 	if gs, ok := m.(GotFormatter); ok {
 		got = gs.Got(arg)
 	}
