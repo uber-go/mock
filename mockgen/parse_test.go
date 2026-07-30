@@ -107,6 +107,17 @@ func checkGreeterImports(t *testing.T, imports map[string]importedPackage) {
 	}
 }
 
+func TestParseSourceWithAliasedImportInEmbeddedInterfacePackage(t *testing.T) {
+	// Regression test for #254. Source mode must resolve an embedded interface
+	// whose package aliases an import in an alphabetically-later file. Merging
+	// the package's files drops the alias, so parsing used to fail with
+	// `unknown package`.
+	_, err := sourceMode("internal/tests/aliased_embedded_interface/source.go")
+	if err != nil {
+		t.Fatalf("Unexpected error: %v", err)
+	}
+}
+
 func Benchmark_parseFile(b *testing.B) {
 	source := "internal/tests/performance/big_interface/big_interface.go"
 	for n := 0; n < b.N; n++ {
