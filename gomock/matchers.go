@@ -33,7 +33,7 @@ type Matcher interface {
 
 // WantFormatter modifies the given Matcher's String() method to the given
 // Stringer. This allows for control on how the "Want" is formatted when
-// printing .
+// printing failure messages.
 func WantFormatter(s fmt.Stringer, m Matcher) Matcher {
 	type matcher interface {
 		Matches(x any) bool
