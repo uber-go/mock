@@ -268,6 +268,29 @@ func (p *fileParser) parseFile(importPath string, file *ast.File) (*model.Packag
 		delete(p.includeNamesSet, name)
 	}
 
+
+	for signature := range iterSignatures(file) {
+		name := signature.name.String()
+		if _, ok := p.excludeNamesSet[name]; ok {
+			continue
+		}
+
+		// All signatures are included if no filter was specified.
+		if len(p.includeNamesSet) > 0 {
+			if _, ok := p.includeNamesSet[name]; !ok {
+				continue
+			}
+		}
+
+		i, err := p.parseSignature(name, importPath, signature)
+		if err != nil {
+			return nil, fmt.Errorf("parsing signature %s: %w", name, err)
+		}
+
+		is = append(is, i)
+		delete(p.includeNamesSet, name)
+	}
+
 	return &model.Package{
 		Name:       file.Name.String(),
 		PkgPath:    importPath,
@@ -345,6 +368,21 @@ func (p *fileParser) constructTps(it *namedInterface) (tps map[string]model.Type
 			tps[tm.Name] = nil
 			if len(it.instTypes) != 0 {
 				tps[tm.Name] = it.instTypes[n]
+				n++
+			}
+		}
+	}
+	return tps
+}
+
+func (p *fileParser) constructTpsForSignature(signature *namedSignature) (tps map[string]model.Type) {
+	tps = make(map[string]model.Type)
+	n := 0
+	for _, tp := range signature.typeParams {
+		for _, tm := range tp.Names {
+			tps[tm.Name] = nil
+			if len(signature.instTypes) != 0 {
+				tps[tm.Name] = signature.instTypes[n]
 				n++
 			}
 		}
@@ -489,6 +527,33 @@ func (p *fileParser) parseMethod(field *ast.Field, it *namedInterface, iface *mo
 			return p.parseGenericMethod(field, it, iface, pkg, tps)
 		}
 	}
+}
+
+// parseSignature parses the signature and returns it as an interface with the Execute method
+func (p *fileParser) parseSignature(name, pkg string, signature *namedSignature) (*model.Interface, error) {
+	tps := p.constructTpsForSignature(signature)
+	typeParams, err := p.parseFieldList(pkg, signature.typeParams, tps)
+	if err != nil {
+		return nil, fmt.Errorf("parsing type params: %w", err)
+	}
+
+	in, variadic, out, err := p.parseFunc(pkg, signature.funcType, tps)
+	if err != nil {
+		return nil, fmt.Errorf("func parsing: %w", err)
+	}
+
+	return &model.Interface{
+		Name: name,
+		Methods: []*model.Method{
+			{
+				Name:     "Execute",
+				In:       in,
+				Out:      out,
+				Variadic: variadic,
+			},
+		},
+		TypeParams: typeParams,
+	}, nil
 }
 
 func (p *fileParser) parseFunc(pkg string, f *ast.FuncType, tps map[string]model.Type) (inParam []*model.Parameter, variadic *model.Parameter, outParam []*model.Parameter, err error) {
@@ -788,6 +853,41 @@ func iterInterfaces(file *ast.File) <-chan *namedInterface {
 				}
 
 				ch <- &namedInterface{name: ts.Name, it: it, typeParams: getTypeSpecTypeParams(ts)}
+			}
+		}
+		close(ch)
+	}()
+	return ch
+}
+
+type namedSignature struct {
+	name                   *ast.Ident
+	funcType               *ast.FuncType
+	typeParams             []*ast.Field
+	embeddedInstTypeParams []ast.Expr
+	instTypes              []model.Type
+}
+
+func iterSignatures(file *ast.File) <-chan *namedSignature {
+	ch := make(chan *namedSignature)
+	go func() {
+		for _, decl := range file.Decls {
+			gd, ok := decl.(*ast.GenDecl)
+			if !ok || gd.Tok != token.TYPE {
+				continue
+			}
+			for _, spec := range gd.Specs {
+				ts, ok := spec.(*ast.TypeSpec)
+				if !ok {
+					continue
+				}
+
+				funcType, ok := ts.Type.(*ast.FuncType)
+				if !ok {
+					continue
+				}
+
+				ch <- &namedSignature{name: ts.Name, funcType: funcType, typeParams: getTypeSpecTypeParams(ts)}
 			}
 		}
 		close(ch)
