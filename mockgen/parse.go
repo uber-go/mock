@@ -299,9 +299,15 @@ func (p *fileParser) parsePackage(path string) (*fileParser, error) {
 		for ni := range iterInterfaces(file) {
 			newP.importedInterfaces.Set(path, ni.name.Name, ni)
 		}
-		imports, _ := importsOfFile(file)
-		for pkgName, pkgI := range imports {
-			newP.imports[pkgName] = pkgI
+		// Collect imports from each file rather than the merged file:
+		// FilterImportDuplicates dedupes imports by path, which drops an alias
+		// that only appears in one file and makes it look like an unknown
+		// package during type resolution (#254).
+		for _, f := range pkg.Files {
+			imports, _ := importsOfFile(f)
+			for pkgName, pkgI := range imports {
+				newP.imports[pkgName] = pkgI
+			}
 		}
 	}
 	return newP, nil
