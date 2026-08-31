@@ -467,3 +467,95 @@ func TestParseExcludeInterfaces(t *testing.T) {
 		})
 	}
 }
+
+func TestGetGenerateDirective(t *testing.T) {
+	// Setup a temporary file that acts as our GOFILE
+	tmpDir := t.TempDir()
+	tmpFile, err := os.Create(filepath.Join(tmpDir, "gofile.go"))
+	if err != nil {
+		t.Fatalf("failed to create temp file: %v", err)
+	}
+
+	content := `package main
+
+//go:generate mockgen -destination=mock.go . MyInterface
+//go:generate go tool mockgen -destination=mock2.go . MyOtherInterface
+//go:generate    mockgen   -destination=mock3.go . SpacedInterface
+	//go:generate mockgen indented
+func main() {}
+`
+	if _, err := tmpFile.WriteString(content); err != nil {
+		t.Fatalf("failed to write to temp file: %v", err)
+	}
+	tmpFile.Close()
+
+	osArgs := []string{"mockgen", "-destination=mock.go", ".", "MyInterface"}
+
+	testCases := []struct {
+		name     string
+		gofile   string
+		goline   string
+		progName string
+		expected string
+	}{
+		{
+			name:     "no env vars",
+			gofile:   "",
+			goline:   "",
+			expected: "//go:generate mockgen -destination=mock.go . MyInterface",
+		},
+		{
+			name:     "with progName",
+			gofile:   "",
+			goline:   "",
+			progName: "go tool mockgen",
+			expected: "//go:generate go tool mockgen -destination=mock.go . MyInterface",
+		},
+		{
+			name:     "line 1 (not a generate directive)",
+			gofile:   tmpFile.Name(),
+			goline:   "1",
+			expected: "//go:generate mockgen -destination=mock.go . MyInterface",
+		},
+		{
+			name:     "line 3 (standard mockgen)",
+			gofile:   tmpFile.Name(),
+			goline:   "3",
+			expected: "//go:generate mockgen -destination=mock.go . MyInterface",
+		},
+		{
+			name:     "line 4 (go tool mockgen)",
+			gofile:   tmpFile.Name(),
+			goline:   "4",
+			expected: "//go:generate go tool mockgen -destination=mock2.go . MyOtherInterface",
+		},
+		{
+			name:     "line 5 (spaced)",
+			gofile:   tmpFile.Name(),
+			goline:   "5",
+			expected: "//go:generate    mockgen   -destination=mock3.go . SpacedInterface",
+		},
+		{
+			name:     "line 6 (indented)",
+			gofile:   tmpFile.Name(),
+			goline:   "6",
+			expected: "//go:generate mockgen indented",
+		},
+		{
+			name:     "out of bounds line",
+			gofile:   tmpFile.Name(),
+			goline:   "100",
+			expected: "//go:generate mockgen -destination=mock.go . MyInterface",
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			actual := getGenerateDirective(tc.progName, tc.gofile, tc.goline, osArgs)
+			if actual != tc.expected {
+				t.Errorf("expected %q, got %q", tc.expected, actual)
+			}
+		})
+	}
+}
