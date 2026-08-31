@@ -38,6 +38,17 @@ import (
 
 // sourceMode generates mocks via source file.
 func sourceMode(source string) (*model.Package, error) {
+	if flag.NArg() > 1 {
+		return nil, errors.New("-source mode accepts at most one argument")
+	}
+	var includeNames []string
+	if flag.NArg() == 1 {
+		includeNames = strings.Split(flag.Arg(0), ",")
+	}
+	return sourceModeWithOptions(source, *imports, *auxFiles, *excludeInterfaces, includeNames)
+}
+
+func sourceModeWithOptions(source, importsFlag, auxFilesFlag, excludeInterfacesFlag string, includeNames []string) (*model.Package, error) {
 	srcDir, err := filepath.Abs(filepath.Dir(source))
 	if err != nil {
 		return nil, fmt.Errorf("failed getting source directory: %v", err)
@@ -63,21 +74,17 @@ func sourceMode(source string) (*model.Package, error) {
 	}
 
 	// positional interface names -> include set
-	if flag.NArg() > 1 {
-		return nil, errors.New("-source mode accepts at most one argument")
-	}
-	if flag.NArg() == 1 {
-		ifaces := strings.Split(flag.Arg(0), ",")
-		p.includeNamesSet = make(map[string]struct{}, len(ifaces))
-		for _, name := range ifaces {
+	if len(includeNames) > 0 {
+		p.includeNamesSet = make(map[string]struct{}, len(includeNames))
+		for _, name := range includeNames {
 			p.includeNamesSet[name] = struct{}{}
 		}
 	}
 
 	// Handle -imports.
 	dotImports := make(map[string]bool)
-	if *imports != "" {
-		for _, kv := range strings.Split(*imports, ",") {
+	if importsFlag != "" {
+		for _, kv := range strings.Split(importsFlag, ",") {
 			eq := strings.Index(kv, "=")
 			k, v := kv[:eq], kv[eq+1:]
 			if k == "." {
@@ -88,12 +95,12 @@ func sourceMode(source string) (*model.Package, error) {
 		}
 	}
 
-	if *excludeInterfaces != "" {
-		p.excludeNamesSet = parseExcludeInterfaces(*excludeInterfaces)
+	if excludeInterfacesFlag != "" {
+		p.excludeNamesSet = parseExcludeInterfaces(excludeInterfacesFlag)
 	}
 
 	// Handle -aux_files.
-	if err := p.parseAuxFiles(*auxFiles); err != nil {
+	if err := p.parseAuxFiles(auxFilesFlag); err != nil {
 		return nil, err
 	}
 	p.addAuxInterfacesFromFile(packageImport, file) // this file

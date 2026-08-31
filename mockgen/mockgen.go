@@ -24,6 +24,7 @@ import (
 	"errors"
 	"flag"
 	"fmt"
+	"go/format"
 	"go/token"
 	"io"
 	"log"
@@ -37,10 +38,8 @@ import (
 	"strings"
 	"unicode"
 
-	"golang.org/x/mod/modfile"
-	toolsimports "golang.org/x/tools/imports"
-
 	"go.uber.org/mock/mockgen/model"
+	"golang.org/x/mod/modfile"
 )
 
 const (
@@ -71,6 +70,7 @@ var (
 	auxFiles               = flag.String("aux_files", "", "(source mode) Comma-separated pkg=path pairs of auxiliary Go source files.")
 	modelGob               = flag.String("model_gob", "", "Skip package/source loading entirely and use the gob encoded model.Package at the given path")
 	excludeInterfaces      = flag.String("exclude_interfaces", "", "Comma-separated names of interfaces to be excluded")
+	generateMode           = flag.Bool("generate", false, "Discover and run //go:generate mockgen directives for the given package patterns in one mockgen process")
 	debugParser            = flag.Bool("debug_parser", false, "Print out parser results only.")
 	showVersion            = flag.Bool("version", false, "Print version.")
 )
@@ -83,6 +83,12 @@ func main() {
 
 	if *showVersion {
 		printVersion()
+		return
+	}
+	if *generateMode {
+		if err := runGenerateMode(flag.Args()); err != nil {
+			log.Fatalf("Generate mode failed: %v", err)
+		}
 		return
 	}
 
@@ -383,7 +389,9 @@ func (g *generator) Generate(pkg *model.Package, outputPkgName string, outputPac
 
 	// Get all required imports, and generate unique names for them all.
 	im := pkg.Imports()
-	im[gomockImportPath] = true
+	if len(pkg.Interfaces) > 0 {
+		im[gomockImportPath] = true
+	}
 
 	// Only import reflect if it's used. We only use reflect in mocked methods
 	// so only import if any of the mocked interfaces have methods.
@@ -460,19 +468,20 @@ func (g *generator) Generate(pkg *model.Package, outputPkgName string, outputPac
 	}
 	g.p("package %v", outputPkgName)
 	g.p("")
-	g.p("import (")
-	g.in()
-	for pkgPath, pkgName := range g.packageMap {
-		if pkgPath == outputPackagePath {
-			continue
+	importSpecs := sortedImportSpecs(g.packageMap, pkg.DotImports, outputPackagePath)
+	if len(importSpecs) > 0 {
+		g.p("import (")
+		g.in()
+		for i, spec := range importSpecs {
+			if i > 0 && spec.group != importSpecs[i-1].group {
+				g.p("")
+			}
+			g.p("%v %q", spec.name, spec.path)
 		}
-		g.p("%v %q", pkgName, pkgPath)
+		g.out()
+		g.p(")")
+		g.p("")
 	}
-	for _, pkgPath := range pkg.DotImports {
-		g.p(". %q", pkgPath)
-	}
-	g.out()
-	g.p(")")
 
 	if *writeGenerateDirective {
 		g.p("//go:generate %v", strings.Join(os.Args, " "))
@@ -485,6 +494,40 @@ func (g *generator) Generate(pkg *model.Package, outputPkgName string, outputPac
 	}
 
 	return nil
+}
+
+type importSpec struct {
+	name  string
+	path  string
+	group int
+}
+
+func sortedImportSpecs(packageMap map[string]string, dotImports []string, outputPackagePath string) []importSpec {
+	specs := make([]importSpec, 0, len(packageMap)+len(dotImports))
+	for pkgPath, pkgName := range packageMap {
+		if pkgPath == outputPackagePath {
+			continue
+		}
+		specs = append(specs, importSpec{name: pkgName, path: pkgPath, group: importGroup(pkgPath)})
+	}
+	for _, pkgPath := range dotImports {
+		specs = append(specs, importSpec{name: ".", path: pkgPath, group: importGroup(pkgPath)})
+	}
+	sort.Slice(specs, func(i, j int) bool {
+		if specs[i].group != specs[j].group {
+			return specs[i].group < specs[j].group
+		}
+		return specs[i].path < specs[j].path
+	})
+	return specs
+}
+
+func importGroup(importPath string) int {
+	firstComponent := strings.Split(importPath, "/")[0]
+	if !strings.Contains(firstComponent, ".") {
+		return 0
+	}
+	return 1
 }
 
 // The name of the mock type to use for the given interface identifier.
@@ -874,7 +917,7 @@ func (o identifierAllocator) allocateIdentifier(want string) string {
 
 // Output returns the generator's output, formatted in the standard Go style.
 func (g *generator) Output() []byte {
-	src, err := toolsimports.Process(g.destination, g.buf.Bytes(), nil)
+	src, err := format.Source(g.buf.Bytes())
 	if err != nil {
 		log.Fatalf("Failed to format generated source code: %s\n%s", err, g.buf.String())
 	}
@@ -884,6 +927,37 @@ func (g *generator) Output() []byte {
 // createPackageMap returns a map of import path to package name
 // for specified importPaths.
 func createPackageMap(importPaths []string) map[string]string {
+	pkgMap := make(map[string]string)
+	var missing []string
+	for _, importPath := range importPaths {
+		if packageNameCache != nil {
+			if name, ok := packageNameCache[importPath]; ok {
+				pkgMap[importPath] = name
+				continue
+			}
+		}
+		missing = append(missing, importPath)
+	}
+	if len(missing) == 0 {
+		return pkgMap
+	}
+	const maxGoListImportPaths = 100
+	for start := 0; start < len(missing); start += maxGoListImportPaths {
+		end := start + maxGoListImportPaths
+		if end > len(missing) {
+			end = len(missing)
+		}
+		for importPath, name := range createPackageMapChunk(missing[start:end]) {
+			pkgMap[importPath] = name
+			if packageNameCache != nil {
+				packageNameCache[importPath] = name
+			}
+		}
+	}
+	return pkgMap
+}
+
+func createPackageMapChunk(importPaths []string) map[string]string {
 	var pkg struct {
 		Name       string
 		ImportPath string
