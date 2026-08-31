@@ -6,7 +6,7 @@ import (
 )
 
 // getString is a safe way to convert a value to a string for printing results
-// If the value is a a mock, getString avoids calling the mocked String() method,
+// If the value is a mock, getString avoids calling the mocked String() method,
 // which avoids potential deadlocks
 func getString(x any) string {
 	if isGeneratedMock(x) {
