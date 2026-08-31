@@ -874,7 +874,15 @@ func (o identifierAllocator) allocateIdentifier(want string) string {
 
 // Output returns the generator's output, formatted in the standard Go style.
 func (g *generator) Output() []byte {
-	src, err := toolsimports.Process(g.destination, g.buf.Bytes(), nil)
+	// FormatOnly keeps formatting hermetic: mockgen already emits a complete,
+	// self-consistent import set, so goimports' add/remove pass (which shells
+	// out to `go` and breaks in Buck/Bazel) is unnecessary.
+	src, err := toolsimports.Process(g.destination, g.buf.Bytes(), &toolsimports.Options{
+		Comments:   true,
+		TabIndent:  true,
+		TabWidth:   8,
+		FormatOnly: true,
+	})
 	if err != nil {
 		log.Fatalf("Failed to format generated source code: %s\n%s", err, g.buf.String())
 	}
