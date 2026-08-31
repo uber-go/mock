@@ -159,6 +159,8 @@ func (s *Subject) ActOnTestStructMethod(arg TestStruct, arg1 int) int {
 
 func (s *Subject) SetArgMethod(sliceArg []byte, ptrArg *int, mapArg map[any]any) {}
 func (s *Subject) SetArgMethodInterface(sliceArg, ptrArg, mapArg any)            {}
+func (s *Subject) SliceArgMethod(arg []byte)                                    {}
+func (s *Subject) SliceOfArraysMethod(arg [][32]byte)                           {}
 
 func assertEqual(t *testing.T, expected any, actual any) {
 	if !reflect.DeepEqual(expected, actual) {
@@ -620,6 +622,48 @@ func TestSetArgPtr(t *testing.T) {
 	if in != set {
 		t.Error("Expected SetArg() to modify value pointed to by argument as any")
 	}
+}
+
+func TestNilSliceVsEmptySlice(t *testing.T) {
+	reporter, ctrl := createFixtures(t)
+	defer reporter.recoverUnexpectedFatal()
+	subject := new(Subject)
+
+	ctrl.RecordCall(subject, "SliceArgMethod", []byte{})
+
+	var nilSlice []byte
+	reporter.assertFatal(func() {
+		// Calling with a nil slice should fail, but error message should clearly
+		// distinguish nil from empty slice (issue #69).
+		ctrl.Call(subject, "SliceArgMethod", nilSlice)
+	}, "Unexpected call to", "doesn't match the argument at index 0",
+		"Got: nil ([]uint8)\nWant: is equal to [] ([]uint8)")
+
+	reporter.assertFatal(func() {
+		// The expected call wasn't made.
+		ctrl.Finish()
+	})
+}
+
+func TestNilSliceOfArraysVsEmpty(t *testing.T) {
+	reporter, ctrl := createFixtures(t)
+	defer reporter.recoverUnexpectedFatal()
+	subject := new(Subject)
+
+	ctrl.RecordCall(subject, "SliceOfArraysMethod", [][32]byte{})
+
+	var nilSlice [][32]byte
+	reporter.assertFatal(func() {
+		// Reproduce the exact scenario from issue #69: nil vs empty [][32]byte.
+		// Before the fix, both would show as "[]" making them indistinguishable.
+		ctrl.Call(subject, "SliceOfArraysMethod", nilSlice)
+	}, "Unexpected call to", "doesn't match the argument at index 0",
+		"Got: nil ([][32]uint8)\nWant: is equal to [] ([][32]uint8)")
+
+	reporter.assertFatal(func() {
+		// The expected call wasn't made.
+		ctrl.Finish()
+	})
 }
 
 func TestReturn(t *testing.T) {
