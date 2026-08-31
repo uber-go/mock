@@ -8,6 +8,39 @@ import (
 	"go.uber.org/mock/mockgen/model"
 )
 
+// Test_packageModeParser_parsePackage_resolvesPackageNames: parsePackage returns
+// real export-data names for the name≠basename case (client/v1 is package "client").
+func Test_packageModeParser_parsePackage_resolvesPackageNames(t *testing.T) {
+	parser := packageModeParser{}
+	_, importNames, err := parser.parsePackage(
+		"go.uber.org/mock/mockgen/internal/tests/custom_package_name/greeter",
+		[]string{"InputMaker"},
+	)
+	require.NoError(t, err)
+
+	const clientV1 = "go.uber.org/mock/mockgen/internal/tests/custom_package_name/client/v1"
+	assert.Equal(t, "client", importNames[clientV1],
+		"parseExportFile must resolve the real package name from export data, not the path basename")
+}
+
+// Test_packageMode_endToEnd_importAliasing feeds the real parsePackage name map
+// into Generate and checks the emitted alias is "client", not basename "v1".
+func Test_packageMode_endToEnd_importAliasing(t *testing.T) {
+	parser := packageModeParser{}
+	pkg, importNames, err := parser.parsePackage(
+		"go.uber.org/mock/mockgen/internal/tests/custom_package_name/greeter",
+		[]string{"InputMaker"},
+	)
+	require.NoError(t, err)
+
+	g := &generator{importNames: importNames}
+	require.NoError(t, g.Generate(pkg, "mock_greeter", ""))
+
+	assert.Contains(t, g.buf.String(),
+		`client "go.uber.org/mock/mockgen/internal/tests/custom_package_name/client/v1"`,
+		"real export-data name map must flow into Generate and alias .../client/v1 as package \"client\"")
+}
+
 func Test_packageModeParser_parsePackage(t *testing.T) {
 	type args struct {
 		packageName string
@@ -360,7 +393,7 @@ func Test_packageModeParser_parsePackage(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			parser := packageModeParser{}
-			actual, err := parser.parsePackage(tt.args.packageName, tt.args.ifaces)
+			actual, _, err := parser.parsePackage(tt.args.packageName, tt.args.ifaces)
 
 			if tt.expectedErr != "" {
 				assert.ErrorContains(t, err, tt.expectedErr)
@@ -389,7 +422,7 @@ func Test_packageModeParser_parsePackage(t *testing.T) {
 		}
 
 		parser := packageModeParser{}
-		actual, err := parser.parsePackage(expected.PkgPath, []string{})
+		actual, _, err := parser.parsePackage(expected.PkgPath, []string{})
 		require.NoError(t, err)
 		require.NotNil(t, actual)
 		assert.Equal(t, expected.Name, actual.Name)
@@ -544,7 +577,7 @@ func TestAliases(t *testing.T) {
 	} {
 		t.Run(tt.desc, func(t *testing.T) {
 			var parser packageModeParser
-			actual, err := parser.parsePackage(packageName, []string{tt.iface})
+			actual, _, err := parser.parsePackage(packageName, []string{tt.iface})
 			require.NoError(t, err)
 			require.NotNil(t, actual)
 			require.Len(t, actual.Interfaces, 1)

@@ -27,11 +27,13 @@ import (
 	"go/token"
 	"io"
 	"log"
+	"maps"
 	"os"
 	"os/exec"
 	"path"
 	"path/filepath"
 	"runtime"
+	"slices"
 	"sort"
 	"strconv"
 	"strings"
@@ -89,13 +91,14 @@ func main() {
 	var pkg *model.Package
 	var err error
 	var packageName string
+	var importNames map[string]string
 
 	// Switch between modes
 	switch {
 	case *modelGob != "": // gob mode
-		pkg, err = gobMode(*modelGob)
+		pkg, importNames, err = gobMode(*modelGob)
 	case *source != "": // source mode
-		pkg, err = sourceMode(*source)
+		pkg, importNames, err = sourceMode(*source)
 	case *archive != "": // archive mode
 		checkArgsArchive()
 		packageName = flag.Arg(0)
@@ -104,7 +107,7 @@ func main() {
 			interfaces = strings.Split(flag.Arg(1), ",")
 		}
 		// If no interfaces specified, parseExportFile will discover all interfaces
-		pkg, err = parseExportFile(packageName, interfaces, *archive)
+		pkg, importNames, err = parseExportFile(packageName, interfaces, *archive)
 
 	default: // package mode
 		checkArgsPackage()
@@ -123,7 +126,7 @@ func main() {
 
 		}
 		parser := packageModeParser{}
-		pkg, err = parser.parsePackage(packageName, interfaces)
+		pkg, importNames, err = parser.parsePackage(packageName, interfaces)
 	}
 
 	if err != nil {
@@ -165,6 +168,7 @@ func main() {
 
 	g := &generator{
 		buildConstraint: *buildConstraint,
+		importNames:     importNames,
 	}
 	if *source != "" {
 		g.filename = *source
@@ -300,7 +304,12 @@ type generator struct {
 	copyrightHeader           string
 	buildConstraint           string // may be empty
 
-	packageMap map[string]string // map from import path to package name
+	// packageMap maps import path to the unique local alias emitted in the
+	// generated code; it is derived from importNames.
+	packageMap map[string]string
+
+	// importNames maps import path to package name, as provided by the caller.
+	importNames map[string]string
 }
 
 func (g *generator) p(format string, args ...any) {
@@ -403,8 +412,6 @@ func (g *generator) Generate(pkg *model.Package, outputPkgName string, outputPac
 	}
 	sort.Strings(sortedPaths)
 
-	packagesName := createPackageMap(sortedPaths)
-
 	definedImports := make(map[string]string, len(im))
 	if *imports != "" {
 		for _, kv := range strings.Split(*imports, ",") {
@@ -418,7 +425,7 @@ func (g *generator) Generate(pkg *model.Package, outputPkgName string, outputPac
 	g.packageMap = make(map[string]string, len(im))
 	localNames := make(map[string]bool, len(im))
 	for _, pth := range sortedPaths {
-		base, ok := packagesName[pth]
+		base, ok := g.importNames[pth]
 		if !ok {
 			base = sanitize(path.Base(pth))
 		}
@@ -881,30 +888,47 @@ func (g *generator) Output() []byte {
 	return src
 }
 
-// createPackageMap returns a map of import path to package name
-// for specified importPaths.
-func createPackageMap(importPaths []string) map[string]string {
-	var pkg struct {
-		Name       string
-		ImportPath string
+// resolveImportNames resolves pkg's imports to package names via `go list`
+// (source and gob modes). Returns nil for no imports, so `go list` isn't run empty.
+func resolveImportNames(pkg *model.Package) (map[string]string, error) {
+	importSet := pkg.Imports()
+	if len(importSet) == 0 {
+		return nil, nil
 	}
-	pkgMap := make(map[string]string)
-	b := bytes.NewBuffer(nil)
-	args := []string{"list", "-json=ImportPath,Name"}
-	args = append(args, importPaths...)
+	return goListImportNames(slices.Collect(maps.Keys(importSet)))
+}
+
+// goListImportNames resolves import paths to package names via `go list -e`.
+// Unresolvable imports are dropped (callers fall back to the basename); only a
+// `go list` invocation failure returns an error.
+func goListImportNames(importPaths []string) (map[string]string, error) {
+	var stdout, stderr bytes.Buffer
+	args := append([]string{"list", "-e", "-json=ImportPath,Name"}, importPaths...)
 	cmd := exec.Command("go", args...)
-	cmd.Stdout = b
-	cmd.Run()
-	dec := json.NewDecoder(b)
-	for dec.More() {
-		err := dec.Decode(&pkg)
-		if err != nil {
-			log.Printf("failed to decode 'go list' output: %v", err)
-			continue
+	cmd.Stdout = &stdout
+	cmd.Stderr = &stderr
+	if err := cmd.Run(); err != nil {
+		if msg := strings.TrimSpace(stderr.String()); msg != "" {
+			return nil, fmt.Errorf("go list: %w: %s", err, msg)
 		}
-		pkgMap[pkg.ImportPath] = pkg.Name
+		return nil, fmt.Errorf("go list: %w", err)
 	}
-	return pkgMap
+	names := make(map[string]string)
+	dec := json.NewDecoder(&stdout)
+	for dec.More() {
+		// Fresh per iteration: json.Decode won't clear a Name absent under -e.
+		var pkg struct {
+			Name       string
+			ImportPath string
+		}
+		if err := dec.Decode(&pkg); err != nil {
+			return nil, fmt.Errorf("decoding 'go list' output: %w", err)
+		}
+		if pkg.Name != "" {
+			names[pkg.ImportPath] = pkg.Name
+		}
+	}
+	return names, nil
 }
 
 func printVersion() {

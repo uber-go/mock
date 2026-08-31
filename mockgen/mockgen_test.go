@@ -340,7 +340,7 @@ func TestGetArgNames(t *testing.T) {
 	}
 }
 
-func Test_createPackageMap(t *testing.T) {
+func Test_goListImportNames(t *testing.T) {
 	tests := []struct {
 		name            string
 		importPath      string
@@ -349,22 +349,93 @@ func Test_createPackageMap(t *testing.T) {
 	}{
 		{"golang package", "context", "context", true},
 		{"third party", "golang.org/x/tools/present", "present", true},
+		// Unresolvable: must be dropped, not inherit the previous entry's name.
+		{"unresolvable omitted", "go.uber.org/mock/mockgen/internal/does_not_exist_xyz", "", false},
 	}
 	var importPaths []string
 	for _, t := range tests {
 		importPaths = append(importPaths, t.importPath)
 	}
-	packages := createPackageMap(importPaths)
+	packages, err := goListImportNames(importPaths)
+	if err != nil {
+		t.Fatalf("goListImportNames() error = %v", err)
+	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			gotPackageName, gotOk := packages[tt.importPath]
 			if gotPackageName != tt.wantPackageName {
-				t.Errorf("createPackageMap() gotPackageName = %v, wantPackageName = %v", gotPackageName, tt.wantPackageName)
+				t.Errorf("goListImportNames() gotPackageName = %v, wantPackageName = %v", gotPackageName, tt.wantPackageName)
 			}
 			if gotOk != tt.wantOK {
-				t.Errorf("createPackageMap() gotOk = %v, wantOK = %v", gotOk, tt.wantOK)
+				t.Errorf("goListImportNames() gotOk = %v, wantOK = %v", gotOk, tt.wantOK)
 			}
 		})
+	}
+}
+
+func Test_resolveImportNames(t *testing.T) {
+	// No imports must not run `go list` (with no args it lists the cwd package).
+	empty := &model.Package{Interfaces: []*model.Interface{{Name: "Empty"}}}
+	names, err := resolveImportNames(empty)
+	if err != nil {
+		t.Fatalf("resolveImportNames(no imports) error = %v", err)
+	}
+	if names != nil {
+		t.Errorf("resolveImportNames(no imports) = %v, want nil", names)
+	}
+
+	withImport := &model.Package{Interfaces: []*model.Interface{{
+		Name: "I",
+		Methods: []*model.Method{{
+			Name: "M",
+			In:   []*model.Parameter{{Type: &model.NamedType{Package: "time", Type: "Duration"}}},
+		}},
+	}}}
+	names, err = resolveImportNames(withImport)
+	if err != nil {
+		t.Fatalf("resolveImportNames() error = %v", err)
+	}
+	if names["time"] != "time" {
+		t.Errorf(`resolveImportNames()["time"] = %q, want "time"`, names["time"])
+	}
+}
+
+// Test_Generate_usesPreResolvedPackageNames: Generate aliases imports from
+// g.importNames — path basename "v2" but alias "bar" proves the map is used.
+func Test_Generate_usesPreResolvedPackageNames(t *testing.T) {
+	pkg := &model.Package{
+		Name:    "greeter",
+		PkgPath: "example.com/greeter",
+		Interfaces: []*model.Interface{
+			{
+				Name: "Greeter",
+				Methods: []*model.Method{
+					{
+						Name: "Greet",
+						Out: []*model.Parameter{
+							{Type: &model.NamedType{Package: "example.com/foo/v2", Type: "Message"}},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	g := &generator{
+		importNames: map[string]string{
+			"example.com/foo/v2": "bar",
+		},
+	}
+	if err := g.Generate(pkg, "mock_greeter", ""); err != nil {
+		t.Fatalf("Generate() error = %v", err)
+	}
+
+	out := g.buf.String()
+	if !strings.Contains(out, `bar "example.com/foo/v2"`) {
+		t.Errorf("expected import aliased to pre-resolved name %q, got:\n%s", "bar", out)
+	}
+	if strings.Contains(out, `v2 "example.com/foo/v2"`) {
+		t.Errorf("import fell back to path basename instead of pre-resolved name:\n%s", out)
 	}
 }
 

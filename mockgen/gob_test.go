@@ -14,7 +14,7 @@ func TestGobMode(t *testing.T) {
 
 	// Encode a package to a temporary gob.
 	parser := packageModeParser{}
-	want, err := parser.parsePackage(
+	want, _, err := parser.parsePackage(
 		"go.uber.org/mock/mockgen/internal/tests/package_mode", /* package name */
 		[]string{"Human", "Earth"},                             /* ifaces */
 	)
@@ -26,7 +26,7 @@ func TestGobMode(t *testing.T) {
 	outfile.Close()
 
 	// Ensure gobMode loads it correctly.
-	got, err := gobMode(path)
+	got, _, err := gobMode(path)
 	require.NoError(t, err)
 	assert.Equal(t, want, got)
 }

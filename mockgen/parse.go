@@ -37,21 +37,21 @@ import (
 )
 
 // sourceMode generates mocks via source file.
-func sourceMode(source string) (*model.Package, error) {
+func sourceMode(source string) (*model.Package, map[string]string, error) {
 	srcDir, err := filepath.Abs(filepath.Dir(source))
 	if err != nil {
-		return nil, fmt.Errorf("failed getting source directory: %v", err)
+		return nil, nil, fmt.Errorf("failed getting source directory: %v", err)
 	}
 
 	packageImport, err := parsePackageImport(srcDir)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	fs := token.NewFileSet()
 	file, err := parser.ParseFile(fs, source, nil, 0)
 	if err != nil {
-		return nil, fmt.Errorf("failed parsing source file %v: %v", source, err)
+		return nil, nil, fmt.Errorf("failed parsing source file %v: %v", source, err)
 	}
 
 	p := &fileParser{
@@ -64,7 +64,7 @@ func sourceMode(source string) (*model.Package, error) {
 
 	// positional interface names -> include set
 	if flag.NArg() > 1 {
-		return nil, errors.New("-source mode accepts at most one argument")
+		return nil, nil, errors.New("-source mode accepts at most one argument")
 	}
 	if flag.NArg() == 1 {
 		ifaces := strings.Split(flag.Arg(0), ",")
@@ -94,19 +94,23 @@ func sourceMode(source string) (*model.Package, error) {
 
 	// Handle -aux_files.
 	if err := p.parseAuxFiles(*auxFiles); err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 	p.addAuxInterfacesFromFile(packageImport, file) // this file
 
 	pkg, err := p.parseFile(packageImport, file)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 	for pkgPath := range dotImports {
 		pkg.DotImports = append(pkg.DotImports, pkgPath)
 	}
 
-	return pkg, nil
+	importNames, err := resolveImportNames(pkg)
+	if err != nil {
+		return nil, nil, err
+	}
+	return pkg, importNames, nil
 }
 
 type importedPackage interface {
@@ -710,7 +714,11 @@ func importsOfFile(file *ast.File) (normalImports map[string]importedPackage, do
 		importPath := is.Path.Value[1 : len(is.Path.Value)-1] // remove quotes
 		importPaths = append(importPaths, importPath)
 	}
-	packagesName := createPackageMap(importPaths)
+	importNames, err := goListImportNames(importPaths)
+	if err != nil {
+		// Best-effort here: names fall back to import-path suffixes below.
+		log.Printf("failed to resolve import names via 'go list': %v", err)
+	}
 	normalImports = make(map[string]importedPackage)
 	dotImports = make([]string, 0)
 	for _, is := range file.Imports {
@@ -724,7 +732,7 @@ func importsOfFile(file *ast.File) (normalImports map[string]importedPackage, do
 			}
 			pkgName = is.Name.Name
 		} else {
-			pkg, ok := packagesName[importPath]
+			pkg, ok := importNames[importPath]
 			if !ok {
 				// Fallback to import path suffix. Note that this is uncertain.
 				_, last := path.Split(importPath)

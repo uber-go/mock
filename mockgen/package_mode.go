@@ -17,18 +17,20 @@ var (
 
 type packageModeParser struct{}
 
-func (p *packageModeParser) parsePackage(packageName string, ifaces []string) (*model.Package, error) {
+// parsePackage returns the package model and a map of import path to package
+// name from the loaded export data.
+func (p *packageModeParser) parsePackage(packageName string, ifaces []string) (*model.Package, map[string]string, error) {
 	pkg, err := p.loadPackage(packageName)
 	if err != nil {
-		return nil, fmt.Errorf("load package: %w", err)
+		return nil, nil, fmt.Errorf("load package: %w", err)
 	}
 
-	modelPackage, err := parseExportFile(packageName, ifaces, pkg.ExportFile)
+	modelPackage, importNames, err := parseExportFile(packageName, ifaces, pkg.ExportFile)
 	if err != nil {
-		return nil, fmt.Errorf("extract interfaces from package: %w", err)
+		return nil, nil, fmt.Errorf("extract interfaces from package: %w", err)
 	}
 
-	return modelPackage, nil
+	return modelPackage, importNames, nil
 }
 
 func (p *packageModeParser) loadPackage(packageName string) (*packages.Package, error) {
@@ -64,7 +66,7 @@ func (p *packageModeParser) loadPackage(packageName string) (*packages.Package, 
 
 func extractInterfacesFromPackageTypes(pkgTypes *types.Package, ifaces []string) ([]*model.Interface, error) {
 	// If no interfaces specified, discover all interfaces in the package
-	if len(ifaces) == 0  {
+	if len(ifaces) == 0 {
 		return getAllInterfacesFromPackageTypes(pkgTypes)
 	}
 	scope := pkgTypes.Scope()
