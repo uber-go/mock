@@ -99,6 +99,9 @@ var _ net.Addr
 // A function that we will test that uses the above interface.
 // It takes a list of keys and values, and puts them in the index.
 func Remember(index Index, keys []string, values []any) {
+	if len(keys) > len(values) {
+		return fmt.Errorf("The number of values is smaller than the number of keys")
+	}
 	for i, k := range keys {
 		index.Put(k, values[i])
 	}
