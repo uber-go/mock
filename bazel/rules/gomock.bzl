@@ -221,6 +221,7 @@ def gomock(name, out, library = None, source_importpath = "", source = None, int
             package = package,
             self_package = self_package,
             mockgen_tool = mockgen_tool,
+            mockgen_args = mockgen_args,
             copyright_file = copyright_file,
             mock_names = mock_names,
             **kwargs
@@ -238,6 +239,7 @@ def _gomock_archive_impl(ctx):
     args.add("-destination", ctx.outputs.out)
     args.add("-package", ctx.attr.package)
     args.add("-self_package", ctx.attr.self_package)
+    args.add_all(ctx.attr.mockgen_args)
     args.add(ctx.attr.library[GoInfo].importpath)
     args.add_joined(ctx.attr.interfaces, join_with = ",")
 
@@ -295,6 +297,10 @@ _gomock_archive = rule(
             default = Label("@com_github_golang_mock//mockgen"),
             executable = True,
             cfg = "exec",
+        ),
+        "mockgen_args": attr.string_list(
+            doc = "Additional arguments to pass to the mockgen tool",
+            mandatory = False,
         ),
         "use_underlying_names": attr.bool(
             doc = "Use alias underlying type names in generated mocks instead of the alias names directly",
