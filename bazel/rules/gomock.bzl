@@ -173,7 +173,7 @@ _gomock_source = rule(
     toolchains = [GO_TOOLCHAIN],
 )
 
-def gomock(name, out, library = None, source_importpath = "", source = None, interfaces = [], package = "", self_package = "", aux_files = {}, mockgen_tool = _MOCKGEN_TOOL, mockgen_args = [], imports = {}, copyright_file = None, mock_names = {}, **kwargs):
+def gomock(name, out="", library = None, source_importpath = "", source = None, interfaces = [], package = "", self_package = "", aux_files = {}, mockgen_tool = _MOCKGEN_TOOL, mockgen_args = [], imports = {}, copyright_file = None, mock_names = {}, **kwargs):
     """Calls [mockgen](https://github.com/uber-go/mock) to generates a Go file containing mocks from the given library.
 
     If `source` is given, the mocks are generated in source mode; otherwise in archive mode.
@@ -195,6 +195,8 @@ def gomock(name, out, library = None, source_importpath = "", source = None, int
         mock_names: dictionary of interface name to mock name pairs to change the output names of the mock objects. Mock names default to 'Mock' prepended to the name of the interface. See [mockgen's -mock_names](https://github.com/uber-go/mock#flags) for more information.
         kwargs: common attributes](https://bazel.build/reference/be/common-definitions#common-attributes) to all Bazel rules.
     """
+    if not out:
+        out = name + ".go"
     if source:
         _gomock_source(
             name = name,
