@@ -60,6 +60,31 @@ func TestCallSetAdd_WhenOverridable_ClearsPreviousExpectedAndExhausted(t *testin
 	}
 }
 
+func TestCallSetAdd_WhenOverridableArgsAware_ClearsPreviousExpectedAndExhausted(t *testing.T) {
+	method := "TestMethod"
+	var receiver any = "TestReceiver"
+	cs := newOverridableArgsAwareCallSet()
+
+	cs.Add(newCall(t, receiver, method, reflect.TypeOf(receiverType{}.Func), "foo"))
+	numExpectedCalls := len(cs.expected[callSetKey{receiver, method}])
+	if numExpectedCalls != 1 {
+		t.Fatalf("Expected 1 expected call in callset, got %d", numExpectedCalls)
+	}
+
+	cs.Add(newCall(t, receiver, method, reflect.TypeOf(receiverType{}.Func), "bar"))
+	numExpectedCalls = len(cs.expected[callSetKey{receiver, method}])
+	if numExpectedCalls != 2 {
+		t.Fatalf("Expected 2 expected call in callset, got %d", numExpectedCalls)
+	}
+
+	// Only override the first call with "foo" argument.
+	cs.Add(newCall(t, receiver, method, reflect.TypeOf(receiverType{}.Func), "foo"))
+	newNumExpectedCalls := len(cs.expected[callSetKey{receiver, method}])
+	if newNumExpectedCalls != 2 {
+		t.Fatalf("Expected 2 expected call in callset, got %d", newNumExpectedCalls)
+	}
+}
+
 func TestCallSetRemove(t *testing.T) {
 	method := "TestMethod"
 	var receiver any = "TestReceiver"
