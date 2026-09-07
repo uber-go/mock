@@ -43,9 +43,7 @@ import (
 	"go.uber.org/mock/mockgen/model"
 )
 
-const (
-	gomockImportPath = "go.uber.org/mock/gomock"
-)
+const _gomockImportPath = "go.uber.org/mock/gomock"
 
 var (
 	version = ""
@@ -383,7 +381,7 @@ func (g *generator) Generate(pkg *model.Package, outputPkgName string, outputPac
 
 	// Get all required imports, and generate unique names for them all.
 	im := pkg.Imports()
-	im[gomockImportPath] = true
+	im[_gomockImportPath] = true
 
 	// Only import reflect if it's used. We only use reflect in mocked methods
 	// so only import if any of the mocked interfaces have methods.
