@@ -86,6 +86,7 @@ func NewController(t TestReporter, opts ...ControllerOption) *Controller {
 	if !ok {
 		h = &nopTestHelper{t}
 	}
+	h.Helper()
 	ctrl := &Controller{
 		T:             h,
 		expectedCalls: newCallSet(),
