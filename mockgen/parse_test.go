@@ -5,6 +5,8 @@ import (
 	"go/token"
 	"strings"
 	"testing"
+
+	"go.uber.org/mock/mockgen/model"
 )
 
 func TestFileParser_ParseFile(t *testing.T) {
@@ -227,5 +229,108 @@ func TestParseFile_IncludeWithDuplicates_Dedupes(t *testing.T) {
 
 	if len(pkg.Interfaces) != 1 || pkg.Interfaces[0].Name != "InputMaker" {
 		t.Fatalf("Expected only InputMaker once, got %v", pkg.Interfaces)
+	}
+}
+
+func TestParseFile_AnyTypeAlias(t *testing.T) {
+	fs := token.NewFileSet()
+	src := `package test
+
+type Empty any
+type EmptyAlias = any
+type AnyMethod interface {
+	any
+	Foo(x any) any
+	Bar(a ...any) []any
+	Baz(m map[string]any) <-chan any
+}
+`
+	file, err := parser.ParseFile(fs, "test.go", src, 0)
+	if err != nil {
+		t.Fatalf("Unexpected error: %v", err)
+	}
+
+	p := fileParser{
+		fileSet:            fs,
+		imports:            make(map[string]importedPackage),
+		importedInterfaces: newInterfaceCache(),
+		auxInterfaces:      newInterfaceCache(),
+	}
+
+	pkg, err := p.parseFile("test", file)
+	if err != nil {
+		t.Fatalf("Unexpected error: %v", err)
+	}
+
+	if len(pkg.Interfaces) != 3 {
+		t.Fatalf("Expected 3 interfaces, got %d", len(pkg.Interfaces))
+	}
+
+	ifaces := make(map[string]*model.Interface)
+	for _, iface := range pkg.Interfaces {
+		ifaces[iface.Name] = iface
+	}
+
+	empty, ok := ifaces["Empty"]
+	if !ok {
+		t.Fatal("Missing interface Empty")
+	}
+	if len(empty.Methods) != 0 {
+		t.Errorf("Expected Empty to have 0 methods, got %d", len(empty.Methods))
+	}
+
+	emptyAlias, ok := ifaces["EmptyAlias"]
+	if !ok {
+		t.Fatal("Missing interface EmptyAlias")
+	}
+	if len(emptyAlias.Methods) != 0 {
+		t.Errorf("Expected EmptyAlias to have 0 methods, got %d", len(emptyAlias.Methods))
+	}
+
+	anyMethod, ok := ifaces["AnyMethod"]
+	if !ok {
+		t.Fatal("Missing interface AnyMethod")
+	}
+	if len(anyMethod.Methods) != 3 {
+		t.Fatalf("Expected AnyMethod to have 3 methods, got %d", len(anyMethod.Methods))
+	}
+
+	// Verify Foo(x any) any
+	foo := anyMethod.Methods[0]
+	if foo.Name != "Foo" {
+		t.Errorf("Expected method Foo, got %s", foo.Name)
+	}
+	if len(foo.In) != 1 || foo.In[0].Type != model.PredeclaredType("any") {
+		t.Errorf("Expected Foo.In[0] to be any, got %v", foo.In)
+	}
+	if len(foo.Out) != 1 || foo.Out[0].Type != model.PredeclaredType("any") {
+		t.Errorf("Expected Foo.Out[0] to be any, got %v", foo.Out)
+	}
+
+	// Verify Bar(a ...any) []any
+	bar := anyMethod.Methods[1]
+	if bar.Name != "Bar" {
+		t.Errorf("Expected method Bar, got %s", bar.Name)
+	}
+	if bar.Variadic == nil || bar.Variadic.Type != model.PredeclaredType("any") {
+		t.Errorf("Expected Bar.Variadic to be any, got %v", bar.Variadic)
+	}
+	expectedBarOut := &model.ArrayType{Len: -1, Type: model.PredeclaredType("any")}
+	if len(bar.Out) != 1 || bar.Out[0].Type.String(nil, "") != expectedBarOut.String(nil, "") {
+		t.Errorf("Expected Bar.Out[0] to be []any, got %v", bar.Out)
+	}
+
+	// Verify Baz(m map[string]any) <-chan any
+	baz := anyMethod.Methods[2]
+	if baz.Name != "Baz" {
+		t.Errorf("Expected method Baz, got %s", baz.Name)
+	}
+	expectedBazIn := &model.MapType{Key: model.PredeclaredType("string"), Value: model.PredeclaredType("any")}
+	if len(baz.In) != 1 || baz.In[0].Type.String(nil, "") != expectedBazIn.String(nil, "") {
+		t.Errorf("Expected Baz.In[0] to be map[string]any, got %v", baz.In)
+	}
+	expectedBazOut := &model.ChanType{Dir: model.RecvDir, Type: model.PredeclaredType("any")}
+	if len(baz.Out) != 1 || baz.Out[0].Type.String(nil, "") != expectedBazOut.String(nil, "") {
+		t.Errorf("Expected Baz.Out[0] to be <-chan any, got %v", baz.Out)
 	}
 }

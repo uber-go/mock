@@ -411,6 +411,8 @@ func (p *fileParser) parseMethod(field *ast.Field, it *namedInterface, iface *mo
 					return nil, err
 				}
 
+			} else if v.String() == "any" {
+				return nil, nil
 			} else {
 				// This is built-in error interface.
 				if v.String() == model.ErrorInterface.Name {
@@ -436,6 +438,11 @@ func (p *fileParser) parseMethod(field *ast.Field, it *namedInterface, iface *mo
 				}
 			}
 			return embeddedIface.Methods, nil
+		case *ast.InterfaceType:
+			if v.Methods == nil || len(v.Methods.List) == 0 {
+				return nil, nil
+			}
+			return nil, p.errorf(v.Pos(), "can't handle non-empty unnamed interface types")
 		case *ast.SelectorExpr:
 			// Embedded interface in another package.
 			filePkg, sel := v.X.(*ast.Ident).String(), v.Sel.String()
@@ -784,7 +791,11 @@ func iterInterfaces(file *ast.File) <-chan *namedInterface {
 				}
 				it, ok := ts.Type.(*ast.InterfaceType)
 				if !ok {
-					continue
+					if ident, ok := ts.Type.(*ast.Ident); ok && ident.Name == "any" {
+						it = &ast.InterfaceType{Methods: &ast.FieldList{}}
+					} else {
+						continue
+					}
 				}
 
 				ch <- &namedInterface{name: ts.Name, it: it, typeParams: getTypeSpecTypeParams(ts)}

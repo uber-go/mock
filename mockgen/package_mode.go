@@ -64,7 +64,7 @@ func (p *packageModeParser) loadPackage(packageName string) (*packages.Package, 
 
 func extractInterfacesFromPackageTypes(pkgTypes *types.Package, ifaces []string) ([]*model.Interface, error) {
 	// If no interfaces specified, discover all interfaces in the package
-	if len(ifaces) == 0  {
+	if len(ifaces) == 0 {
 		return getAllInterfacesFromPackageTypes(pkgTypes)
 	}
 	scope := pkgTypes.Scope()
@@ -100,12 +100,9 @@ func getAllInterfacesFromPackageTypes(pkgTypes *types.Package) ([]*model.Interfa
 		if !obj.Exported() {
 			continue
 		}
-		named, ok := types.Unalias(obj.Type()).(*types.Named)
-		if !ok {
-			continue
-		}
+		unaliased := types.Unalias(obj.Type())
 		// Check if the underlying type is an interface
-		iface, ok := named.Underlying().(*types.Interface)
+		iface, ok := unaliased.Underlying().(*types.Interface)
 		if !ok {
 			continue
 		}
@@ -126,12 +123,8 @@ func getAllInterfacesFromPackageTypes(pkgTypes *types.Package) ([]*model.Interfa
 }
 
 func parseInterface(obj types.Object) (*model.Interface, error) {
-	named, ok := types.Unalias(obj.Type()).(*types.Named)
-	if !ok {
-		return nil, fmt.Errorf("%s is not an interface. it is a %T", obj.Name(), obj.Type().Underlying())
-	}
-
-	iface, ok := named.Underlying().(*types.Interface)
+	unaliased := types.Unalias(obj.Type())
+	iface, ok := unaliased.Underlying().(*types.Interface)
 	if !ok {
 		return nil, fmt.Errorf("%s is not an interface. it is a %T", obj.Name(), obj.Type().Underlying())
 	}
@@ -161,7 +154,8 @@ func parseInterface(obj types.Object) (*model.Interface, error) {
 		}
 	}
 
-	if named.TypeParams() == nil {
+	named, ok := unaliased.(*types.Named)
+	if !ok || named.TypeParams() == nil {
 		return &model.Interface{Name: obj.Name(), Methods: methods}, nil
 	}
 
@@ -233,6 +227,10 @@ func parseType(t types.Type) (model.Type, error) {
 		var pkg string
 		if object.Obj().Pkg() != nil {
 			pkg = object.Obj().Pkg().Path()
+		}
+
+		if pkg == "" && name == "any" {
+			return model.PredeclaredType("any"), nil
 		}
 
 		// TypeArgs method not available for aliases in go1.22
