@@ -216,6 +216,25 @@ func TestAssignableToTypeOfMatcher(t *testing.T) {
 	if match := gomock.AssignableToTypeOf(ctxInterface).Matches(ctxWithValue); !match {
 		t.Errorf(`AssignableToTypeOf(context.Context) should not match ctxWithValue`)
 	}
+
+	if match := gomock.AssignableToTypeOf(ctxInterface).Matches(nil); match {
+		t.Errorf(`AssignableToTypeOf(context.Context) should not match nil`)
+	}
+	if match := gomock.AssignableToTypeOf(&Dog{}).Matches(nil); match {
+		t.Errorf(`AssignableToTypeOf(&Dog{}) should not match nil`)
+	}
+	if match := gomock.AssignableToTypeOf(&Dog{}).Matches((*Dog)(nil)); !match {
+		t.Errorf(`AssignableToTypeOf(&Dog{}) should match a typed nil *Dog`)
+	}
+	if match := gomock.AssignableToTypeOf(nil).Matches("abc"); match {
+		t.Errorf(`AssignableToTypeOf(nil) should not match "abc"`)
+	}
+	if match := gomock.AssignableToTypeOf(nil).Matches(nil); match {
+		t.Errorf(`AssignableToTypeOf(nil) should not match nil`)
+	}
+	if str := gomock.AssignableToTypeOf(nil).String(); str != "is assignable to <nil>" {
+		t.Errorf(`AssignableToTypeOf(nil).String() = %q, want "is assignable to <nil>"`, str)
+	}
 }
 
 func TestInAnyOrder(t *testing.T) {
