@@ -197,10 +197,17 @@ type assignableToTypeOfMatcher struct {
 }
 
 func (m assignableToTypeOfMatcher) Matches(x any) bool {
-	return reflect.TypeOf(x).AssignableTo(m.targetType)
+	xt := reflect.TypeOf(x)
+	if xt == nil || m.targetType == nil {
+		return false
+	}
+	return xt.AssignableTo(m.targetType)
 }
 
 func (m assignableToTypeOfMatcher) String() string {
+	if m.targetType == nil {
+		return "is assignable to <nil>"
+	}
 	return "is assignable to " + m.targetType.Name()
 }
 
@@ -429,6 +436,9 @@ func Regex(regexStr string) Matcher {
 //
 //	var ctx = reflect.TypeOf((*context.Context)(nil)).Elem()
 //	AssignableToTypeOf(ctx).Matches(context.Background()) // returns true
+//
+// An untyped nil carries no type and never matches; use Nil, or
+// AnyOf(Nil(), AssignableToTypeOf(x)), to accept one.
 func AssignableToTypeOf(x any) Matcher {
 	if xt, ok := x.(reflect.Type); ok {
 		return assignableToTypeOfMatcher{xt}
