@@ -80,6 +80,101 @@ func Test_packageModeParser_parsePackage(t *testing.T) {
 			},
 		},
 		{
+			name: "success: any alias and methods in package mode",
+			args: args{
+				packageName: "go.uber.org/mock/mockgen/internal/tests/any_type",
+				ifaces:      []string{"EmptyAny", "EmptyAnyAlias", "AnyService"},
+			},
+			expected: &model.Package{
+				Name:    "any_type",
+				PkgPath: "go.uber.org/mock/mockgen/internal/tests/any_type",
+				Interfaces: []*model.Interface{
+					{
+						Name:    "EmptyAny",
+						Methods: []*model.Method{},
+					},
+					{
+						Name:    "EmptyAnyAlias",
+						Methods: []*model.Method{},
+					},
+					{
+						Name: "AnyService",
+						Methods: []*model.Method{
+							{
+								Name: "Do",
+								In: []*model.Parameter{
+									{
+										Name: "x",
+										Type: model.PredeclaredType("any"),
+									},
+								},
+								Out: []*model.Parameter{
+									{
+										Type: model.PredeclaredType("any"),
+									},
+								},
+							},
+							{
+								Name: "DoChan",
+								In: []*model.Parameter{
+									{
+										Name: "ch",
+										Type: &model.ChanType{
+											Dir:  model.RecvDir,
+											Type: model.PredeclaredType("any"),
+										},
+									},
+								},
+								Out: []*model.Parameter{
+									{
+										Type: &model.ChanType{
+											Dir:  model.SendDir,
+											Type: model.PredeclaredType("any"),
+										},
+									},
+								},
+							},
+							{
+								Name: "DoMap",
+								In: []*model.Parameter{
+									{
+										Name: "m",
+										Type: &model.MapType{
+											Key:   model.PredeclaredType("string"),
+											Value: model.PredeclaredType("any"),
+										},
+									},
+								},
+								Out: []*model.Parameter{
+									{
+										Type: &model.MapType{
+											Key:   model.PredeclaredType("string"),
+											Value: model.PredeclaredType("any"),
+										},
+									},
+								},
+							},
+							{
+								Name: "DoVariadic",
+								Variadic: &model.Parameter{
+									Name: "items",
+									Type: model.PredeclaredType("any"),
+								},
+								Out: []*model.Parameter{
+									{
+										Type: &model.ArrayType{
+											Len:  -1,
+											Type: model.PredeclaredType("any"),
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
 			name: "success: interface with variadic args",
 			args: args{
 				packageName: "go.uber.org/mock/mockgen/internal/tests/package_mode",
