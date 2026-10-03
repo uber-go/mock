@@ -266,6 +266,11 @@ func (ctrl *Controller) finish(cleanup bool, panicErr any) {
 	defer ctrl.mu.Unlock()
 
 	if ctrl.finished {
+		// Finish recovered the in-flight panic before calling us; pass it
+		// through instead of silently discarding it.
+		if panicErr != nil {
+			panic(panicErr)
+		}
 		if _, ok := isCleanuper(ctrl.T); !ok {
 			ctrl.T.Fatalf("Controller.Finish was called more than once. It has to be called exactly once.")
 		}

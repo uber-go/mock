@@ -703,6 +703,26 @@ func TestPanicOverridesExpectationChecks(t *testing.T) {
 	})
 }
 
+func TestPanicNotSwallowedAfterFinish(t *testing.T) {
+	// The reporter implements Cleanup, so calling Finish more than once is
+	// tolerated. A panic that occurs after Finish has already run must still
+	// propagate through the deferred Finish call.
+	reporter := NewErrorReporter(t)
+	ctrl := gomock.NewController(reporter)
+	ctrl.Finish()
+
+	defer func() {
+		if r := recover(); r != "intentional panic" {
+			t.Fatalf("expected the panic to propagate, got %v", r)
+		}
+	}()
+	func() {
+		defer ctrl.Finish()
+		panic("intentional panic")
+	}()
+	t.Fatal("expected a panic")
+}
+
 func TestSetArgWithBadType(t *testing.T) {
 	rep, ctrl := createFixtures(t)
 
