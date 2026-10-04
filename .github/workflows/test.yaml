@@ -72,3 +72,7 @@ jobs:
       - name: Run Bazel tests
         run: |
           cd bazel && bazel test //...
+
+      - name: Run Bazel tests with the race detector
+        run: |
+          cd bazel && bazel test --@io_bazel_rules_go//go/config:race //...

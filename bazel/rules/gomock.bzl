@@ -31,7 +31,9 @@ load("@io_bazel_rules_go//go/private/rules:wrappers.bzl", go_binary = "go_binary
 _MOCKGEN_TOOL = Label("@org_uber_go_mock//mockgen")
 
 def _gomock_source_impl(ctx):
-    go = go_context(ctx, include_deprecated_properties = False)
+    # Source mode only runs mockgen, so it needs no C/C++ toolchain. Without this, rules_go forces
+    # pure mode, which fails the analysis when the race detector is enabled.
+    go = go_context(ctx, include_deprecated_properties = False, maybe_needs_cc_toolchain = False)
 
     # In Source mode, it's not necessary to pass through a library, as the only thing we use it for is setting up
     # the relative file locations. Forcing users to pass a library makes it difficult in the case where a mock should
