@@ -6,8 +6,12 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 ## Unreleased
 - [#273][]: Archive mode: supports same capabilities as "package" mode, including:
   erroring out on type constraints and handling type aliases explicitly
+- [#226][]: Source mode: fixed "ambiguous because of duplicate imports" errors when
+  the package of an embedded interface imports different packages under the same
+  name in different files.
 
 [#273]: https://github.com/uber-go/mock/pull/273
+[#226]: https://github.com/uber-go/mock/issues/226
 
 ## 0.6.0 (18 Aug 2025)
 ### Added

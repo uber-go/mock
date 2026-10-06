@@ -22,6 +22,8 @@ import (
 
 type Foreign interface {
 	ersatz.Embedded
+	Leveler
+	Logger() *log.Logger
 }
 
 func Conflict0() {

@@ -15,3 +15,5 @@
 package log
 
 func Foo() {}
+
+type Level int

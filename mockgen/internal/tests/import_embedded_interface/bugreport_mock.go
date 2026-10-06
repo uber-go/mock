@@ -10,11 +10,13 @@
 package bugreport
 
 import (
+	log0 "log"
 	reflect "reflect"
 
 	gomock "go.uber.org/mock/gomock"
 	ersatz "go.uber.org/mock/mockgen/internal/tests/import_embedded_interface/ersatz"
 	ersatz0 "go.uber.org/mock/mockgen/internal/tests/import_embedded_interface/other/ersatz"
+	log "go.uber.org/mock/mockgen/internal/tests/import_embedded_interface/other/log"
 )
 
 // MockSource is a mock of Source interface.
@@ -81,6 +83,34 @@ func (m *MockSource) Ersatz() ersatz.Return {
 func (mr *MockSourceMockRecorder) Ersatz() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Ersatz", reflect.TypeOf((*MockSource)(nil).Ersatz))
+}
+
+// Level mocks base method.
+func (m *MockSource) Level() log.Level {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Level")
+	ret0, _ := ret[0].(log.Level)
+	return ret0
+}
+
+// Level indicates an expected call of Level.
+func (mr *MockSourceMockRecorder) Level() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Level", reflect.TypeOf((*MockSource)(nil).Level))
+}
+
+// Logger mocks base method.
+func (m *MockSource) Logger() *log0.Logger {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Logger")
+	ret0, _ := ret[0].(*log0.Logger)
+	return ret0
+}
+
+// Logger indicates an expected call of Logger.
+func (mr *MockSourceMockRecorder) Logger() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Logger", reflect.TypeOf((*MockSource)(nil).Logger))
 }
 
 // OtherErsatz mocks base method.

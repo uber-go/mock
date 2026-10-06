@@ -19,3 +19,7 @@ import "go.uber.org/mock/mockgen/internal/tests/import_embedded_interface/other/
 func Conflict1() {
 	log.Foo()
 }
+
+type Leveler interface {
+	Level() log.Level
+}

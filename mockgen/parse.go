@@ -27,11 +27,14 @@ import (
 	"go/token"
 	"go/types"
 	"log"
+	"maps"
 	"os"
 	"path"
 	"path/filepath"
+	"slices"
 	"strconv"
 	"strings"
+	"sync"
 
 	"go.uber.org/mock/mockgen/model"
 )
@@ -57,6 +60,7 @@ func sourceMode(source string) (*model.Package, error) {
 	p := &fileParser{
 		fileSet:            fs,
 		imports:            make(map[string]importedPackage),
+		packages:           make(map[string]*fileParser),
 		importedInterfaces: newInterfaceCache(),
 		auxInterfaces:      newInterfaceCache(),
 		srcDir:             srcDir,
@@ -111,22 +115,17 @@ func sourceMode(source string) (*model.Package, error) {
 
 type importedPackage interface {
 	Path() string
-	Parser() *fileParser
 }
 
 type importedPkg struct {
-	path   string
-	parser *fileParser
+	path string
 }
 
-func (i importedPkg) Path() string        { return i.path }
-func (i importedPkg) Parser() *fileParser { return i.parser }
+func (i importedPkg) Path() string { return i.path }
 
-// duplicateImport is a bit of a misnomer. Currently the parser can't
-// handle cases of multi-file packages importing different packages
-// under the same name. Often these imports would not be problematic,
-// so this type lets us defer raising an error unless the package name
-// is actually used.
+// duplicateImport is a package name bound to several imports of a file,
+// which only happens when names are guessed from import paths. The error
+// is deferred until the name is actually used.
 type duplicateImport struct {
 	name       string
 	duplicates []string
@@ -136,8 +135,7 @@ func (d duplicateImport) Error() string {
 	return fmt.Sprintf("%q is ambiguous because of duplicate imports: %v", d.name, d.duplicates)
 }
 
-func (d duplicateImport) Path() string        { log.Fatal(d.Error()); return "" }
-func (d duplicateImport) Parser() *fileParser { log.Fatal(d.Error()); return nil }
+func (d duplicateImport) Path() string { log.Fatal(d.Error()); return "" }
 
 type interfaceCache struct {
 	m map[string]map[string]*namedInterface
@@ -177,6 +175,7 @@ func (i *interfaceCache) GetASTIface(pkg, name string) *ast.InterfaceType {
 type fileParser struct {
 	fileSet            *token.FileSet
 	imports            map[string]importedPackage // package name => imported package
+	packages           map[string]*fileParser     // import path => parsed package, shared by all parsers
 	importedInterfaces *interfaceCache
 	auxFiles           []*ast.File
 	auxInterfaces      *interfaceCache
@@ -223,7 +222,7 @@ func (p *fileParser) addAuxInterfacesFromFile(pkg string, file *ast.File) {
 // parseFile loads all file imports and auxiliary files import into the
 // fileParser, parses all file interfaces and returns package model.
 func (p *fileParser) parseFile(importPath string, file *ast.File) (*model.Package, error) {
-	allImports, dotImports := importsOfFile(file)
+	allImports, dotImports := importsOfFile(file.Imports)
 	// Don't stomp imports provided by -imports. Those should take precedence.
 	for pkg, pkgI := range allImports {
 		if _, ok := p.imports[pkg]; !ok {
@@ -233,7 +232,7 @@ func (p *fileParser) parseFile(importPath string, file *ast.File) (*model.Packag
 	// Add imports from auxiliary files, which might be needed for embedded interfaces.
 	// Don't stomp any other imports.
 	for _, f := range p.auxFiles {
-		auxImports, _ := importsOfFile(f)
+		auxImports, _ := importsOfFile(f.Imports)
 		for pkg, pkgI := range auxImports {
 			if _, ok := p.imports[pkg]; !ok {
 				p.imports[pkg] = pkgI
@@ -276,15 +275,18 @@ func (p *fileParser) parseFile(importPath string, file *ast.File) (*model.Packag
 	}, nil
 }
 
-// parsePackage loads package specified by path, parses it and returns
-// a new fileParser with the parsed imports and interfaces.
+// parsePackage parses the package at path once and returns a fileParser
+// holding its interfaces, each bound to the imports of its own file.
 func (p *fileParser) parsePackage(path string) (*fileParser, error) {
+	if parsed, ok := p.packages[path]; ok {
+		return parsed, nil
+	}
 	newP := &fileParser{
 		fileSet:            token.NewFileSet(),
-		imports:            make(map[string]importedPackage),
 		importedInterfaces: newInterfaceCache(),
 		auxInterfaces:      newInterfaceCache(),
 		srcDir:             p.srcDir,
+		packages:           p.packages,
 	}
 
 	var pkgs map[string]*ast.Package
@@ -294,16 +296,29 @@ func (p *fileParser) parsePackage(path string) (*fileParser, error) {
 		return nil, err
 	}
 
-	for _, pkg := range pkgs {
-		file := ast.MergePackageFiles(pkg, ast.FilterFuncDuplicates|ast.FilterUnassociatedComments|ast.FilterImportDuplicates)
-		for ni := range iterInterfaces(file) {
-			newP.importedInterfaces.Set(path, ni.name.Name, ni)
-		}
-		imports, _ := importsOfFile(file)
-		for pkgName, pkgI := range imports {
-			newP.imports[pkgName] = pkgI
+	// Sorted descending: under the import path, the package overrides its
+	// external test package.
+	for _, pkgName := range slices.Backward(slices.Sorted(maps.Keys(pkgs))) {
+		pkg := pkgs[pkgName]
+		for _, filename := range slices.Sorted(maps.Keys(pkg.Files)) {
+			file := pkg.Files[filename]
+			// Resolved on first use: it runs "go list", and few of these
+			// interfaces are ever parsed.
+			imports := file.Imports
+			fileImports := sync.OnceValue(func() map[string]importedPackage {
+				m, _ := importsOfFile(imports)
+				return m
+			})
+			for ni := range iterInterfaces(file) {
+				ni.fileImports = fileImports
+				// Keyed by import path for other packages, and by package
+				// name for the files of the directory.
+				newP.importedInterfaces.Set(path, ni.name.Name, ni)
+				newP.importedInterfaces.Set(pkgName, ni.name.Name, ni)
+			}
 		}
 	}
+	p.packages[path] = newP
 	return newP, nil
 }
 
@@ -355,6 +370,12 @@ func (p *fileParser) constructTps(it *namedInterface) (tps map[string]model.Type
 // parseInterface loads interface specified by pkg and name, parses it and returns
 // a new model with the parsed.
 func (p *fileParser) parseInterface(name, pkg string, it *namedInterface) (*model.Interface, error) {
+	if it.fileImports != nil {
+		fp := *p
+		fp.imports = it.fileImports()
+		p = &fp
+	}
+
 	iface := &model.Interface{Name: name}
 	tps := p.constructTps(it)
 	tp, err := p.parseFieldList(pkg, it.typeParams, tps)
@@ -396,7 +417,7 @@ func (p *fileParser) parseMethod(field *ast.Field, it *namedInterface, iface *mo
 			// Embedded interface in this package.
 			embeddedIfaceType := p.auxInterfaces.Get(pkg, v.String())
 			if embeddedIfaceType == nil {
-				embeddedIfaceType = p.importedInterfaces.Get(pkg, v.String())
+				embeddedIfaceType = p.importedInterfaces.Get(it.pkgName, v.String())
 			}
 
 			var embeddedIface *model.Interface
@@ -421,7 +442,7 @@ func (p *fileParser) parseMethod(field *ast.Field, it *namedInterface, iface *mo
 						return nil, p.errorf(v.Pos(), "could not parse package %s: %v", pkg, err)
 					}
 
-					if embeddedIfaceType = ip.importedInterfaces.Get(pkg, v.String()); embeddedIfaceType == nil {
+					if embeddedIfaceType = ip.importedInterfaces.Get(it.pkgName, v.String()); embeddedIfaceType == nil {
 						return nil, p.errorf(v.Pos(), "unknown embedded interface %s.%s", pkg, v.String())
 					}
 
@@ -458,17 +479,9 @@ func (p *fileParser) parseMethod(field *ast.Field, it *namedInterface, iface *mo
 				}
 			} else {
 				path := embeddedPkg.Path()
-				parser := embeddedPkg.Parser()
-				if parser == nil {
-					ip, err := p.parsePackage(path)
-					if err != nil {
-						return nil, p.errorf(v.Pos(), "could not parse package %s: %v", path, err)
-					}
-					parser = ip
-					p.imports[filePkg] = importedPkg{
-						path:   embeddedPkg.Path(),
-						parser: parser,
-					}
+				parser, err := p.parsePackage(path)
+				if err != nil {
+					return nil, p.errorf(v.Pos(), "could not parse package %s: %v", path, err)
 				}
 				if embeddedIfaceType = parser.importedInterfaces.Get(path, sel); embeddedIfaceType == nil {
 					return nil, p.errorf(v.Pos(), "unknown embedded interface %s.%s", path, sel)
@@ -700,10 +713,10 @@ func (p *fileParser) parseArrayLength(expr ast.Expr) (string, error) {
 }
 
 // importsOfFile returns a map of package name to import path
-// of the imports in file.
-func importsOfFile(file *ast.File) (normalImports map[string]importedPackage, dotImports []string) {
+// of the imports of a file.
+func importsOfFile(imports []*ast.ImportSpec) (normalImports map[string]importedPackage, dotImports []string) {
 	var importPaths []string
-	for _, is := range file.Imports {
+	for _, is := range imports {
 		if is.Name != nil {
 			continue
 		}
@@ -713,7 +726,7 @@ func importsOfFile(file *ast.File) (normalImports map[string]importedPackage, do
 	packagesName := createPackageMap(importPaths)
 	normalImports = make(map[string]importedPackage)
 	dotImports = make([]string, 0)
-	for _, is := range file.Imports {
+	for _, is := range imports {
 		var pkgName string
 		importPath := is.Path.Value[1 : len(is.Path.Value)-1] // remove quotes
 
@@ -766,6 +779,10 @@ type namedInterface struct {
 	typeParams             []*ast.Field
 	embeddedInstTypeParams []ast.Expr
 	instTypes              []model.Type
+	// fileImports returns the imports of the declaring file. It is nil for
+	// source and aux file interfaces, which use the parser's imports.
+	fileImports func() map[string]importedPackage
+	pkgName     string // package of the declaring file
 }
 
 // Create an iterator over all interfaces in file.
@@ -787,7 +804,7 @@ func iterInterfaces(file *ast.File) <-chan *namedInterface {
 					continue
 				}
 
-				ch <- &namedInterface{name: ts.Name, it: it, typeParams: getTypeSpecTypeParams(ts)}
+				ch <- &namedInterface{name: ts.Name, it: it, typeParams: getTypeSpecTypeParams(ts), pkgName: file.Name.Name}
 			}
 		}
 		close(ch)

@@ -3,6 +3,9 @@ package main
 import (
 	"go/parser"
 	"go/token"
+	"os"
+	"path/filepath"
+	"slices"
 	"strings"
 	"testing"
 )
@@ -48,15 +51,94 @@ func TestFileParser_ParsePackage(t *testing.T) {
 	p := fileParser{
 		fileSet:            fs,
 		imports:            make(map[string]importedPackage),
+		packages:           make(map[string]*fileParser),
 		importedInterfaces: newInterfaceCache(),
 	}
 
-	newP, err := p.parsePackage("go.uber.org/mock/mockgen/internal/tests/custom_package_name/greeter")
+	path := "go.uber.org/mock/mockgen/internal/tests/custom_package_name/greeter"
+	newP, err := p.parsePackage(path)
 	if err != nil {
 		t.Fatalf("Unexpected error: %v", err)
 	}
 
-	checkGreeterImports(t, newP.imports)
+	checkGreeterImports(t, newP.importedInterfaces.Get(path, "InputMaker").fileImports())
+}
+
+// faux.go and conflict.go import different packages named log.
+func TestFileParser_ParsePackage_FileScopedImports(t *testing.T) {
+	const base = "go.uber.org/mock/mockgen/internal/tests/import_embedded_interface"
+	path := base + "/faux"
+	p := fileParser{packages: make(map[string]*fileParser)}
+	newP, err := p.parsePackage(path)
+	if err != nil {
+		t.Fatalf("Unexpected error: %v", err)
+	}
+
+	iface, err := newP.parseInterface("Foreign", path, newP.importedInterfaces.Get(path, "Foreign"))
+	if err != nil {
+		t.Fatalf("Unexpected error: %v", err)
+	}
+
+	pm := map[string]string{base + "/other/ersatz": "ersatz", base + "/other/log": "otherlog", "log": "log"}
+	expected := []string{"ersatz.Return", "otherlog.Level", "*log.Logger"}
+	var got []string
+	for _, m := range iface.Methods {
+		got = append(got, m.Out[0].Type.String(pm, ""))
+	}
+	if !slices.Equal(got, expected) {
+		t.Errorf("Expected methods to return %v but got %v", expected, got)
+	}
+}
+
+// A package shadows its external test package for other packages, while
+// a source file in either of them embeds the interfaces of its own.
+func TestFileParser_ParsePackage_ShadowsTestPackage(t *testing.T) {
+	dir := t.TempDir()
+	for name, src := range map[string]string{
+		"a.go":      "package a\n\ntype I interface{ A() }\n",
+		"a_test.go": "package a_test\n\ntype I interface{ B() }\n",
+	} {
+		if err := os.WriteFile(filepath.Join(dir, name), []byte(src), 0o600); err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	p := fileParser{srcDir: dir, packages: make(map[string]*fileParser)}
+	newP, err := p.parsePackage(".")
+	if err != nil {
+		t.Fatalf("Unexpected error: %v", err)
+	}
+	it := newP.importedInterfaces.Get(".", "I")
+	if got := filepath.Base(newP.fileSet.Position(it.name.Pos()).Filename); got != "a.go" {
+		t.Errorf("Expected I from a.go but got it from %s", got)
+	}
+
+	for pkgName, method := range map[string]string{"a": "A", "a_test": "B"} {
+		fs := token.NewFileSet()
+		file, err := parser.ParseFile(fs, "s.go", "package "+pkgName+"\n\ntype S interface{ I }\n", 0)
+		if err != nil {
+			t.Fatalf("Unexpected error: %v", err)
+		}
+		src := fileParser{
+			fileSet:            fs,
+			imports:            make(map[string]importedPackage),
+			packages:           make(map[string]*fileParser),
+			importedInterfaces: newInterfaceCache(),
+			auxInterfaces:      newInterfaceCache(),
+			srcDir:             dir,
+		}
+		pkg, err := src.parseFile(".", file)
+		if err != nil {
+			t.Fatalf("Unexpected error: %v", err)
+		}
+		var methods []string
+		for _, m := range pkg.Interfaces[0].Methods {
+			methods = append(methods, m.Name)
+		}
+		if !slices.Equal(methods, []string{method}) {
+			t.Errorf("Expected %s.S to have methods [%s] but got %v", pkgName, method, methods)
+		}
+	}
 }
 
 func TestImportsOfFile(t *testing.T) {
@@ -66,7 +148,7 @@ func TestImportsOfFile(t *testing.T) {
 		t.Fatalf("Unexpected error: %v", err)
 	}
 
-	imports, _ := importsOfFile(file)
+	imports, _ := importsOfFile(file.Imports)
 	checkGreeterImports(t, imports)
 }
 
