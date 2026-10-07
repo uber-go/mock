@@ -228,6 +228,12 @@ func parseType(t types.Type) (model.Type, error) {
 
 		return sig, nil
 	case *types.Named, *types.Alias:
+		if alias, ok := t.(*types.Alias); ok && alias.Obj().Pkg() != nil && !alias.Obj().Exported() {
+			// Expand one alias at a time to preserve exported aliases that
+			// provide access to unexported defined types.
+			return parseType(alias.Rhs())
+		}
+
 		object := t.(interface{ Obj() *types.TypeName })
 		name := object.Obj().Name()
 		var pkg string

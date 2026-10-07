@@ -1,6 +1,6 @@
 package alias
 
-//go:generate mockgen -typed -package=mock -destination=mock/interfaces.go . Fooer,FooerAlias,Barer,BarerAlias,Bazer,QuxerConsumer,QuuxerConsumer
+//go:generate mockgen -typed -package=mock -destination=mock/interfaces.go . Fooer,FooerAlias,Barer,BarerAlias,Bazer,QuxerConsumer,QuuxerConsumer,Router
 
 import "go.uber.org/mock/mockgen/internal/tests/alias/subpkg"
 
@@ -44,4 +44,16 @@ type QuxerConsumer interface{
 //         The generated method should only use the alias, not the unexported underlying name.
 type QuuxerConsumer interface{
 	Consume(subpkg.Quuxer) subpkg.Quuxer
+}
+
+// Case 8: Unexported aliases must be expanded, stopping at exported aliases
+// even when they refer to unexported defined types in another package.
+type routeHandler = func(Fooer)
+type chainedHandler = routeHandler
+type privateQuuxer = subpkg.Quuxer
+
+type Router interface {
+	Route(handler routeHandler) routeHandler
+	Unroute(handlers ...chainedHandler)
+	Consume(privateQuuxer) privateQuuxer
 }
