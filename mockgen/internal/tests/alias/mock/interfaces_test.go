@@ -19,4 +19,5 @@ var (
 	_ alias.Bazer          = &MockBazer{}
 	_ alias.QuxerConsumer  = &MockQuxerConsumer{}
 	_ alias.QuuxerConsumer = &MockQuuxerConsumer{}
+	_ alias.Router        = &MockRouter{}
 )

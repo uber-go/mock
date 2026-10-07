@@ -1,12 +1,66 @@
 package main
 
 import (
+	"go/ast"
+	"go/parser"
+	"go/token"
+	"go/types"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/mockgen/model"
 )
+
+func TestParseTypeAliases(t *testing.T) {
+	const source = `package alias
+type Route struct{}
+type routeHandler = func(Route)
+type chainedHandler = routeHandler
+type ExportedHandler = routeHandler
+type privateHandler func(Route)
+type PublicHandler = privateHandler
+type hiddenHandler = PublicHandler
+type routeAlias = Route
+type handler[T any] = func(T)
+type Handler[T any] = func(T)
+type handlerAlias[T any] = Handler[T]
+type Box[T any] struct{ Value T }
+type boxAlias[T any] = Box[T]
+`
+	fset := token.NewFileSet()
+	file, err := parser.ParseFile(fset, "alias.go", source, 0)
+	require.NoError(t, err)
+	var config types.Config
+	pkg, err := config.Check("example.com/alias", fset, []*ast.File{file}, nil)
+	require.NoError(t, err)
+
+	for _, tt := range []struct {
+		desc       string
+		expression string
+		expected   string
+	}{
+		{"unexported function alias", "routeHandler", "func(alias.Route)"},
+		{"unexported alias chain", "chainedHandler", "func(alias.Route)"},
+		{"aliases in composite types", "map[string][]routeHandler", "map[string][]func(alias.Route)"},
+		{"alias to an exported named type", "routeAlias", "alias.Route"},
+		{"exported alias", "ExportedHandler", "alias.ExportedHandler"},
+		{"alias to an exported alias of a private type", "hiddenHandler", "alias.PublicHandler"},
+		{"unexported defined type", "privateHandler", "alias.privateHandler"},
+		{"generic function alias", "handler[int]", "func(int)"},
+		{"generic alias to an exported alias", "handlerAlias[int]", "alias.Handler[int]"},
+		{"generic alias to a named type", "boxAlias[int]", "alias.Box[int]"},
+		{"predeclared alias", "any", "any"},
+	} {
+		t.Run(tt.desc, func(t *testing.T) {
+			value, err := types.Eval(fset, pkg, token.NoPos, tt.expression)
+			require.NoError(t, err)
+			actual, err := parseType(value.Type)
+			require.NoError(t, err)
+			assert.Equal(t, tt.expected, actual.String(map[string]string{pkg.Path(): pkg.Name()}, ""))
+		})
+	}
+}
 
 func Test_packageModeParser_parsePackage(t *testing.T) {
 	type args struct {
