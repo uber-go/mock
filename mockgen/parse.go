@@ -215,7 +215,7 @@ func (p *fileParser) parseAuxFiles(auxFiles string) error {
 }
 
 func (p *fileParser) addAuxInterfacesFromFile(pkg string, file *ast.File) {
-	for ni := range iterInterfaces(file) {
+	for ni := range iterInterfaces(file, true) {
 		p.auxInterfaces.Set(pkg, ni.name.Name, ni)
 	}
 }
@@ -242,7 +242,7 @@ func (p *fileParser) parseFile(importPath string, file *ast.File) (*model.Packag
 	}
 
 	var is []*model.Interface
-	for ni := range iterInterfaces(file) {
+	for ni := range iterInterfaces(file, false) {
 		name := ni.name.String()
 
 		if _, ok := p.excludeNamesSet[name]; ok {
@@ -296,7 +296,7 @@ func (p *fileParser) parsePackage(path string) (*fileParser, error) {
 
 	for _, pkg := range pkgs {
 		file := ast.MergePackageFiles(pkg, ast.FilterFuncDuplicates|ast.FilterUnassociatedComments|ast.FilterImportDuplicates)
-		for ni := range iterInterfaces(file) {
+		for ni := range iterInterfaces(file, true) {
 			newP.importedInterfaces.Set(path, ni.name.Name, ni)
 		}
 		imports, _ := importsOfFile(file)
@@ -355,6 +355,12 @@ func (p *fileParser) constructTps(it *namedInterface) (tps map[string]model.Type
 // parseInterface loads interface specified by pkg and name, parses it and returns
 // a new model with the parsed.
 func (p *fileParser) parseInterface(name, pkg string, it *namedInterface) (*model.Interface, error) {
+	if it.inProgress {
+		return nil, p.errorf(it.name.Pos(), "cyclic interface embedding involving %s", name)
+	}
+	it.inProgress = true
+	defer func() { it.inProgress = false }()
+
 	iface := &model.Interface{Name: name}
 	tps := p.constructTps(it)
 	tp, err := p.parseFieldList(pkg, it.typeParams, tps)
@@ -766,10 +772,13 @@ type namedInterface struct {
 	typeParams             []*ast.Field
 	embeddedInstTypeParams []ast.Expr
 	instTypes              []model.Type
+	inProgress             bool
 }
 
-// Create an iterator over all interfaces in file.
-func iterInterfaces(file *ast.File) <-chan *namedInterface {
+// iterInterfaces returns interface declarations. When includeAliases is true,
+// aliases are also available for resolving embedded interfaces, but should not
+// be used to discover additional interfaces to mock.
+func iterInterfaces(file *ast.File, includeAliases bool) <-chan *namedInterface {
 	ch := make(chan *namedInterface)
 	go func() {
 		for _, decl := range file.Decls {
@@ -784,7 +793,27 @@ func iterInterfaces(file *ast.File) <-chan *namedInterface {
 				}
 				it, ok := ts.Type.(*ast.InterfaceType)
 				if !ok {
-					continue
+					if !includeAliases || !ts.Assign.IsValid() {
+						continue
+					}
+					typ := ts.Type
+					for {
+						paren, ok := typ.(*ast.ParenExpr)
+						if !ok {
+							break
+						}
+						typ = paren.X
+					}
+					switch typ.(type) {
+					case *ast.Ident, *ast.SelectorExpr, *ast.IndexExpr, *ast.IndexListExpr:
+						// An alias has the same methods as its target. Resolve it
+						// using the existing embedded-interface parsing logic.
+						it = &ast.InterfaceType{Methods: &ast.FieldList{
+							List: []*ast.Field{{Type: typ}},
+						}}
+					default:
+						continue
+					}
 				}
 
 				ch <- &namedInterface{name: ts.Name, it: it, typeParams: getTypeSpecTypeParams(ts)}
