@@ -67,3 +67,18 @@ func ExampleCall_DoAndReturn_withOverridableExpectations() {
 	fmt.Printf("%s %s", r, s)
 	// Output: I'm sleepy foo
 }
+
+func ExampleEq_pointers() {
+	s1 := "hello"
+	s2 := "hello"
+	s3 := "world"
+
+	fmt.Println(&s1 == &s2)
+	fmt.Println(gomock.Eq(&s1).Matches(&s2))
+	fmt.Println(gomock.Eq(&s1).Matches(&s3))
+
+	// Output:
+	// false
+	// true
+	// false
+}

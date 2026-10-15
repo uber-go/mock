@@ -369,7 +369,10 @@ func AnyOf(xs ...any) Matcher {
 	return anyOfMatcher{ms}
 }
 
-// Eq returns a matcher that matches on equality.
+// Eq returns a matcher that matches on deep equality using [reflect.DeepEqual].
+// Before comparing non-nil values, the expected value is converted to the actual
+// value's type if it is assignable to that type. Otherwise, the values do not match.
+// In particular, pointers to deeply equal values match even if their addresses differ.
 //
 // Example usage:
 //
