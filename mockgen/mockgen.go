@@ -475,7 +475,11 @@ func (g *generator) Generate(pkg *model.Package, outputPkgName string, outputPac
 	g.p(")")
 
 	if *writeGenerateDirective {
-		g.p("//go:generate %v", strings.Join(os.Args, " "))
+		directive, err := generateDirective(g.destination, flag.CommandLine, os.Args)
+		if err != nil {
+			return err
+		}
+		g.p("//go:generate %s", directive)
 	}
 
 	for _, intf := range pkg.Interfaces {
